@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Background } from '@/components/layout/Background'
 import { Navbar } from '@/components/layout/Navbar'
 import { Home } from '@/sections/Home'
+import { Expertise } from '@/sections/Expertise'
 import { Placeholder } from '@/sections/Placeholder'
 import { useTheme } from '@/theme/ThemeProvider'
 import type { SectionId } from '@/theme/themes'
@@ -13,12 +14,6 @@ const HoloCore = lazy(() =>
 )
 
 const PENDING: Record<string, { eyebrow: string; title: string; sub: string; step: string }> = {
-  expertise: {
-    eyebrow: 'Core Expertise',
-    title: 'What I Actually Do',
-    sub: 'Static and dynamic analysis, protocol archaeology, format reconstruction, and the tooling that makes it repeatable.',
-    step: 'Step 7',
-  },
   projects: {
     eyebrow: 'Selected Work',
     title: 'Explore My Portfolio',
@@ -53,6 +48,7 @@ const PENDING: Record<string, { eyebrow: string; title: string; sub: string; ste
 
 function renderSection(section: SectionId) {
   if (section === 'home') return <Home />
+  if (section === 'expertise') return <Expertise />
   const p = PENDING[section]
   return <Placeholder eyebrow={p.eyebrow} title={p.title} subtitle={p.sub} step={p.step} />
 }
