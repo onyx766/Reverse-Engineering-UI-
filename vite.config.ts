@@ -7,7 +7,9 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
-  server: { port: 5173, open: false },
+  // `host: true` binds IPv4 + IPv6 — on Windows a default bind can end up
+  // IPv6-only, which makes http://localhost:5173 refuse the connection.
+  server: { host: true, port: 5173, strictPort: true, open: false },
   build: {
     target: 'es2020',
     rollupOptions: {
