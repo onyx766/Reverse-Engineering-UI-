@@ -50,12 +50,14 @@ function WireShell({
   size,
   speed,
   opacity,
+  edgeOpacity = 0.6,
   color,
   dir = 1,
 }: {
   size: number
   speed: number
   opacity: number
+  edgeOpacity?: number
   color: THREE.Color
   dir?: number
 }) {
@@ -85,7 +87,7 @@ function WireShell({
           blending={THREE.AdditiveBlending}
         />
         <Edges scale={1} threshold={15}>
-          <lineBasicMaterial color={color} transparent opacity={0.85} />
+          <lineBasicMaterial color={color} transparent opacity={edgeOpacity} />
         </Edges>
       </mesh>
     </group>
@@ -127,11 +129,11 @@ function CoreChip({ color, glow }: { color: THREE.Color; glow: THREE.Color }) {
         <meshStandardMaterial
           color={glow}
           emissive={glow}
-          emissiveIntensity={2.4}
-          roughness={0.25}
-          metalness={0.6}
+          emissiveIntensity={0.9}
+          roughness={0.35}
+          metalness={0.5}
           transparent
-          opacity={0.95}
+          opacity={0.9}
         />
         <Edges threshold={15}>
           <lineBasicMaterial color={color} />
@@ -152,7 +154,7 @@ function CoreChip({ color, glow }: { color: THREE.Color; glow: THREE.Color }) {
         <meshBasicMaterial color={glow} transparent opacity={0.95} />
       </mesh>
 
-      <pointLight color={glow} intensity={14} distance={6} decay={2} />
+      <pointLight color={glow} intensity={7} distance={6} decay={2} />
     </group>
   )
 }
@@ -411,9 +413,9 @@ function Rig(props: ThreeElements['group']) {
   return (
     <group ref={group} {...props}>
       <Float speed={reduced ? 0 : 1.4} rotationIntensity={0.25} floatIntensity={0.5}>
-        <WireShell size={3.1} speed={0.12} opacity={0.045} color={accent} />
-        <WireShell size={2.35} speed={0.2} opacity={0.07} color={accent2} dir={-1} />
-        <WireShell size={1.7} speed={0.3} opacity={0.1} color={accent} />
+        <WireShell size={2.75} speed={0.12} opacity={0.022} edgeOpacity={0.15} color={accent} />
+        <WireShell size={2.1} speed={0.2} opacity={0.04} edgeOpacity={0.26} color={accent2} dir={-1} />
+        <WireShell size={1.55} speed={0.3} opacity={0.07} edgeOpacity={0.45} color={accent} />
         <InnerMotes color={accent3} />
         <CoreChip color={accent} glow={accent3} />
         <OrbitRings color={accent} alt={accent2} />
@@ -444,7 +446,7 @@ export function HoloCore({ className }: { className?: string }) {
       <Canvas
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        camera={{ position: [0, 0.4, 7.4], fov: 42 }}
+        camera={{ position: [0, 0.4, 8.6], fov: 40 }}
         frameloop={reduced ? 'demand' : 'always'}
       >
         <Suspense fallback={null}>

@@ -199,7 +199,7 @@ function NavLink({
     <button
       onClick={onClick}
       className={cn(
-        'group relative rounded-xl px-3.5 py-2.5 font-display text-[12.5px] font-semibold uppercase tracking-[0.12em] transition-colors duration-300 xl:px-4',
+        'group relative whitespace-nowrap rounded-xl px-3 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors duration-300 xl:px-3.5 xl:text-[12.5px]',
         active ? 'text-ink' : 'text-muted hover:text-ink',
       )}
     >
