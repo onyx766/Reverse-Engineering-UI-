@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Defaults — overwritten at runtime by the theme engine (home palette). */
+    --accent: 34 211 238;
+    --accent-2: 45 212 191;
+    --accent-3: 125 211 252;
+    --surface: 8 20 28;
+    --deep: 3 8 13;
+    --ink: 226 243 248;
+    --muted: 129 163 177;
+
+    --theme-ms: 700ms;
+    --ease-holo: cubic-bezier(0.22, 1, 0.36, 1);
+
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: rgb(var(--deep));
+    color: rgb(var(--ink));
+    font-family: theme('fontFamily.sans');
+    overflow-x: hidden;
+    transition:
+      background-color var(--theme-ms) var(--ease-holo),
+      color var(--theme-ms) var(--ease-holo);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.35);
+    color: rgb(var(--ink));
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--deep));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      rgb(var(--accent) / 0.65),
+      rgb(var(--accent-2) / 0.45)
+    );
+    border-radius: 999px;
+    border: 2px solid rgb(var(--deep));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--accent) / 0.9);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  /* ── Glass holo panel ─────────────────────────────────────────── */
+  .glass {
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--surface) / 0.86) 0%,
+        rgb(var(--deep) / 0.72) 100%
+      );
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgb(var(--accent) / 0.28);
+    box-shadow:
+      0 0 0 1px rgb(var(--accent) / 0.07) inset,
+      0 1px 0 rgb(255 255 255 / 0.08) inset,
+      0 24px 60px -24px rgb(0 0 0 / 0.9),
+      0 0 34px -12px rgb(var(--accent) / 0.45);
+    transition:
+      border-color var(--theme-ms) var(--ease-holo),
+      box-shadow var(--theme-ms) var(--ease-holo),
+      background var(--theme-ms) var(--ease-holo);
+  }
+
+  .glass-strong {
+    background:
+      linear-gradient(
+        145deg,
+        rgb(var(--surface) / 0.95) 0%,
+        rgb(var(--deep) / 0.88) 100%
+      );
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid rgb(var(--accent) / 0.38);
+  }
+
+  /* Neon label text */
+  .neon {
+    color: rgb(var(--accent));
+    text-shadow:
+      0 0 6px rgb(var(--accent) / 0.75),
+      0 0 22px rgb(var(--accent) / 0.4);
+  }
+
+  .text-gradient {
+    background-image: linear-gradient(
+      100deg,
+      rgb(var(--accent-3)),
+      rgb(var(--accent)) 45%,
+      rgb(var(--accent-2))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Perspective helpers for the 3D layout */
+  .scene {
+    perspective: 1600px;
+    perspective-origin: 50% 45%;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .hairline {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--accent) / 0.55),
+      transparent
+    );
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .gpu {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
