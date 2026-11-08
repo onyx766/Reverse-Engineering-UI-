@@ -1,8 +1,14 @@
+import { Suspense, lazy } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Background } from '@/components/layout/Background'
 import { Navbar } from '@/components/layout/Navbar'
 import { useTheme } from '@/theme/ThemeProvider'
 import { THEMES } from '@/theme/themes'
+
+// The WebGL bundle is heavy — keep it out of the critical path.
+const HoloCore = lazy(() =>
+  import('@/components/three/HoloCore').then((m) => ({ default: m.HoloCore })),
+)
 
 const COPY: Record<string, { title: string; sub: string }> = {
   home: {
@@ -44,7 +50,12 @@ export default function App() {
       <Background />
       <Navbar />
 
-      <main className="mx-auto flex min-h-[200vh] max-w-6xl flex-col items-center px-6 pt-48 text-center">
+      {/* 3D hologram centrepiece — sits between the background and the panels */}
+      <Suspense fallback={<CorePlaceholder />}>
+        <HoloCore className="pointer-events-none fixed left-1/2 top-1/2 -z-[5] h-[min(78vh,760px)] w-[min(78vw,760px)] -translate-x-1/2 -translate-y-1/2" />
+      </Suspense>
+
+      <main className="relative mx-auto flex min-h-[180vh] max-w-6xl flex-col items-center px-6 pt-44 text-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${section}-${epoch}`}
@@ -64,10 +75,20 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
 
-        <p className="mt-24 font-mono text-xs uppercase tracking-[0.3em] text-muted/60">
-          background · 3d core · panels — steps 3 to 10
+        <p className="mt-[60vh] font-mono text-xs uppercase tracking-[0.3em] text-muted/60">
+          glass panels · sections — steps 5 to 10
         </p>
       </main>
+    </div>
+  )
+}
+
+/** Shown while the WebGL chunk streams in — same silhouette, zero JS cost. */
+function CorePlaceholder() {
+  return (
+    <div className="pointer-events-none fixed left-1/2 top-1/2 -z-[5] h-64 w-64 -translate-x-1/2 -translate-y-1/2">
+      <div className="absolute inset-0 animate-pulse rounded-3xl border border-accent/30 bg-accent/5 blur-xl" />
+      <div className="absolute inset-8 rounded-2xl border border-accent/40" />
     </div>
   )
 }
