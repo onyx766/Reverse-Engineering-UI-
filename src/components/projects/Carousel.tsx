@@ -59,18 +59,20 @@ function computeLayout(width: number, vh: number, mode: CarouselMode): Layout {
   }
   const cardW = Math.round(clamp(Math.min(width * 0.166, vh * 0.258), 192, 282))
   const span = width - 2 * (ARROW + 18)
-  // squeeze the arc when the row is narrower than five cards side by side
-  const fit = clamp((span - cardW) / (4.1 * cardW), 0.62, 1)
+  // squeeze the arc a little when five cards barely fit; below that show three
+  const fit = (span - cardW) / (4.1 * cardW)
+  const five = fit >= 0.86
+  const squeeze = five ? Math.min(1, fit) : 1
   return {
     mode,
     cardW,
     cardH: Math.round(cardW * 1.2),
-    gap1: cardW * 1.07 * fit,
-    gap2: cardW * 1.0 * fit,
-    rot: 11,
+    gap1: cardW * 1.07 * squeeze,
+    gap2: cardW * 1.0 * squeeze,
+    rot: five ? 11 : 16,
     depth: 58,
     drop: 7,
-    range: 2,
+    range: five ? 2 : 1,
     sideOpacity: 1,
   }
 }
@@ -103,6 +105,8 @@ interface CarouselProps {
   /** how far every card moved in the last focus change (null = re-layout, no wrap path) */
   shift: number | null
   mode: CarouselMode
+  /** stage visible and motion allowed: idle loops on the centre card run only then */
+  live: boolean
   onStep: (delta: number) => void
   onOpen: (id: string) => void
   className?: string
@@ -115,7 +119,7 @@ interface CarouselProps {
  * side card all move focus; cards that wrap around exit one side and re-enter
  * from the other instead of sweeping across the stage.
  */
-export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, className }: CarouselProps) {
+export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOpen, className }: CarouselProps) {
   const reduced = useReducedMotion()
   const rootRef = useRef<HTMLDivElement>(null)
   const { width } = useElementSize(rootRef)
@@ -123,6 +127,10 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
   const drag = useMotionValue(0)
   const didPan = useRef(false)
   const buttons = useRef(new Map<string, HTMLButtonElement>())
+  const firstPaint = useRef(true)
+  useEffect(() => {
+    firstPaint.current = false
+  }, [])
 
   useEffect(() => {
     const onResize = () => setVh(window.innerHeight)
@@ -147,6 +155,10 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
   }, [focused])
 
   const onPanEnd = (_: PointerEvent, info: PanInfo) => {
+    // the release's own click fires in this task; keyboard activation must work again afterwards
+    setTimeout(() => {
+      didPan.current = false
+    }, 0)
     const proj = info.offset.x / L.gap1 + (info.velocity.x / L.gap1) * 0.12
     let steps = -Math.round(proj)
     if (steps === 0 && Math.abs(proj) > 0.22) steps = -Math.sign(proj)
@@ -162,7 +174,7 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
   const ghosts: number[] = []
   if (mode === 'arc' && n < 5) {
     const taken = new Set(projects.map((_, i) => offsetFor(i, focusIndex, n)))
-    for (const d of [-2, -1, 1, 2]) if (!taken.has(d)) ghosts.push(d)
+    for (const d of [-2, -1, 1, 2]) if (!taken.has(d) && Math.abs(d) <= L.range) ghosts.push(d)
   }
 
   const trackH = L.cardH + (mode === 'arc' ? 64 : 36)
@@ -176,7 +188,7 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
       className={cn('relative w-full', className)}
     >
       <motion.div
-        className={cn('relative', mode === 'slider' && 'overflow-hidden')}
+        className={cn('relative select-none', mode === 'slider' && '-mx-5 overflow-hidden sm:-mx-8')}
         style={{ height: trackH, perspective: mode === 'arc' ? 1500 : 1100, perspectiveOrigin: '50% 30%', touchAction: 'pan-y' }}
         onPointerDownCapture={() => {
           didPan.current = false
@@ -197,11 +209,12 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
           ))}
         </AnimatePresence>
 
-        <AnimatePresence initial={false}>
+        <AnimatePresence>
           {projects.map((p, i) => (
             <Slot
               key={p.id}
               project={p}
+              enterDelay={firstPaint.current ? 0.3 + Math.abs(offsetFor(i, focusIndex, n)) * 0.1 : 0.05}
               d={offsetFor(i, focusIndex, n)}
               index={i}
               total={n}
@@ -209,6 +222,7 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
               L={L}
               drag={drag}
               reduced={reduced}
+              live={live}
               focused={i === focusIndex}
               didPan={didPan}
               registerButton={(el) => {
@@ -222,29 +236,29 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
         </AnimatePresence>
       </motion.div>
 
-      {/* arrows */}
-      {n > 1 && (
+      {/* arc: big arrows flank the stage */}
+      {mode === 'arc' && n > 1 && (
         <>
           <ArrowButton
             dir="prev"
             onClick={() => onStep(-1)}
-            className={mode === 'arc' ? 'absolute left-0' : 'absolute left-1'}
-            style={{ top: L.cardH / 2 - ARROW / 2 + (mode === 'arc' ? 6 : 0) }}
-            small={mode === 'slider'}
+            className="absolute left-0"
+            style={{ top: L.cardH / 2 - ARROW / 2 + 6 }}
           />
           <ArrowButton
             dir="next"
             onClick={() => onStep(1)}
-            className={mode === 'arc' ? 'absolute right-0' : 'absolute right-1'}
-            style={{ top: L.cardH / 2 - ARROW / 2 + (mode === 'arc' ? 6 : 0) }}
-            small={mode === 'slider'}
+            className="absolute right-0"
+            style={{ top: L.cardH / 2 - ARROW / 2 + 6 }}
           />
         </>
       )}
 
-      {/* slider dots */}
+      {/* slider: arrows + dots under the card */}
       {mode === 'slider' && n > 1 && (
-        <div className="mt-1 flex items-center justify-center gap-1">
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <ArrowButton dir="prev" onClick={() => onStep(-1)} className="relative" small />
+          <div className="flex items-center">
           {projects.map((p, i) => {
             const on = i === focusIndex
             return (
@@ -254,7 +268,7 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
                 aria-label={`Show ${p.title}`}
                 aria-current={on ? 'true' : undefined}
                 onClick={() => onStep(offsetFor(i, focusIndex, n))}
-                className="group grid h-10 w-7 place-items-center rounded-md"
+                className="group grid h-10 w-9 place-items-center rounded-md min-[380px]:w-10"
               >
                 <span
                   className={cn(
@@ -265,6 +279,8 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
               </button>
             )
           })}
+          </div>
+          <ArrowButton dir="next" onClick={() => onStep(1)} className="relative" small />
         </div>
       )}
 
@@ -277,6 +293,8 @@ export function Carousel({ projects, focusIndex, shift, mode, onStep, onOpen, cl
 
 interface SlotProps {
   project: Project
+  /** entrance delay in seconds */
+  enterDelay: number
   d: number
   index: number
   total: number
@@ -284,6 +302,7 @@ interface SlotProps {
   L: Layout
   drag: MotionValue<number>
   reduced: boolean
+  live: boolean
   focused: boolean
   didPan: React.MutableRefObject<boolean>
   registerButton: (el: HTMLButtonElement | null) => void
@@ -293,6 +312,7 @@ interface SlotProps {
 
 function Slot({
   project,
+  enterDelay,
   d,
   index,
   total,
@@ -300,6 +320,7 @@ function Slot({
   L,
   drag,
   reduced,
+  live,
   focused,
   didPan,
   registerButton,
@@ -313,6 +334,16 @@ function Slot({
   const [hover, setHover] = useState(false)
   const [kbd, setKbd] = useState(false)
 
+  useEffect(() => () => ctrl.current?.stop(), [])
+
+  const transform = useTransform(() => {
+    const g = geom(pos.get() + drag.get(), L)
+    return `translate3d(${g.x.toFixed(2)}px, ${g.y.toFixed(2)}px, ${g.z.toFixed(2)}px) rotateY(${g.rot.toFixed(2)}deg) scale(${g.scale.toFixed(4)})`
+  })
+  const opacity = useTransform(() => geom(pos.get() + drag.get(), L).opacity)
+  const zIndex = useTransform(() => 100 - Math.round(Math.abs(pos.get() + drag.get()) * 10))
+
+  // declared after the derived values so their listeners are re-attached before pos changes
   useLayoutEffect(() => {
     const prev = prevD.current
     if (prev === d) return
@@ -343,18 +374,8 @@ function Slot({
       else pos.set(d)
     }
     void run()
-    // only a change of slot should start a transition
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // only a change of slot starts a transition; the other inputs are read at that moment
   }, [d])
-
-  useEffect(() => () => ctrl.current?.stop(), [])
-
-  const transform = useTransform(() => {
-    const g = geom(pos.get() + drag.get(), L)
-    return `translate3d(${g.x.toFixed(2)}px, ${g.y.toFixed(2)}px, ${g.z.toFixed(2)}px) rotateY(${g.rot.toFixed(2)}deg) scale(${g.scale.toFixed(4)})`
-  })
-  const opacity = useTransform(() => geom(pos.get() + drag.get(), L).opacity)
-  const zIndex = useTransform(() => 100 - Math.round(Math.abs(pos.get() + drag.get()) * 10))
 
   const hidden = Math.abs(d) > L.range
   const lit = hover || kbd
@@ -387,9 +408,8 @@ function Slot({
         initial={{ opacity: 0, y: 60, scale: 0.88, filter: 'blur(10px)' }}
         animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
         exit={{ opacity: 0, y: 46, scale: 0.84, filter: 'blur(10px)', transition: { duration: 0.35 } }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.7, delay: enterDelay, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* floor underglow + soft reflection */}
         <span
           aria-hidden
           className="pointer-events-none absolute left-[8%] right-[8%] rounded-[50%] bg-accent blur-2xl transition-opacity duration-500"
@@ -416,7 +436,7 @@ function Slot({
           animate={{ y: lit && !reduced ? -8 : 0, z: lit && !reduced ? 34 : 0 }}
           transition={{ type: 'spring', stiffness: 260, damping: 24 }}
         >
-          <ProjectCard project={project} focused={focused} hover={lit} compact={L.mode === 'slider'} />
+          <ProjectCard project={project} focused={focused} hover={lit} live={live} width={L.cardW} />
           <button
             ref={registerButton}
             type="button"
@@ -466,13 +486,13 @@ function Ghost({ d, L }: { d: number; L: Layout }) {
 
 /** The elliptical stage floor the arc of cards stands on. */
 function ArcFloor({ L }: { L: Layout }) {
-  const w = L.gap1 * 2 + L.gap2 * 2 + L.cardW * 1.5
+  const w = L.range > 1 ? L.gap1 * 2 + L.gap2 * 2 + L.cardW * 1.5 : L.gap1 * 2 + L.cardW * 1.9
   const h = Math.max(120, w * 0.12)
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute left-1/2 -translate-x-1/2"
-      style={{ width: w, height: h, top: L.cardH * 0.78, zIndex: 0 }}
+      style={{ width: w, height: h, top: L.cardH * 0.6, zIndex: 0 }}
     >
       <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="h-full w-full overflow-visible">
         <defs>
@@ -501,7 +521,6 @@ function ArcFloor({ L }: { L: Layout }) {
           style={{ animation: 'pj-dash 2.6s linear infinite' }}
         />
         <ellipse cx="500" cy="58" rx="380" ry="38" fill="none" stroke="rgb(var(--accent-2) / 0.25)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-        {/* bright segments on the front rim */}
         {[300, 700].map((x) => (
           <ellipse key={x} cx={x} cy={100} rx={46} ry={3} fill="rgb(var(--accent-3) / 0.75)" style={{ filter: 'blur(2px)' }} />
         ))}

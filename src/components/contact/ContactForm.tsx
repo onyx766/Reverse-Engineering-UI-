@@ -98,8 +98,8 @@ export function ContactForm() {
   const [brief, setBrief] = useState<Brief | null>(null)
   const [delivery, setDelivery] = useState<Delivery>('pending')
   const [failure, setFailure] = useState('')
+  const [ackDetail, setAckDetail] = useState<string>()
   const [attempt, setAttempt] = useState(0)
-  const [stageH, setStageH] = useState<number>()
 
   const formRef = useRef<HTMLFormElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -148,7 +148,13 @@ export function ContactForm() {
     const wrap = form.querySelector<HTMLElement>(`[data-field="${fid(k)}"]`)
     const el = wrap?.querySelector<HTMLElement>('input, textarea')
     el?.focus({ preventScroll: true })
-    wrap?.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' })
+    // framer restores window scroll after measuring the errors' height:auto on the
+    // next frame, which would cancel a smooth scroll started now
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        wrap?.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }),
+      ),
+    )
     if (reduced) return
     FIELD_ORDER.filter((f) => errors[f]).forEach((f) => {
       form.querySelector<HTMLElement>(`[data-field="${fid(f)}"]`)?.animate(
@@ -168,7 +174,23 @@ export function ContactForm() {
 
   useEffect(() => {
     if (phase === 'success' || phase === 'error') headingRef.current?.focus({ preventScroll: true })
-  }, [phase])
+    if (phase === 'form') return
+    // keep the active phase on screen: the progress bar near the bottom edge while
+    // sending (where the button was), the result centred below the fixed navbar
+    let id = window.requestAnimationFrame(() => {
+      id = window.requestAnimationFrame(() => {
+        const el = stageRef.current
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        const top = 96
+        const bottom = window.innerHeight - 20
+        const dy =
+          phase === 'sending' ? r.bottom - bottom : (r.top + r.bottom) / 2 - (top + bottom) / 2
+        if (Math.abs(dy) > 12) window.scrollBy({ top: dy, behavior: reduced ? 'auto' : 'smooth' })
+      })
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [phase, reduced])
 
   useEffect(() => {
     if (caret.current === null) return
@@ -220,12 +242,15 @@ export function ContactForm() {
 
   const send = async (b: Brief) => {
     abortRef.current?.abort()
+    setAckDetail(undefined)
     const ctrl = new AbortController()
     abortRef.current = ctrl
     const timer = window.setTimeout(() => ctrl.abort(), CONTACT.timeoutMs)
     try {
-      await postBrief(b, ctrl.signal)
-      if (abortRef.current === ctrl) setDelivery('ok')
+      const status = await postBrief(b, ctrl.signal)
+      if (abortRef.current !== ctrl) return
+      setAckDetail(status)
+      setDelivery('ok')
     } catch (err) {
       if (abortRef.current !== ctrl) return
       setFailure(err instanceof Error ? err.message : 'Unknown error.')
@@ -253,11 +278,9 @@ export function ContactForm() {
 
     busy.current = true
     setAnnounce('')
-    const height = stageRef.current?.offsetHeight
     const b = await composeBrief(values)
     busy.current = false
     setBrief(b)
-    setStageH(height)
 
     // bots fill the hidden field; they get a success screen and nothing is sent
     if (honeypot.current?.value) {
@@ -297,7 +320,6 @@ export function ContactForm() {
     setRestored(false)
     setFailure('')
     setDelivery('pending')
-    setStageH(undefined)
     setPhase('form')
     pendingFocus.current = null
     window.requestAnimationFrame(() =>
@@ -329,7 +351,10 @@ export function ContactForm() {
   const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
-      formRef.current?.requestSubmit()
+      const form = formRef.current
+      if (!form) return
+      if (typeof form.requestSubmit === 'function') form.requestSubmit()
+      else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
     }
   }
 
@@ -353,210 +378,211 @@ export function ContactForm() {
       badge={badge}
       from="left"
       tilt={1.5}
-      bodyClassName="flex flex-col"
+      className="h-full"
+      bodyClassName="flex flex-col lg:min-h-[calc(100%-58px)]"
     >
-      <div
-        ref={stageRef}
-        className="relative flex flex-1 flex-col"
-        style={{ minHeight: phase === 'form' ? undefined : stageH }}
-      >
+      <div ref={stageRef} className="relative flex flex-1 flex-col">
         <AnimatePresence mode="popLayout" initial={false}>
           {phase === 'form' && (
-            <motion.form
+            <motion.div
               key="form"
-              ref={formRef}
-              noValidate
-              onSubmit={onSubmit}
-              onKeyDown={onKeyDown}
-              aria-label="Project enquiry"
               initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, filter: 'blur(6px)', transition: { duration: 0.3 } }}
               transition={{ duration: 0.55, ease: EASE }}
-              className="flex flex-col gap-5"
+              className="flex flex-1 flex-col"
             >
-              <input
-                ref={honeypot}
-                type="text"
-                name="hp_trap"
-                tabIndex={-1}
-                autoComplete="off"
-                aria-hidden
-                className="pointer-events-none absolute left-0 top-0 h-0 w-0 opacity-0"
-              />
-
-              <div className="grid gap-5 sm:grid-cols-2">
-                <TextField
-                  id={fid('name')}
-                  label="Name"
-                  icon={User}
-                  value={values.name}
-                  onChange={(v) => update('name', v)}
-                  onBlur={() => touch('name')}
-                  error={show('name')}
-                  ok={ok('name')}
-                  autoComplete="name"
-                  placeholder={FORM_COPY.namePlaceholder}
-                  maxLength={CONTACT.limits.nameMax}
-                  inputRef={nameRef}
+              <form
+                ref={formRef}
+                noValidate
+                onSubmit={onSubmit}
+                onKeyDown={onKeyDown}
+                aria-label="Project enquiry"
+                className="flex flex-1 flex-col gap-5"
+              >
+                <input
+                  ref={honeypot}
+                  type="text"
+                  name="hp_trap"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden
+                  className="pointer-events-none absolute left-0 top-0 h-0 w-0 opacity-0"
                 />
-                <TextField
-                  id={fid('email')}
-                  type="email"
-                  label="Email"
-                  icon={AtSign}
-                  value={values.email}
-                  onChange={(v) => update('email', v)}
-                  onBlur={() => touch('email')}
-                  error={show('email')}
-                  ok={ok('email')}
-                  autoComplete="email"
-                  placeholder={FORM_COPY.emailPlaceholder}
-                  maxLength={CONTACT.limits.emailMax}
-                />
-              </div>
 
-              <TextField
-                id={fid('company')}
-                label="Company / org"
-                icon={Building2}
-                optional
-                value={values.company}
-                onChange={(v) => update('company', v)}
-                onBlur={() => touch('company')}
-                error={show('company')}
-                ok={ok('company')}
-                autoComplete="organization"
-                placeholder={FORM_COPY.companyPlaceholder}
-                maxLength={CONTACT.limits.companyMax}
-              />
-
-              <ChipGroup
-                id={fid('types')}
-                legend="Engagement type"
-                options={TYPE_OPTIONS}
-                value={values.types}
-                onToggle={toggleType}
-                onBlur={() => touch('types')}
-                error={show('types')}
-                hint={
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.p
-                      key={hint?.id ?? 'none'}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.22 }}
-                      className="flex items-start gap-1.5 font-mono text-[11px] leading-snug text-muted"
-                    >
-                      <span aria-hidden className="text-accent">
-                        ›
-                      </span>
-                      {hint ? (
-                        <span>
-                          <span className="text-ink/90">{hint.label}:</span> {hint.hint}
-                        </span>
-                      ) : (
-                        <span>Select all that apply.</span>
-                      )}
-                    </motion.p>
-                  </AnimatePresence>
-                }
-              />
-
-              <SegmentGroup
-                id={fid('timeline')}
-                legend="Timeline"
-                options={TIMELINES}
-                value={values.timeline}
-                onChange={(v) => update('timeline', v)}
-                onBlur={() => touch('timeline')}
-                error={show('timeline')}
-                reduced={reduced}
-              />
-
-              <MessageField
-                id={fid('message')}
-                value={values.message}
-                onChange={(v) => update('message', v)}
-                onBlur={() => touch('message')}
-                error={show('message')}
-                max={CONTACT.limits.messageMax}
-                placeholder={FORM_COPY.messagePlaceholder}
-                onTemplate={insertTemplate}
-                textareaRef={messageRef}
-              />
-
-              <ConsentField
-                id={fid('consent')}
-                checked={values.consent}
-                onChange={(v) => update('consent', v)}
-                onBlur={() => touch('consent')}
-                error={show('consent')}
-                label={FORM_COPY.consent}
-                note={FORM_COPY.consentNote}
-              />
-
-              <div className="flex flex-col gap-2">
-                <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-3">
-                  <span className="inline-flex min-w-0 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-                    <Save aria-hidden className="h-3.5 w-3.5 shrink-0 text-accent" />
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.span
-                        key={draftStatus}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        transition={{ duration: 0.22 }}
-                        className="truncate"
-                      >
-                        {draftStatus}
-                      </motion.span>
-                    </AnimatePresence>
-                  </span>
-                  {!isBlank(values) && (
-                    <button
-                      type="button"
-                      onClick={discard}
-                      className="group/discard -mr-2 inline-flex h-10 items-center gap-1.5 rounded-lg px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted transition-colors duration-300 hover:bg-rose-400/10 hover:text-rose-300"
-                    >
-                      <Trash2
-                        aria-hidden
-                        className="h-3.5 w-3.5 transition-transform duration-300 group-hover/discard:-rotate-12"
-                      />
-                      Discard draft
-                    </button>
-                  )}
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <TextField
+                    id={fid('name')}
+                    label="Name"
+                    icon={User}
+                    value={values.name}
+                    onChange={(v) => update('name', v)}
+                    onBlur={() => touch('name')}
+                    error={show('name')}
+                    ok={ok('name')}
+                    autoComplete="name"
+                    placeholder={FORM_COPY.namePlaceholder}
+                    maxLength={CONTACT.limits.nameMax}
+                    inputRef={nameRef}
+                  />
+                  <TextField
+                    id={fid('email')}
+                    type="email"
+                    label="Email"
+                    icon={AtSign}
+                    value={values.email}
+                    onChange={(v) => update('email', v)}
+                    onBlur={() => touch('email')}
+                    error={show('email')}
+                    ok={ok('email')}
+                    autoComplete="email"
+                    placeholder={FORM_COPY.emailPlaceholder}
+                    maxLength={CONTACT.limits.emailMax}
+                  />
                 </div>
 
-                <button
-                  type="submit"
-                  className="group relative flex h-[52px] w-full items-center justify-center overflow-hidden rounded-[14px] border border-accent/60 bg-accent/15 font-display text-[12.5px] font-bold uppercase tracking-[0.2em] text-ink transition-[background-color,border-color,box-shadow,transform] duration-300 hover:border-accent hover:bg-accent/25 hover:shadow-glow active:scale-[0.99]"
-                >
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-                  />
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-x-6 bottom-0 h-px origin-center scale-x-0 bg-accent transition-transform duration-500 group-hover:scale-x-100"
-                  />
-                  <span className="relative flex items-center gap-2.5">
-                    <Send
-                      aria-hidden
-                      className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-1"
-                    />
-                    Transmit message
-                  </span>
-                  <kbd
-                    aria-hidden
-                    className="absolute right-4 hidden rounded border border-accent/30 bg-deep/40 px-1.5 py-0.5 font-mono text-[9.5px] font-normal tracking-[0.08em] text-muted sm:inline-block"
+                <TextField
+                  id={fid('company')}
+                  label="Company / org"
+                  icon={Building2}
+                  optional
+                  value={values.company}
+                  onChange={(v) => update('company', v)}
+                  onBlur={() => touch('company')}
+                  error={show('company')}
+                  ok={ok('company')}
+                  autoComplete="organization"
+                  placeholder={FORM_COPY.companyPlaceholder}
+                  maxLength={CONTACT.limits.companyMax}
+                />
+
+                <ChipGroup
+                  id={fid('types')}
+                  legend="Engagement type"
+                  options={TYPE_OPTIONS}
+                  value={values.types}
+                  onToggle={toggleType}
+                  onBlur={() => touch('types')}
+                  error={show('types')}
+                  hint={
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.p
+                        key={hint?.id ?? 'none'}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.22 }}
+                        className="flex items-start gap-1.5 font-mono text-[11px] leading-snug text-muted"
+                      >
+                        <span aria-hidden className="text-accent">
+                          ›
+                        </span>
+                        {hint ? (
+                          <span>
+                            <span className="text-ink/90">{hint.label}:</span> {hint.hint}
+                          </span>
+                        ) : (
+                          <span>Select all that apply.</span>
+                        )}
+                      </motion.p>
+                    </AnimatePresence>
+                  }
+                />
+
+                <SegmentGroup
+                  id={fid('timeline')}
+                  legend="Timeline"
+                  options={TIMELINES}
+                  value={values.timeline}
+                  onChange={(v) => update('timeline', v)}
+                  onBlur={() => touch('timeline')}
+                  error={show('timeline')}
+                  reduced={reduced}
+                />
+
+                <MessageField
+                  id={fid('message')}
+                  value={values.message}
+                  onChange={(v) => update('message', v)}
+                  onBlur={() => touch('message')}
+                  error={show('message')}
+                  max={CONTACT.limits.messageMax}
+                  placeholder={FORM_COPY.messagePlaceholder}
+                  onTemplate={insertTemplate}
+                  textareaRef={messageRef}
+                />
+
+                <ConsentField
+                  id={fid('consent')}
+                  checked={values.consent}
+                  onChange={(v) => update('consent', v)}
+                  onBlur={() => touch('consent')}
+                  error={show('consent')}
+                  label={FORM_COPY.consent}
+                  note={FORM_COPY.consentNote}
+                />
+
+                <div className="mt-auto flex flex-col gap-2">
+                  <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-3">
+                    <span className="inline-flex min-w-0 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+                      <Save aria-hidden className="h-3.5 w-3.5 shrink-0 text-accent" />
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.span
+                          key={draftStatus}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          transition={{ duration: 0.22 }}
+                          className="truncate"
+                        >
+                          {draftStatus}
+                        </motion.span>
+                      </AnimatePresence>
+                    </span>
+                    {!isBlank(values) && (
+                      <button
+                        type="button"
+                        onClick={discard}
+                        className="group/discard -mr-2 inline-flex h-10 items-center gap-1.5 rounded-lg px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted transition-colors duration-300 hover:bg-rose-400/10 hover:text-rose-300"
+                      >
+                        <Trash2
+                          aria-hidden
+                          className="h-3.5 w-3.5 transition-transform duration-300 group-hover/discard:-rotate-12"
+                        />
+                        Discard draft
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="group relative flex h-[52px] w-full items-center justify-center overflow-hidden rounded-[14px] border border-accent/60 bg-accent/15 font-display text-[12.5px] font-bold uppercase tracking-[0.2em] text-ink transition-[background-color,border-color,box-shadow,transform] duration-300 hover:border-accent hover:bg-accent/25 hover:shadow-glow active:scale-[0.99]"
                   >
-                    Ctrl ↵
-                  </kbd>
-                </button>
-              </div>
-            </motion.form>
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+                    />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-6 bottom-0 h-px origin-center scale-x-0 bg-accent transition-transform duration-500 group-hover:scale-x-100"
+                    />
+                    <span className="relative flex items-center gap-2.5">
+                      <Send
+                        aria-hidden
+                        className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-1"
+                      />
+                      Transmit message
+                    </span>
+                    <kbd
+                      aria-hidden
+                      className="absolute right-4 hidden rounded border border-accent/30 bg-deep/40 px-1.5 py-0.5 font-mono text-[9.5px] font-normal tracking-[0.08em] text-muted sm:inline-block"
+                    >
+                      Ctrl ↵
+                    </kbd>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           )}
 
           {phase === 'sending' && brief && (
@@ -566,6 +592,7 @@ export function ContactForm() {
                 mode={deliveryMode}
                 host={deliveryMode === 'endpoint' ? endpointHost() : 'mail client'}
                 delivery={delivery}
+                detail={delivery === 'fail' ? failure : ackDetail}
                 onDone={onTxDone}
               />
             </motion.div>

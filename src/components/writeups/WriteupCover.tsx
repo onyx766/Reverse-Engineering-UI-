@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import type { CoverMotif } from '@/data/writeups'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { seeded } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { cn, seeded } from '@/lib/utils'
 
 interface Props {
   motif: CoverMotif

@@ -1,14 +1,23 @@
 import { Fragment } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowUpRight, FileText, Mail, MapPin } from 'lucide-react'
+import { ArrowUpRight, FileText, Fingerprint, Mail, MapPin } from 'lucide-react'
 import { HoloPanel } from '@/components/ui/HoloPanel'
 import { HoloButton } from '@/components/ui/HoloButton'
 import { Chip } from '@/components/ui/Chip'
 import { useTheme } from '@/theme/ThemeProvider'
 import { PROFILE } from '@/data/profile'
-import { ABOUT_COPY, BIO, BIO_FILE, ID_CARD, QUICK_FACTS, type QuickFact } from '@/data/about'
+import {
+  ABOUT_COPY,
+  BADGE_LOG,
+  BIO,
+  BIO_FILE,
+  ID_CARD,
+  QUICK_FACTS,
+  type QuickFact,
+} from '@/data/about'
 import { cn } from '@/lib/utils'
 import { IdCard } from './IdCard'
+import { VerifyConsole } from './VerifyConsole'
 import { EASE, GLOW_HOVER, SWEEP } from './fx'
 
 const BIO_BYTES = new TextEncoder().encode(BIO.map((p) => p.replace(/\*\*/g, '')).join('\n\n')).length
@@ -68,8 +77,13 @@ export function AboutHero() {
       </div>
 
       {/* ── ID card ─────────────────────────────────────────────────── */}
-      <div className="relative lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-center">
+      <div className="relative lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-start lg:pt-4">
         <IdCard data={ID_CARD} />
+        <div className="mx-auto mt-8 hidden w-full max-w-[440px] lg:block">
+          <HoloPanel title="badge.verify" icon={Fingerprint} badge="gpg 2.4" from="left" tilt={5} delay={0.35}>
+            <VerifyConsole lines={BADGE_LOG} />
+          </HoloPanel>
+        </div>
       </div>
 
       {/* ── bio, facts, CTAs ────────────────────────────────────────── */}

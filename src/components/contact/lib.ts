@@ -255,8 +255,8 @@ export function endpointHost() {
 
 export class DeliveryError extends Error {}
 
-/** POSTs the brief as JSON; throws a DeliveryError with a human-readable reason. */
-export async function postBrief(b: Brief, signal: AbortSignal): Promise<void> {
+/** POSTs the brief as JSON and returns the status line; throws a DeliveryError with a readable reason. */
+export async function postBrief(b: Brief, signal: AbortSignal): Promise<string> {
   let res: Response
   try {
     res = await fetch(CONTACT.endpoint, {
@@ -286,11 +286,9 @@ export async function postBrief(b: Brief, signal: AbortSignal): Promise<void> {
         : `Couldn’t reach ${endpointHost()}.`,
     )
   }
-  if (!res.ok) {
-    throw new DeliveryError(
-      `${endpointHost()} answered HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}.`,
-    )
-  }
+  const status = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`
+  if (!res.ok) throw new DeliveryError(`${endpointHost()} answered ${status}.`)
+  return `${status} from ${endpointHost()}`
 }
 
 /** Opens an external URL (mailto:) from script; returns false if the browser refused. */
@@ -336,6 +334,23 @@ export async function copyText(text: string): Promise<boolean> {
   } finally {
     active?.focus?.({ preventScroll: true })
   }
+}
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256)
+  for (let n = 0; n < 256; n++) {
+    let c = n
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    t[n] = c >>> 0
+  }
+  return t
+})()
+
+/** CRC-32 (IEEE 802.3, reflected 0xEDB88320), the same checksum zlib and Ethernet use. */
+export function crc32(bytes: Uint8Array) {
+  let c = 0xffffffff
+  for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8)
+  return (c ^ 0xffffffff) >>> 0
 }
 
 /** "14:02" in the visitor's locale-independent 24h form. */

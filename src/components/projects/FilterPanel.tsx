@@ -12,6 +12,8 @@ interface FilterProps {
   value: FilterId
   onChange: (id: FilterId) => void
   counts: Record<FilterId, number>
+  /** 0 = roomy, 1 = short viewport, 2 = very short viewport */
+  density?: 0 | 1 | 2
 }
 
 const OPTIONS: { id: FilterId; label: string }[] = [
@@ -19,8 +21,6 @@ const OPTIONS: { id: FilterId; label: string }[] = [
   ...CATEGORIES.map((c) => ({ id: c.id as FilterId, label: c.label })),
 ]
 
-const ROW = 44
-const GAP = 6
 
 /** Roving-tabindex radio group: arrows move the selection, Home/End jump. */
 function useRadioKeys(value: FilterId, onChange: (id: FilterId) => void, axis: 'x' | 'y') {
@@ -44,8 +44,10 @@ function useRadioKeys(value: FilterId, onChange: (id: FilterId) => void, axis: '
 }
 
 /** Left stage panel: category list with live counts and a sliding active pill. */
-export function FilterPanel({ value, onChange, counts }: FilterProps) {
+export function FilterPanel({ value, onChange, counts, density = 0 }: FilterProps) {
   const { refs, onKeyDown } = useRadioKeys(value, onChange, 'y')
+  const ROW = [41, 36, 33][density]
+  const GAP = [5, 4, 3][density]
   const index = Math.max(0, OPTIONS.findIndex((o) => o.id === value))
 
   return (
@@ -105,7 +107,12 @@ export function FilterPanel({ value, onChange, counts }: FilterProps) {
                   active ? 'text-accent drop-shadow-[0_0_6px_rgb(var(--accent)/0.9)]' : 'text-muted group-hover/row:text-accent',
                 )}
               />
-              <span className="relative flex min-w-0 flex-1 items-baseline gap-1.5 font-sans text-[15.5px] font-semibold tracking-wide">
+              <span
+                className={cn(
+                  'relative flex min-w-0 flex-1 items-baseline gap-1.5 font-sans font-semibold',
+                  density === 0 ? 'text-[15.5px] tracking-wide' : 'text-[14.5px] tracking-normal',
+                )}
+              >
                 <span className="truncate">{o.label}</span>
                 <span className={cn('font-mono text-[11.5px]', active ? 'text-accent' : 'text-muted/80')}>
                   ({counts[o.id]})
@@ -127,7 +134,7 @@ export function FilterChips({ value, onChange, counts }: FilterProps) {
     <div
       role="radiogroup"
       aria-label="Filter projects by category"
-      className="no-scrollbar -mx-5 flex snap-x gap-2 overflow-x-auto px-5 py-1 sm:-mx-8 sm:px-8"
+      className="no-scrollbar -mx-5 flex snap-x scroll-px-5 gap-2 overflow-x-auto px-5 py-2 sm:-mx-8 sm:scroll-px-8 sm:px-8"
     >
       {OPTIONS.map((o, i) => {
         const active = o.id === value

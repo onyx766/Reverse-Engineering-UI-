@@ -13,6 +13,7 @@ const CSS = `
 @keyframes pj-spin { to { transform: rotate(360deg); } }
 @keyframes pj-spin-rev { to { transform: rotate(-360deg); } }
 @keyframes pj-node { 0%,100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.35); opacity: 1; } }
+@keyframes pj-ring { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
 @keyframes pj-rise { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate3d(0, -120px, 0); opacity: 0; } }
 [data-pj-paused="true"] *, [data-pj-paused="true"] *::before, [data-pj-paused="true"] *::after { animation-play-state: paused !important; }
 `

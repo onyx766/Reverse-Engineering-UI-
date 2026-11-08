@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
 import { Timer } from 'lucide-react'
 import { HoloPanel } from '@/components/ui/HoloPanel'
 import { TIME_IN_TOOL } from '@/data/tools'
@@ -34,12 +35,16 @@ export function TimeInToolPanel({
   onOpen: (id: string) => void
 }) {
   const { ref, value } = useCountUp(TOTAL, 1400)
+  const listRef = useRef<HTMLUListElement>(null)
+  const sparkRef = useRef<HTMLDivElement>(null)
+  const listShown = useInView(listRef, { once: true, margin: '-30px' })
+  const sparkShown = useInView(sparkRef, { once: true, margin: '-20px' })
 
   return (
     <HoloPanel
       title="Time in Tool"
       icon={Timer}
-      badge="30 days"
+      badge="30d"
       from="right"
       delay={0.12}
       tilt={6}
@@ -57,7 +62,7 @@ export function TimeInToolPanel({
         </p>
       </div>
 
-      <ul className="flex flex-col gap-0.5">
+      <ul ref={listRef} className="flex flex-col gap-0.5">
         {TIME_IN_TOOL.map((row, i) => {
           const tool = TOOL_BY_ID[row.toolId]
           if (!tool) return null
@@ -99,8 +104,7 @@ export function TimeInToolPanel({
                       className="absolute inset-y-0 left-0 origin-left rounded-full bg-gradient-to-r from-accent to-accent2 transition-[filter] duration-300 group-hover:brightness-125"
                       style={{ width: `${(row.hours / MAX) * 100}%` }}
                       initial={{ scaleX: 0 }}
-                      whileInView={{ scaleX: 1 }}
-                      viewport={{ once: true }}
+                      animate={{ scaleX: listShown ? 1 : 0 }}
                       transition={{ duration: 1, delay: 0.4 + i * 0.08, ease: EASE }}
                     />
                     <span
@@ -119,16 +123,15 @@ export function TimeInToolPanel({
       </ul>
 
       <div className="mx-1.5 mt-2.5 border-t border-accent/15 pt-2.5">
-        <div aria-hidden className="flex h-9 items-end gap-[2px]">
+        <div ref={sparkRef} aria-hidden className="flex h-9 items-end gap-[2px]">
           {DAYS.map((h, i) => (
             <motion.span
               key={i}
               className="flex-1 origin-bottom rounded-t-[1px] bg-accent/50"
               style={{ height: `${Math.max(8, (h / DAY_MAX) * 100)}%`, opacity: 0.35 + (h / DAY_MAX) * 0.65 }}
               initial={{ scaleY: 0 }}
-              whileInView={{ scaleY: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.5 + i * 0.018, ease: EASE }}
+              animate={{ scaleY: sparkShown ? 1 : 0 }}
+              transition={{ duration: 0.5, delay: 0.3 + i * 0.018, ease: EASE }}
             />
           ))}
         </div>

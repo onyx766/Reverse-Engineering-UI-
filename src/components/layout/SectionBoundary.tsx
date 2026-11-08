@@ -10,6 +10,26 @@ interface State {
 }
 
 /**
+ * For decorative layers (background hologram): if one fails — a WebGL error,
+ * a chunk that would not download — drop it quietly instead of the app.
+ */
+export class SilentBoundary extends Component<Props & { fallback?: ReactNode }, State> {
+  state: State = { error: null }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { error }
+  }
+
+  componentDidCatch(error: Error) {
+    console.warn('[decor layer dropped]', error.message)
+  }
+
+  render() {
+    return this.state.error ? (this.props.fallback ?? null) : this.props.children
+  }
+}
+
+/**
  * Contains a crash (or a failed chunk download after a redeploy) to the
  * section that caused it, so the navbar and background keep working.
  */

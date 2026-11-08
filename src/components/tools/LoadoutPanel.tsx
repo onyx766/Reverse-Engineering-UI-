@@ -35,7 +35,6 @@ export function LoadoutPanel({
     <HoloPanel
       title="Loadout"
       icon={Boxes}
-      badge={`${TOOL_CATEGORIES.length} domains`}
       from="left"
       delay={0.12}
       tilt={6}
@@ -104,7 +103,8 @@ export function LoadoutPanel({
         })}
       </ul>
       <p className="mx-1 mt-2.5 border-t border-accent/15 pt-2.5 font-mono text-[9.5px] uppercase leading-relaxed tracking-[0.16em] text-muted/80">
-        hover to light the orbit · click to filter
+        <span className="[@media(hover:none)]:hidden">hover to light the orbit · click to filter</span>
+        <span className="hidden [@media(hover:none)]:inline">tap a domain to filter the arsenal</span>
       </p>
     </HoloPanel>
   )

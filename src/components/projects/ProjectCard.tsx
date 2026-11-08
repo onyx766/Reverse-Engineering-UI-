@@ -10,12 +10,20 @@ interface Props {
   focused: boolean
   /** pointer hover or keyboard focus */
   hover: boolean
-  compact?: boolean
+  /** allow the centre card's illustration to keep animating */
+  live: boolean
+  /** rendered card width in px: copy scales with it */
+  width: number
 }
 
+const fit = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
+
 /** Glass project card face (interaction lives in the carousel slot that wraps it). */
-export function ProjectCard({ project, focused, hover, compact }: Props) {
+export function ProjectCard({ project, focused, hover, live, width }: Props) {
   const lit = focused || hover
+  const title = fit(width * 0.08, 15.5, 21.5)
+  const body = fit(width * 0.06, 12.5, 15)
+  const roomy = width >= 236
   return (
     <div
       className={cn(
@@ -32,7 +40,6 @@ export function ProjectCard({ project, focused, hover, compact }: Props) {
             : '0 0 0 1px rgb(var(--accent) / 0.08) inset, 0 0 22px -10px rgb(var(--accent) / 0.45), 0 26px 50px -24px rgb(0 0 0 / 0.95)',
       }}
     >
-      {/* glass decor */}
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
       <span
         aria-hidden
@@ -56,8 +63,7 @@ export function ProjectCard({ project, focused, hover, compact }: Props) {
       </span>
       <CardBrackets lit={lit} />
 
-      {/* illustration */}
-      <div className={cn('relative shrink-0', compact ? 'h-[40%]' : 'h-[43%]')}>
+      <div className="relative min-h-0 flex-1">
         <span
           aria-hidden
           className={cn(
@@ -77,8 +83,8 @@ export function ProjectCard({ project, focused, hover, compact }: Props) {
         />
         <ProjectIllustration
           kind={project.kind}
-          hover={lit}
-          className="absolute left-1 top-3 h-[calc(100%-0.5rem)] w-[78%] drop-shadow-[0_0_10px_rgb(var(--accent)/0.45)]"
+          hover={hover || (focused && live)}
+          className="absolute left-0 top-2 h-[calc(100%-0.25rem)] w-[88%] drop-shadow-[0_0_10px_rgb(var(--accent)/0.45)]"
         />
       </div>
 
@@ -95,27 +101,24 @@ export function ProjectCard({ project, focused, hover, compact }: Props) {
         <ArrowRight className={cn('h-4 w-4 transition-transform duration-300', hover && 'translate-x-0.5')} />
       </span>
 
-      {/* copy */}
-      <div className={cn('relative flex min-h-0 flex-1 flex-col', compact ? 'px-4 pb-4' : 'px-4 pb-3.5')}>
+      <div className="relative flex shrink-0 flex-col px-4 pb-3.5">
         <h3
-          className={cn(
-            'line-clamp-2 font-sans font-bold leading-[1.08] tracking-[0.01em] text-ink transition-colors duration-300',
-            compact ? 'text-[20px]' : 'text-[clamp(17px,1.32vw,22px)]',
-          )}
+          className="line-clamp-2 font-sans font-bold leading-[1.08] tracking-[0.01em] text-ink"
+          style={{ fontSize: title, minHeight: title * 1.08 * 2 }}
         >
           {project.title}
         </h3>
-        <p
-          className={cn(
-            'mt-1.5 line-clamp-2 leading-snug text-muted',
-            compact ? 'text-[14px]' : 'text-[clamp(12.5px,0.94vw,15px)]',
-          )}
-        >
+        <p className="mt-1.5 line-clamp-2 leading-snug text-muted" style={{ fontSize: body }}>
           {project.short}
         </p>
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-2.5">
+        <div className="mt-2.5 flex flex-nowrap gap-1.5 overflow-hidden">
           {project.tags.map((t) => (
-            <Chip key={t} size="xs" active={focused} className="normal-case tracking-[0.06em]">
+            <Chip
+              key={t}
+              size="xs"
+              active={focused}
+              className={cn('shrink-0 normal-case', roomy ? 'px-2.5 py-1 text-[10.5px] tracking-[0.04em]' : 'tracking-[0.02em]')}
+            >
               {t}
             </Chip>
           ))}

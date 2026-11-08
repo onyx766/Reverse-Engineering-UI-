@@ -19,15 +19,15 @@ const BARS = Array.from({ length: 14 }, () => ({
 
 /** Ceiling rig spotlights: soft conic cones, angle in degrees (180 = straight down). */
 const BEAMS = [
-  { left: '16%', angle: 172, spread: 13, dur: 9, delay: 0, op: 0.1 },
-  { left: '50%', angle: 180, spread: 16, dur: 11, delay: -3.5, op: 0.12 },
-  { left: '84%', angle: 188, spread: 13, dur: 10, delay: -6, op: 0.1 },
+  { left: '16%', angle: 172, spread: 13, op: 0.1 },
+  { left: '50%', angle: 180, spread: 16, op: 0.12 },
+  { left: '84%', angle: 188, spread: 13, op: 0.1 },
 ]
 
 /**
  * The lab the whole portfolio floats inside. Every layer is tinted by the
- * active section palette: wash → aurora → spotlights → neon strips →
- * horizon → grid floor/ceiling → floor rings → particles → scanlines/grain/vignette.
+ * active section palette: wash → spotlights → horizon → floor rings → aurora →
+ * neon strips → grid floor/ceiling → particles → scan beam → vignette/scanlines.
  *
  * Performance budget (iGPU): no blur filters on large layers, pointer
  * parallax through motion values (zero React renders per move), and every
@@ -84,30 +84,57 @@ export function Background() {
         }}
       />
 
-      {/* 2 — drifting aurora (pre-softened gradients instead of a blur filter) */}
+      {/* static layers 2–4 stay BELOW the animated ones, or Chrome promotes each to its own GPU layer */}
+
+      {/* 2 — ceiling spotlights */}
+      {BEAMS.map((b) => (
+        <span
+          key={b.left}
+          className="absolute top-0 h-[88vh] w-[72vh] -translate-x-1/2"
+          style={{
+            left: b.left,
+            background: `conic-gradient(from ${b.angle - b.spread}deg at 50% -4%, transparent 0deg, rgb(var(--accent) / ${b.op}) ${b.spread}deg, transparent ${b.spread * 2}deg)`,
+            maskImage: 'linear-gradient(to bottom, black 10%, transparent 92%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 10%, transparent 92%)',
+          }}
+        />
+      ))}
+
+      {/* 3 — horizon: haze and bloom are centred ON the horizon so neither side ends in an edge */}
+      <div className="absolute inset-x-0 top-[42vh]">
+        <div
+          className="absolute inset-x-0 -top-[18vh] h-[36vh]"
+          style={{
+            background:
+              'linear-gradient(to bottom, transparent, rgb(var(--accent) / 0.05) 35%, rgb(var(--accent) / 0.08) 50%, rgb(var(--accent) / 0.04) 66%, transparent)',
+          }}
+        />
+        <div
+          className="absolute left-1/2 top-0 h-[26vh] w-[130vw] -translate-x-1/2 -translate-y-1/2"
+          style={{
+            background:
+              'radial-gradient(closest-side, rgb(var(--accent) / 0.2), rgb(var(--accent) / 0.08) 45%, rgb(var(--accent) / 0.02) 75%, transparent)',
+          }}
+        />
+      </div>
+
+      {/* 4 — floor rings echoing the emitter pedestal */}
+      <div
+        className="absolute left-1/2 top-[74vh] hidden h-[34vh] w-[150vh] -translate-x-1/2 sm:block"
+        style={{
+          background:
+            'radial-gradient(closest-side, transparent 57%, rgb(var(--accent) / 0.11) 59.5%, transparent 62%, transparent 75%, rgb(var(--accent-2) / 0.08) 77.5%, transparent 80%, transparent 92%, rgb(var(--accent) / 0.06) 94.5%, transparent 97%)',
+        }}
+      />
+
+      {/* 5 — drifting aurora (pre-softened gradients instead of a blur filter) */}
       <motion.div className="absolute inset-0" style={{ x: auroraX, y: auroraY }}>
         <Blob className="-left-[6%] top-[0%] h-[46rem] w-[46rem]" delay={0} />
         <Blob className="-right-[8%] top-[18%] h-[40rem] w-[40rem]" delay={-7} alt />
         <Blob className="-bottom-[10%] left-[24%] h-[42rem] w-[42rem]" delay={-12} />
       </motion.div>
 
-      {/* 3 — ceiling spotlights */}
-      {BEAMS.map((b) => (
-        <span
-          key={b.left}
-          className="fx-beam absolute top-0 h-[88vh] w-[90vw] -translate-x-1/2"
-          style={{
-            left: b.left,
-            background: `conic-gradient(from ${b.angle - b.spread}deg at 50% -4%, transparent 0deg, rgb(var(--accent) / ${b.op}) ${b.spread}deg, transparent ${b.spread * 2}deg)`,
-            maskImage: 'linear-gradient(to bottom, black 10%, transparent 92%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 10%, transparent 92%)',
-            animationDuration: `${b.dur}s`,
-            animationDelay: `${b.delay}s`,
-          }}
-        />
-      ))}
-
-      {/* 4 — distant neon strips (the server-room glow in the reference) */}
+      {/* 6 — distant neon strips (the server-room glow in the reference) */}
       <motion.div className="absolute inset-0" style={{ x: stripsX, y: stripsY }}>
         {BARS.map((b, i) => (
           <span
@@ -127,25 +154,7 @@ export function Background() {
         ))}
       </motion.div>
 
-      {/* 5 — horizon: haze and bloom are centred ON the horizon so neither side ends in an edge */}
-      <div className="absolute inset-x-0 top-[42vh]">
-        <div
-          className="absolute inset-x-0 -top-[18vh] h-[36vh]"
-          style={{
-            background:
-              'linear-gradient(to bottom, transparent, rgb(var(--accent) / 0.05) 35%, rgb(var(--accent) / 0.08) 50%, rgb(var(--accent) / 0.04) 66%, transparent)',
-          }}
-        />
-        <div
-          className="absolute left-1/2 top-0 h-[26vh] w-[130vw] -translate-x-1/2 -translate-y-1/2"
-          style={{
-            background:
-              'radial-gradient(closest-side, rgb(var(--accent) / 0.2), rgb(var(--accent) / 0.08) 45%, rgb(var(--accent) / 0.02) 75%, transparent)',
-          }}
-        />
-      </div>
-
-      {/* 6 — perspective grid floor, rolling toward the viewer */}
+      {/* 7 — perspective grid floor, rolling toward the viewer */}
       <motion.div
         className="absolute inset-x-0 bottom-0 h-[58vh]"
         style={{ perspective: '520px', perspectiveOrigin: floorOrigin }}
@@ -162,7 +171,7 @@ export function Background() {
         </motion.div>
       </motion.div>
 
-      {/* 7 — grid ceiling */}
+      {/* 8 — grid ceiling */}
       <div className="absolute inset-x-0 top-0 h-[34vh]" style={{ perspective: '620px' }}>
         <motion.div
           className="absolute inset-x-[-50%] bottom-0 top-[-14%] origin-top bg-grid opacity-60"
@@ -175,34 +184,12 @@ export function Background() {
         />
       </div>
 
-      {/* 8 — floor rings echoing the emitter pedestal */}
-      <div className="absolute inset-x-0 bottom-0 hidden h-[40vh] sm:block" style={{ perspective: '700px' }}>
-        <div
-          className="absolute left-1/2 top-[18%] h-[120vh] w-[120vh] -translate-x-1/2 rounded-full"
-          style={{
-            transform: 'rotateX(78deg)',
-            transformOrigin: '50% 0%',
-            background:
-              'radial-gradient(closest-side, transparent 58%, rgb(var(--accent) / 0.12) 60%, transparent 62%, transparent 76%, rgb(var(--accent-2) / 0.09) 78%, transparent 80%, transparent 93%, rgb(var(--accent) / 0.07) 95%, transparent 97%)',
-            maskImage: 'linear-gradient(to bottom, black, transparent 70%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 70%)',
-          }}
-        />
-      </div>
-
       {/* 9 — particle motes */}
       <div className="absolute inset-0">
         <ParticleField paused={!visible} />
       </div>
 
-      {/* 10 — CRT scanlines, sweeping beam, grain, vignette */}
-      <div
-        className="absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(0deg, rgb(var(--ink)) 0px, rgb(var(--ink)) 1px, transparent 1px, transparent 3px)',
-        }}
-      />
+      {/* 10 — sweeping scan beam */}
       {!reduced && (
         <div
           className="absolute inset-x-0 top-0 h-24 animate-scanline opacity-20"
@@ -212,18 +199,13 @@ export function Background() {
           }}
         />
       )}
-      <div
-        className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")",
-        }}
-      />
+
+      {/* 11 — vignette + CRT scanlines in one overlay layer */}
       <div
         className="absolute inset-0"
         style={{
-          background:
-            'radial-gradient(130% 100% at 50% 40%, transparent 42%, rgb(var(--deep) / 0.75) 100%)',
+          background: `radial-gradient(130% 100% at 50% 40%, transparent 42%, rgb(var(--deep) / 0.75) 100%),
+                       repeating-linear-gradient(0deg, rgb(var(--ink) / 0.05) 0px, rgb(var(--ink) / 0.05) 1px, transparent 1px, transparent 3px)`,
         }}
       />
     </div>

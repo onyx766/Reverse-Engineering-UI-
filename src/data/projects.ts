@@ -305,6 +305,13 @@ class SignedAuth(httpx.Auth):
       label: 'recovered/license_key.hpp',
       code: src(String.raw`
 // Reconstructed from KeyDecoder::Validate (sub_14002A3F0)
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
+constexpr uint8_t kProductId = 0x2A;
+uint16_t Crc16Ccitt(const void* data, size_t len);  // poly 0x1021, init 0xFFFF
+
 #pragma pack(push, 1)
 struct LicenseKey {
     uint8_t  product_id;    // +0x00
@@ -833,6 +840,18 @@ pub fn first_divergence(a: &[Block], b: &[Block]) -> Option<Divergence> {
 
 /** The card focused when the page opens (the reference composition centres it). */
 export const INITIAL_PROJECT_ID = 'protocol-analyzer'
+
+/** Section copy outside the individual case studies. */
+export const PROJECTS_COPY = {
+  eyebrow: 'Selected Work',
+  title: 'Explore My Portfolio',
+  intro: 'Authorised engagements across binaries, wire protocols, file formats and the tooling behind them.',
+  pedestal: 'Explore My Portfolio',
+  indexEyebrow: 'Case Study Index',
+  indexTitle: 'Every Engagement, In Depth',
+  indexSubtitle:
+    'Authorised work only: owned systems, written client permission or interoperability with the client’s own data. Each study walks from the first byte to the delivered result.',
+}
 
 /* ------------------------------------------------------------------ *
  * Stage shard content                                                 *

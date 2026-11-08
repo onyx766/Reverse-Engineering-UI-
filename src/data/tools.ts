@@ -81,6 +81,9 @@ export interface ToolSnippet {
   code: string
 }
 
+/** The year the "years used" figures were last updated. */
+export const TOOLS_AS_OF_YEAR = 2026
+
 export interface Tool {
   id: string
   name: string
@@ -202,7 +205,6 @@ with bn.load("updaterd") as bv:
     category: 'disasm',
     level: 4,
     years: 6,
-    orbit: 1,
     usage:
       'Triage over SSH on boxes with nothing else installed, r2pipe for scripting, and Cutter when I want the graph view.',
     specifics: [
@@ -366,6 +368,7 @@ Interceptor.attach(libcrypto.getExportByName("EVP_DecryptUpdate"), {
     category: 'instr',
     level: 3,
     years: 3,
+    orbit: 1,
     usage:
       'drcov coverage for crash triage — which blocks a malformed input reaches that a clean input never does.',
     specifics: [
@@ -1028,7 +1031,7 @@ export const ORBIT_CORE = {
 }
 
 /** One label per ring, innermost first. */
-export const ORBIT_RINGS = ['Core analysis', 'Runtime & emulation', 'Net · formats · code']
+export const ORBIT_RINGS = ['Disassembly & debug', 'Runtime & emulation', 'Net · formats · code']
 
 /** Hours spent in each tool over the last 30 days (orbit tools only). */
 export const TIME_IN_TOOL: { toolId: string; hours: number }[] = [

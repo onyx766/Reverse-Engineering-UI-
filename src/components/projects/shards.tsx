@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { AudioWaveform, Binary, GitBranch, Globe, TerminalSquare, type LucideIcon } from 'lucide-react'
 import {
   SHARD_DISASM,
@@ -9,7 +9,7 @@ import {
   type ShardId,
 } from '@/data/projects'
 import { cn, seeded } from '@/lib/utils'
-import { svgId } from './hooks'
+import { svgId, useElementSize } from './hooks'
 
 const SHARD_ICON: Record<ShardId, LucideIcon> = {
   disasm: TerminalSquare,
@@ -284,19 +284,23 @@ export function HttpBody({ running, compact }: { running: boolean; compact?: boo
 
 /** Capture timeline: bars breathe, a playhead sweeps, frame markers tick. */
 export function WaveBody({ compact }: { compact?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const { width } = useElementSize(ref)
+  // ~4.5px per bar keeps them hairline-thin at any shard width
+  const count = Math.max(32, Math.min(140, Math.floor((width || 210) / 4.5)))
   const bars = useMemo(() => {
     const rnd = seeded(7400)
-    return Array.from({ length: compact ? 44 : 58 }, (_, i) => {
-      const burst = Math.sin(i * 0.5) * 0.5 + 0.5
+    return Array.from({ length: count }, (_, i) => {
+      const burst = Math.sin(i * 0.42) * 0.5 + 0.5
       const spike = rnd() > 0.86 ? 0.35 : 0
       const h = Math.min(1, 0.18 + burst * 0.45 * rnd() + spike + rnd() * 0.2)
       return { h, dur: 0.9 + rnd() * 1.4, delay: -rnd() * 2, lo: 0.25 + rnd() * 0.35 }
     })
-  }, [compact])
+  }, [count])
 
   return (
     <div>
-      <div className={cn('relative flex items-center gap-[2px]', compact ? 'h-7' : 'h-8')}>
+      <div ref={ref} className={cn('relative flex items-center gap-[2px]', compact ? 'h-7' : 'h-8')}>
         <span aria-hidden className="absolute inset-x-0 top-1/2 h-px bg-accent/25" />
         {bars.map((b, i) => (
           <span

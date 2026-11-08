@@ -169,7 +169,6 @@ function ApiCubes({ id, hover }: IlluProps) {
           topFill="rgb(var(--accent-3) / 0.62)"
         />
       </motion.g>
-      {/* data motes rising from the stack */}
       {[0, 1, 2].map((i) => (
         <motion.circle
           key={i}
@@ -177,6 +176,7 @@ function ApiCubes({ id, hover }: IlluProps) {
           cy={20}
           r={1.4}
           fill="rgb(var(--accent-3))"
+          initial={{ opacity: 0, y: 8 }}
           animate={hover ? { opacity: [0, 1, 0], y: [8, -6] } : { opacity: 0, y: 8 }}
           transition={hover ? { duration: 1.4, repeat: Infinity, delay: i * 0.3 } : { duration: 0.3 }}
         />
@@ -193,7 +193,6 @@ function BinaryChip({ id, hover }: IlluProps) {
   return (
     <>
       <Floor id={id} cx={100} cy={92} rx={70} ry={20} />
-      {/* back pins */}
       {pins.map((p) => (
         <g key={`bx${p}`} opacity={0.65}>
           <IsoBox x={-7} y={p} z={1.5} a={7} b={3.2} h={2.2} ox={ox} oy={oy} />
@@ -201,13 +200,13 @@ function BinaryChip({ id, hover }: IlluProps) {
         </g>
       ))}
       <IsoBox x={0} y={0} z={0} a={60} h={6} ox={ox} oy={oy} glow={1.1} topFill="rgb(var(--surface) / 0.95)" />
-      {/* circuit traces etched on the package */}
       <g transform={`matrix(${C} 0.5 ${-C} 0.5 ${ox} ${oy - 6})`} fill="none" strokeWidth="0.8">
         {[10, 20, 40, 50].map((v, i) => (
           <motion.path
             key={v}
             d={i < 2 ? `M${v} 2 V14 H20` : `M${v} 58 V46 H40`}
             stroke="rgb(var(--accent-3))"
+            initial={false}
             animate={{ opacity: hover ? 0.95 : 0.35 }}
             transition={{ duration: 0.4, delay: hover ? i * 0.08 : 0 }}
           />
@@ -217,13 +216,13 @@ function BinaryChip({ id, hover }: IlluProps) {
             key={`h${v}`}
             d={i < 2 ? `M2 ${v} H14 V20` : `M58 ${v} H46 V40`}
             stroke="rgb(var(--accent))"
+            initial={false}
             animate={{ opacity: hover ? 0.95 : 0.3 }}
             transition={{ duration: 0.4, delay: hover ? 0.3 + i * 0.08 : 0 }}
           />
         ))}
       </g>
-      {/* die */}
-      <motion.g animate={{ opacity: hover ? 1 : 0.85 }} filter={`url(#${id}glow)`}>
+      <motion.g initial={false} animate={{ opacity: hover ? 1 : 0.85 }} filter={`url(#${id}glow)`}>
         <IsoBox x={16} y={16} z={6} a={28} h={3} ox={ox} oy={oy} glow={1.6} topFill="rgb(var(--accent) / 0.55)" />
       </motion.g>
       <g transform={`matrix(${C} 0.5 ${-C} 0.5 ${ox} ${oy - 9})`} stroke="rgb(var(--ink) / 0.55)" strokeWidth="0.5">
@@ -231,10 +230,10 @@ function BinaryChip({ id, hover }: IlluProps) {
           <path key={v} d={`M${v} 18 V42 M18 ${v} H42`} />
         ))}
       </g>
-      {/* front pins glow in sequence on hover */}
       {pins.map((p, i) => (
         <motion.g
           key={`fx${p}`}
+          initial={false}
           animate={{ opacity: hover ? [0.5, 1, 0.7] : 0.8 }}
           transition={hover ? { duration: 0.9, repeat: Infinity, repeatType: 'mirror', delay: i * 0.09 } : { duration: 0.3 }}
           filter={`url(#${id}glow)`}
@@ -248,13 +247,13 @@ function BinaryChip({ id, hover }: IlluProps) {
 }
 
 const NET_NODES: P3[] = [
-  [0, 0, 30],
-  [40, -12, 18],
-  [-22, 38, 22],
-  [30, 38, 8],
-  [-38, -6, 12],
-  [58, 26, 26],
-  [4, -42, 20],
+  [0, 0, 36],
+  [50, -14, 22],
+  [-26, 48, 28],
+  [38, 46, 10],
+  [-48, -8, 16],
+  [70, 32, 32],
+  [6, -52, 24],
 ]
 const NET_EDGES: [number, number][] = [
   [0, 1],
@@ -270,20 +269,18 @@ const NET_EDGES: [number, number][] = [
 ]
 
 function ProtocolNet({ id, hover }: IlluProps) {
-  const ox = 100
-  const oy = 58
+  const ox = 96
+  const oy = 62
   const pts = NET_NODES.map((p) => iso(p, ox, oy))
   const floor = NET_NODES.map(([x, y]) => iso([x, y, 0], ox, oy))
   return (
     <>
       <Floor id={id} cx={100} cy={66} rx={78} ry={30} />
-      {/* iso floor grid */}
       <g transform={`matrix(${C} 0.5 ${-C} 0.5 ${ox} ${oy})`} stroke="rgb(var(--accent) / 0.18)" strokeWidth="0.6">
-        {[-50, -25, 0, 25, 50].map((v) => (
-          <path key={v} d={`M${v} -55 V55 M-55 ${v} H55`} />
+        {[-60, -30, 0, 30, 60].map((v) => (
+          <path key={v} d={`M${v} -66 V66 M-66 ${v} H66`} />
         ))}
       </g>
-      {/* drop lines + shadows */}
       {pts.map(([x, y], i) => (
         <g key={`d${i}`}>
           <line x1={x} y1={y} x2={floor[i][0]} y2={floor[i][1]} stroke="rgb(var(--accent) / 0.3)" strokeDasharray="1.5 2" strokeWidth="0.6" />
@@ -298,6 +295,7 @@ function ProtocolNet({ id, hover }: IlluProps) {
               d={d}
               stroke="rgb(var(--accent-3))"
               strokeWidth={0.9}
+              initial={false}
               animate={{ opacity: hover ? 0.95 : 0.55 }}
               transition={{ duration: 0.4 }}
             />
@@ -314,7 +312,7 @@ function ProtocolNet({ id, hover }: IlluProps) {
           key={i}
           cx={x}
           cy={y}
-          r={i === 0 ? 5.5 : 4}
+          r={i === 0 ? 6.5 : 4.6}
           fill={`url(#${id}node)`}
           filter={`url(#${id}glow)`}
           animate={hover ? { scale: [1, 1.25, 1] } : { scale: 1 }}
@@ -349,7 +347,6 @@ function FileLayers({ id, hover }: IlluProps) {
             glow={0.8 + i * 0.25}
             topFill={i === 3 ? 'rgb(var(--accent) / 0.5)' : undefined}
           />
-          {/* hex-row etching on each layer */}
           <g
             transform={`matrix(${C} 0.5 ${-C} 0.5 ${ox} ${oy - i * 11 - 5})`}
             stroke={i === 3 ? 'rgb(var(--ink) / 0.8)' : 'rgb(var(--accent-3) / 0.5)'}
@@ -363,6 +360,7 @@ function FileLayers({ id, hover }: IlluProps) {
         </motion.g>
       ))}
       <motion.g
+        initial={false}
         animate={{ opacity: hover ? 1 : 0, y: hover ? -24 : -16 }}
         transition={{ duration: 0.5, ease: EASE }}
         filter={`url(#${id}glow)`}
@@ -515,28 +513,33 @@ function ToolingKit({ id, hover }: IlluProps) {
         ))}
         <rect x={20} y={34} width={4} height={6} fill="rgb(var(--accent))" className="animate-blink" />
       </g>
-      {/* wrench */}
+      {/* combination wrench: ring end with a hex socket, open jaw at the other end */}
+      <defs>
+        <mask id={`${id}wrench`} maskUnits="userSpaceOnUse" x={-16} y={-16} width={110} height={32}>
+          <g fill="white">
+            <circle cx={0} cy={0} r={9.5} />
+            <path d="M5 -3.4 L63 -4.6 L63 4.6 L5 3.4 Z" />
+            <circle cx={71} cy={0} r={10.5} />
+          </g>
+          <g fill="black">
+            <path d="M4.6 0 L2.3 4 L-2.3 4 L-4.6 0 L-2.3 -4 L2.3 -4 Z" />
+            <path d="M70 -4.2 H86 V4.2 H70 A4.2 4.2 0 0 1 70 -4.2 Z" />
+          </g>
+        </mask>
+      </defs>
       <motion.g
-        style={{ transformBox: 'fill-box', transformOrigin: '30% 70%' }}
+        style={{ transformBox: 'fill-box', transformOrigin: '20% 80%' }}
+        initial={false}
         animate={{ rotate: hover ? [-8, 14, -4, 6] : 0 }}
         transition={{ duration: 1, ease: EASE }}
         filter={`url(#${id}glow)`}
       >
-        <g transform="translate(40 96) rotate(-38)">
-          <path
-            d="M0 -4 H56 l3 -6 a13 13 0 1 1 0 20 l-3 -6 H0 a4 4 0 0 1 0 -8 Z"
-            transform="translate(3 2.5)"
-            fill="rgb(var(--accent) / 0.16)"
-          />
-          <path
-            d="M0 -4 H56 l3 -6 a13 13 0 1 1 0 20 l-3 -6 H0 a4 4 0 0 1 0 -8 Z M72.3 0 L69.8 4.33 L64.8 4.33 L62.3 0 L64.8 -4.33 L69.8 -4.33 Z"
-            fillRule="evenodd"
-            fill="rgb(var(--accent) / 0.42)"
-            stroke="rgb(var(--accent-3) / 0.95)"
-            strokeWidth="1"
-            strokeLinejoin="round"
-          />
-          <path d="M6 0 H48" stroke="rgb(var(--ink) / 0.6)" strokeWidth="0.8" strokeLinecap="round" />
+        <g transform="translate(40 94) rotate(-36)">
+          <rect x={-14} y={-14} width={102} height={28} fill="rgb(var(--accent) / 0.2)" mask={`url(#${id}wrench)`} transform="translate(2.5 3)" />
+          <rect x={-14} y={-14} width={102} height={28} fill="rgb(var(--accent) / 0.55)" mask={`url(#${id}wrench)`} />
+          <path d="M9 -1.2 L58 -2" stroke="rgb(var(--ink) / 0.7)" strokeWidth="1" strokeLinecap="round" />
+          <circle cx={0} cy={0} r={9.5} fill="none" stroke="rgb(var(--accent-3) / 0.9)" strokeWidth="0.9" />
+          <path d="M80.6 -4.2 A10.5 10.5 0 1 0 80.6 4.2" fill="none" stroke="rgb(var(--accent-3) / 0.9)" strokeWidth="0.9" />
         </g>
       </motion.g>
     </>

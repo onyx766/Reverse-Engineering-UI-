@@ -38,7 +38,7 @@ const RINGS: RingDef[] = [
 ]
 
 const DEG = Math.PI / 180
-const PERSPECTIVE = 1400
+const PERSPECTIVE = 2600
 const TAU = Math.PI * 2
 
 interface Orbiter {
@@ -93,10 +93,8 @@ function project(ring: RingDef, theta: number, inclShift: number, gx: number, gy
   // incline the ring: its lower half swings toward the viewer
   const y1 = ly * Math.cos(a)
   const z1 = ly * Math.sin(a)
-  // roll in the screen plane
   const x2 = lx * Math.cos(b) - y1 * Math.sin(b)
   const y2 = lx * Math.sin(b) + y1 * Math.cos(b)
-  // pointer parallax: yaw, then pitch
   const x3 = x2 * Math.cos(gy) + z1 * Math.sin(gy)
   const z3 = -x2 * Math.sin(gy) + z1 * Math.cos(gy)
   const y4 = y2 * Math.cos(gx) - z3 * Math.sin(gx)
@@ -181,6 +179,8 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
 
   const clearTimer = useRef<number>()
   const lastPointer = useRef<string>('mouse')
+  // captured on pointerdown, before the tap's focus event marks the badge active
+  const wasActive = useRef(false)
 
   const roving = useRoving(ORBITERS.length, (i) => setActive(ORBITERS[i].tool.id))
 
@@ -193,6 +193,8 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
     let last = performance.now()
     let lastGx = Number.NaN
     let lastGy = Number.NaN
+    let lastT = Number.NaN
+    let force = true
 
     const frame = (now: number, live: boolean) => {
       const m = sim.current
@@ -202,6 +204,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         const dt = Math.min(0.05, (now - last) / 1000)
         last = now
         m.speed += ((shownId ? 0 : 1) - m.speed) * Math.min(1, dt * 4.2)
+        if (shownId && m.speed < 1e-3) m.speed = 0
         m.t += dt * m.speed
         if (!shownId) {
           m.gx += (pointer.current.tx - m.gx) * Math.min(1, dt * 3)
@@ -209,7 +212,8 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         }
       }
 
-      if (!live || Math.abs(m.gx - lastGx) > 2e-4 || Math.abs(m.gy - lastGy) > 2e-4) {
+      const tilted = !live || Math.abs(m.gx - lastGx) > 2e-4 || Math.abs(m.gy - lastGy) > 2e-4
+      if (tilted) {
         lastGx = m.gx
         lastGy = m.gy
         RINGS.forEach((ring, ri) => {
@@ -222,6 +226,11 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
           if (label) label.style.transform = `translate3d(${(g.cx + p.x).toFixed(1)}px, ${(g.cy + p.y).toFixed(1)}px, 0)`
         })
       }
+
+      // held still (hovered): nothing to write until something moves again
+      if (!force && !tilted && m.t === lastT) return
+      force = false
+      lastT = m.t
 
       const hi = highlightRef.current
       ORBITERS.forEach((o, i) => {
@@ -258,7 +267,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
       const si = shownId ? ORBIT_INDEX[shownId] : undefined
       if (si !== undefined && anchorRef.current) {
         const pos = positions.current[si]
-        const half = Math.min(138, g.W / 2 - 6)
+        const half = Math.min(146, g.W / 2 - 6)
         const cardX = clamp(pos.x, half + 4, g.W - half - 4)
         anchorRef.current.style.transform = `translate3d(${cardX.toFixed(1)}px, ${pos.y.toFixed(1)}px, 0)`
         if (leaderRef.current) leaderRef.current.style.transform = `translateX(${(pos.x - cardX).toFixed(1)}px)`
@@ -277,7 +286,6 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
     return () => cancelAnimationFrame(raf)
   }, [width, H, compact, reduced, inView, shown, highlight])
 
-  // flip the tooltip to whichever side of the badge has room
   useLayoutEffect(() => {
     if (!shown || !(shown in ORBIT_INDEX)) return
     const pos = positions.current[ORBIT_INDEX[shown]]
@@ -326,16 +334,15 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         )}
         style={{ height: H }}
       >
-        {/* HUD corners */}
         <span aria-hidden className="pointer-events-none absolute left-0 top-0 h-5 w-5 border-l border-t border-accent/50" />
         <span aria-hidden className="pointer-events-none absolute right-0 top-0 h-5 w-5 border-r border-t border-accent/50" />
         <div
           aria-hidden
           className="pointer-events-none absolute left-3 top-2.5 hidden font-mono text-[9.5px] uppercase leading-relaxed tracking-[0.2em] text-muted/80 sm:block"
         >
-          <span className="text-accent">orbit</span> // {RINGS.length} rings
+          <span className="text-accent">01</span> // orbital toolkit
           <br />
-          {ORBITERS.length} nodes · {TOOLS.length} total
+          {RINGS.length} rings · {ORBITERS.length} of {TOOLS.length} tools
         </div>
         <div
           aria-hidden
@@ -352,10 +359,20 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
           {status === 'hold' ? 'hold' : status === 'live' ? 'live' : 'static'}
         </div>
 
+        {/* darkened stage so the orbit reads cleanly over the busy backdrop */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-x-[8%] -bottom-[4%] -top-[20%] -z-10"
+          style={{
+            background:
+              'radial-gradient(ellipse 52% 50% at 50% 46%, rgb(var(--deep) / 0.94), rgb(var(--deep) / 0.72) 50%, transparent 77%)',
+          }}
+        />
+
         <Floor pedY={pedY} k={k} />
         <Beam top={cy} bottom={pedY} k={k} />
 
-        {/* far halves of the rings */}
+        {/* rings are split into far and near halves so badges can pass behind and in front of the core */}
         <svg aria-hidden className="pointer-events-none absolute inset-0 z-[10] h-full w-full overflow-visible" viewBox={`0 0 ${width || 1} ${H}`}>
           {RINGS.map((_, ri) => (
             <path
@@ -364,7 +381,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                 backRefs.current[ri] = el
               }}
               fill="none"
-              stroke="rgb(var(--accent) / 0.22)"
+              stroke="rgb(var(--accent) / 0.34)"
               strokeWidth="1"
               strokeDasharray="3 5"
             />
@@ -387,7 +404,6 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
 
         <Core cx={cx} cy={cy} size={core} caption={highlight ? CATEGORY_BY_ID[highlight].short : ORBIT_CORE.caption} />
 
-        {/* near halves of the rings */}
         <svg aria-hidden className="pointer-events-none absolute inset-0 z-[75] h-full w-full overflow-visible" viewBox={`0 0 ${width || 1} ${H}`}>
           {RINGS.map((_, ri) => (
             <g key={ri}>
@@ -396,8 +412,8 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                   glowRefs.current[ri] = el
                 }}
                 fill="none"
-                stroke="rgb(var(--accent) / 0.12)"
-                strokeWidth="6"
+                stroke="rgb(var(--accent) / 0.16)"
+                strokeWidth="7"
                 strokeLinecap="round"
               />
               <path
@@ -405,14 +421,13 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                   frontRefs.current[ri] = el
                 }}
                 fill="none"
-                stroke="rgb(var(--accent) / 0.55)"
-                strokeWidth="1.2"
+                stroke="rgb(var(--accent) / 0.75)"
+                strokeWidth="1.3"
               />
             </g>
           ))}
         </svg>
 
-        {/* ring labels */}
         {RINGS.map((_, ri) => (
           <span
             key={ri}
@@ -424,15 +439,27 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
           >
             <span
               className={cn(
-                'absolute -translate-y-[140%] whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.18em] text-accent/70',
+                'absolute -translate-y-[130%] rounded-sm border border-accent/30 bg-deep/70 px-1 font-mono text-[8.5px] leading-[1.5] tracking-[0.12em] text-accent/90',
                 Math.cos(RINGS[ri].labelAt) < 0 ? 'left-1' : 'right-1',
               )}
             >
               R{ri}
-              {!compact && <span className="text-muted/70"> · {ORBIT_RINGS[ri]}</span>}
             </span>
           </span>
         ))}
+
+        <ul
+          aria-hidden
+          className="pointer-events-none absolute bottom-1 left-2 z-[6] hidden flex-col gap-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-muted/80 sm:flex"
+        >
+          {ORBIT_RINGS.map((label, ri) => (
+            <li key={label} className="flex items-center gap-1.5">
+              <span className="w-5 text-accent/90">R{ri}</span>
+              <span className="h-px w-3 bg-accent/50" />
+              {label}
+            </li>
+          ))}
+        </ul>
 
         <div
           role="group"
@@ -458,6 +485,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                 aria-haspopup="dialog"
                 onPointerDown={(e) => {
                   lastPointer.current = e.pointerType
+                  wasActive.current = shownRef.current === t.id
                 }}
                 onPointerEnter={(e) => {
                   if (e.pointerType !== 'mouse') return
@@ -467,9 +495,11 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                 onPointerLeave={(e) => {
                   if (e.pointerType === 'mouse') scheduleClear()
                 }}
-                onFocus={() => {
-                  cancelClear()
+                onFocus={(e) => {
                   roving.setIndex(i)
+                  // pointer focus (and focus restored after a mouse-closed dialog) must not freeze the orbit
+                  if (!e.currentTarget.matches(':focus-visible')) return
+                  cancelClear()
                   setActive(t.id)
                 }}
                 onBlur={scheduleClear}
@@ -480,8 +510,10 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                   }
                   props.onKeyDown(e)
                 }}
-                onClick={() => {
-                  if (lastPointer.current !== 'mouse' && active !== t.id) {
+                onClick={(e) => {
+                  // touch: first tap inspects, second tap opens (keyboard clicks have detail 0)
+                  if (e.detail > 0 && lastPointer.current !== 'mouse' && !wasActive.current) {
+                    wasActive.current = true
                     setActive(t.id)
                     return
                   }
@@ -528,13 +560,13 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
 
         {/* tooltip, glued to the hovered badge by the render loop */}
         <div ref={anchorRef} className="pointer-events-none absolute left-0 top-0 z-[200]">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {shownTool && (
               <motion.div
-                key={shownTool.id}
+                key="tooltip"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                exit={{ opacity: 0, transition: { duration: 0.15 } }}
                 transition={{ duration: 0.2 }}
               >
                 <span
@@ -549,11 +581,12 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                 />
                 <div
                   className={cn(
-                    'absolute left-0 w-[16.5rem] max-w-[calc(100vw-2.5rem)] -translate-x-1/2',
+                    'absolute left-0 w-[18rem] max-w-[calc(100vw-2.5rem)] -translate-x-1/2',
                     placement === 'above' ? 'bottom-[30px]' : 'top-[30px]',
                   )}
                 >
                   <motion.div
+                    key={shownTool.id}
                     id={tooltipId}
                     role="tooltip"
                     data-orbit-hit
@@ -601,8 +634,8 @@ function TooltipCard({ tool, onOpen }: { tool: Tool; onOpen: () => void }) {
       <div className="flex items-center gap-3">
         <ToolMonogram tool={tool} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-[13.5px] font-bold tracking-wide text-ink">{tool.name}</p>
-          <p className="truncate font-mono text-[9.5px] uppercase tracking-[0.16em] text-accent">{cat.label}</p>
+          <p className="font-display text-[13.5px] font-bold leading-tight tracking-wide text-ink">{tool.name}</p>
+          <p className="mt-0.5 font-mono text-[9.5px] uppercase leading-snug tracking-[0.14em] text-accent">{cat.label}</p>
         </div>
         <span className="shrink-0 rounded-md border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-ink">
           {tool.years}y
@@ -686,8 +719,8 @@ function Core({ cx, cy, size, caption }: { cx: number; cy: number; size: number;
 
       <div
         aria-hidden
-        className="pointer-events-none absolute z-[72] -translate-x-1/2 text-center"
-        style={{ left: cx, top: cy + size / 2 + 4 }}
+        className="pointer-events-none absolute z-[72] -translate-x-1/2 -translate-y-full text-center"
+        style={{ left: cx, top: cy - size / 2 + 2 }}
       >
         <p className="font-display text-[13px] font-bold tracking-[0.2em] text-ink [text-shadow:0_0_12px_rgb(var(--accent)/0.8)]">
           {ORBIT_CORE.label}
@@ -738,7 +771,6 @@ function Floor({ pedY, k }: { pedY: number; k: number }) {
   const w = Math.round(420 * Math.max(k, 0.62))
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-[4]">
-      {/* perspective grid under the pedestal */}
       <div
         className="absolute inset-x-0 bottom-0 overflow-hidden"
         style={{
@@ -754,7 +786,6 @@ function Floor({ pedY, k }: { pedY: number; k: number }) {
         />
       </div>
 
-      {/* pedestal: flat rings laid into the floor */}
       <div className="absolute left-1/2 h-0 w-0" style={{ top: pedY, perspective: '700px' }}>
         {[1, 0.78, 0.56, 0.34].map((f, i) => {
           const d = w * f

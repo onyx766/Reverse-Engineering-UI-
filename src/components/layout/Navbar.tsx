@@ -130,10 +130,11 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
         transition={{ duration: 0.9, ease: EASE, delay: ready ? 0.15 : 0 }}
         className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3 sm:px-4 sm:pt-5"
       >
+        {/* widths are sized for Orbitron, which is wider than its fallbacks */}
         <div
           className={cn(
-            'scene pointer-events-auto relative w-full max-w-6xl transition-[max-width] duration-500',
-            scrolled && 'max-w-5xl',
+            'scene pointer-events-auto relative w-full max-w-6xl transition-[max-width] duration-500 2xl:max-w-[84rem]',
+            scrolled && 'max-w-5xl xl:max-w-[68rem] 2xl:max-w-[76rem]',
           )}
         >
           {/* curved holo bar */}
@@ -159,34 +160,41 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
               className="group flex min-h-10 items-center gap-3 rounded-xl px-1.5 py-1 text-left transition-colors duration-300 focus-visible:bg-accent/10"
             >
               <HoloLogo size={38} />
-              <span className="hidden leading-none sm:block">
+              <span className="hidden min-w-[4.75rem] leading-none sm:block">
                 <span className="block font-display text-[20px] font-black tracking-[0.18em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent">
                   NOX
                 </span>
-                <span className="mt-1 block font-mono text-[9.5px] uppercase tracking-[0.2em] text-muted">
-                  Reverse Engineer &amp; Systems Dev
+                <span
+                  className={cn(
+                    'mt-1 block font-mono text-[8.5px] uppercase leading-[1.35] tracking-[0.18em] text-muted lg:hidden xl:block',
+                    scrolled && 'xl:hidden',
+                  )}
+                >
+                  <span className="block truncate">Reverse Engineering</span>
+                  <span className="block truncate">&amp; Systems Development</span>
                 </span>
               </span>
             </a>
 
             {/* desktop nav */}
-            <nav aria-label="Primary" className="hidden items-center gap-0.5 lg:flex">
+            <nav aria-label="Primary" className="hidden shrink-0 items-center gap-0.5 lg:flex">
               {NAV_ITEMS.map((id) => (
                 <NavLink
                   key={id}
                   id={id}
                   active={section === id}
+                  compact={scrolled}
                   onSelect={(e) => routeClick(e, () => go(id))}
                 />
               ))}
             </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <MagneticButton
                 onClick={() => go('contact')}
                 strength={0.3}
                 className={cn(
-                  'group relative hidden overflow-hidden rounded-xl border px-4 py-2.5 font-display text-[12px] font-bold uppercase tracking-[0.16em] transition-[color,border-color,background-color,box-shadow] duration-300 sm:inline-flex',
+                  'group relative hidden overflow-hidden rounded-xl border px-3 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] transition-[color,border-color,background-color,box-shadow] duration-300 sm:inline-flex xl:px-4 xl:text-[12px] xl:tracking-[0.16em]',
                   section === 'contact'
                     ? 'border-accent bg-accent/20 text-ink shadow-glow'
                     : 'border-accent/45 bg-accent/10 text-accent hover:border-accent hover:text-ink hover:shadow-glow-sm focus-visible:border-accent focus-visible:text-ink',
@@ -226,7 +234,6 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
               </button>
             </div>
 
-            {/* section scroll progress riding the bar's lower edge */}
             <ScrollProgress className="inset-x-7 -bottom-px" />
           </div>
 
@@ -342,10 +349,13 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
 function NavLink({
   id,
   active,
+  compact,
   onSelect,
 }: {
   id: SectionId
   active: boolean
+  /** condensed bar after scrolling: labels only */
+  compact: boolean
   onSelect: (e: MouseEvent<HTMLAnchorElement>) => void
 }) {
   const Icon = ICONS[id]
@@ -360,7 +370,7 @@ function NavLink({
       aria-keyshortcuts={key}
       data-cursor-label={`[${key}]`}
       className={cn(
-        'group relative whitespace-nowrap rounded-xl px-3 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors duration-300 xl:px-3.5 xl:text-[12.5px]',
+        'group relative whitespace-nowrap rounded-xl px-1.5 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors duration-300 xl:px-2.5 xl:text-[12px] xl:tracking-[0.1em] 2xl:px-3',
         active ? 'text-ink' : 'text-muted hover:text-ink focus-visible:text-ink',
       )}
     >
@@ -374,7 +384,8 @@ function NavLink({
       <span className="relative flex items-center gap-2">
         <Icon
           className={cn(
-            'h-4 w-4 transition-all duration-300',
+            'hidden h-4 w-4 transition-all duration-300 2xl:block',
+            compact && '2xl:hidden',
             active
               ? 'text-accent'
               : 'text-muted group-hover:-translate-y-px group-hover:text-accent group-focus-visible:text-accent',
@@ -384,13 +395,13 @@ function NavLink({
       </span>
 
       {/* hover underline sweep */}
-      <span className="pointer-events-none absolute inset-x-3 -bottom-0.5 h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-accent to-transparent transition-transform duration-500 group-hover:scale-x-100 group-focus-visible:scale-x-100" />
+      <span className="pointer-events-none absolute inset-x-1.5 -bottom-0.5 xl:inset-x-2.5 2xl:inset-x-3 h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-accent to-transparent transition-transform duration-500 group-hover:scale-x-100 group-focus-visible:scale-x-100" />
 
       {active && (
         <motion.span
           layoutId="nav-underline"
           transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-          className="absolute inset-x-2.5 -bottom-1.5 h-[2px] rounded-full bg-accent shadow-glow-sm"
+          className="absolute inset-x-1 -bottom-1.5 xl:inset-x-2 2xl:inset-x-2.5 h-[2px] rounded-full bg-accent shadow-glow-sm"
         />
       )}
     </a>

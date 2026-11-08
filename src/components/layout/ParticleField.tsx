@@ -36,7 +36,12 @@ export function ParticleField({ paused = false }: { paused?: boolean }) {
 
   // the rAF loop reads the latest palette / pause flag through refs, so it never restarts
   const targetRef = useRef(theme.gl)
-  targetRef.current = theme.gl
+  const changedAtRef = useRef(0)
+  if (targetRef.current !== theme.gl) {
+    // stamped with the target so a stalled first frame cannot start the tween late
+    targetRef.current = theme.gl
+    changedAtRef.current = performance.now()
+  }
   const pausedRef = useRef(paused)
   pausedRef.current = paused
   const wakeRef = useRef<() => void>(() => {})
@@ -110,7 +115,7 @@ export function ParticleField({ paused = false }: { paused?: boolean }) {
         } else {
           fromA = [colA[0], colA[1], colA[2]]
           fromB = [colB[0], colB[1], colB[2]]
-          tweenStart = now
+          tweenStart = changedAtRef.current > 0 ? Math.min(now, changedAtRef.current) : now
         }
       }
       if (tweenStart < 0) return false

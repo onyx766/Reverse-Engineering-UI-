@@ -3,7 +3,7 @@ import { motion, useInView } from 'framer-motion'
 import { ArrowUp, ArrowUpRight, Github, Link2, Mail } from 'lucide-react'
 import { HoloLogo } from '@/components/ui/HoloLogo'
 import { MagneticButton } from '@/components/ui/MagneticButton'
-import { FOOTER } from '@/components/fx/content'
+import { FOOTER } from '@/data/site'
 import { usePageVisible } from '@/components/fx/hooks'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useTheme } from '@/theme/ThemeProvider'
@@ -196,25 +196,28 @@ function Navigate() {
               >
                 <kbd
                   className={cn(
-                    'grid h-6 w-6 shrink-0 place-items-center rounded-md border bg-deep/60 font-mono text-[10px] transition-all duration-300',
+                    'relative grid h-6 w-6 shrink-0 place-items-center rounded-md border bg-deep/60 font-mono text-[10px] transition-all duration-300',
                     active
                       ? 'border-accent/70 text-accent shadow-glow-sm'
                       : 'border-accent/25 text-muted group-hover:border-accent/70 group-hover:text-accent group-hover:shadow-glow-sm',
                   )}
                 >
                   {i + 1}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'absolute -right-[3px] -top-[3px] h-[7px] w-[7px] rounded-full border border-deep transition-transform duration-300 group-hover:scale-125',
+                      active ? 'scale-110' : 'opacity-80',
+                    )}
+                    style={{ background: `rgb(${swatch})`, boxShadow: `0 0 8px rgb(${swatch} / 0.85)` }}
+                  />
                 </kbd>
-                <span className="truncate font-display text-[11px] font-semibold uppercase tracking-[0.1em] transition-transform duration-300 group-hover:translate-x-0.5">
+                <span className="truncate font-sans text-[14px] font-semibold uppercase tracking-[0.12em] transition-transform duration-300 group-hover:translate-x-0.5">
                   {THEMES[id].label}
                 </span>
-                <span
-                  aria-hidden
-                  className={cn(
-                    'ml-auto h-1.5 w-1.5 shrink-0 rounded-full transition-all duration-300 group-hover:scale-150 group-hover:opacity-100',
-                    active ? 'scale-125 opacity-100' : 'opacity-55',
-                  )}
-                  style={{ background: `rgb(${swatch})`, boxShadow: `0 0 8px rgb(${swatch} / 0.85)` }}
-                />
+                {active && (
+                  <span aria-hidden className="ml-auto h-px w-3 shrink-0 bg-accent shadow-glow-sm" />
+                )}
               </a>
             </li>
           )

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Component, Suspense, useEffect, useId, useMemo, useRef, type ReactNode } from 'react'
 import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber'
 import { Edges, Float } from '@react-three/drei'
 import * as THREE from 'three'
@@ -269,6 +269,8 @@ function EnergyStreams({ color }: { color: THREE.Color }) {
   }, [])
 
   const pulses = useRef<THREE.Mesh[]>([])
+  // resting spots for the pulses when motion is reduced (useFrame owns them otherwise)
+  const rest = useMemo(() => curves.map((c, i) => c.getPointAt(0.35 + i * 0.07)), [curves])
 
   useFrame((state, dt) => {
     if (group.current && !reduced) group.current.rotation.y += dt * 0.07
@@ -301,6 +303,8 @@ function EnergyStreams({ color }: { color: THREE.Color }) {
             ref={(el) => {
               if (el) pulses.current[i] = el
             }}
+            position={rest[i]}
+            scale={reduced ? 0.1 : 0}
           >
             <sphereGeometry args={[1, 10, 10]} />
             <meshBasicMaterial
@@ -460,6 +464,99 @@ function Lights() {
 /** The pedestal rings expand past the canvas bounds — feather the edges so they fade instead of clipping. */
 const FEATHER = 'radial-gradient(50% 50% at 50% 50%, #000 66%, transparent 100%)'
 
+/* ------------------------------------------------------------------ *
+ * WebGL can be missing — hardened browsers, locked-down GPUs, remote  *
+ * desktops. Without a guard the renderer's throw unmounts the whole   *
+ * app, so probe once and keep a boundary as the second line.          *
+ * ------------------------------------------------------------------ */
+
+let webglSupport: boolean | null = null
+
+function hasWebGL() {
+  if (webglSupport !== null) return webglSupport
+  try {
+    const probe = document.createElement('canvas')
+    const gl = probe.getContext('webgl2') ?? probe.getContext('webgl')
+    webglSupport = !!gl
+    // hand the probe context back right away; browsers cap live contexts
+    gl?.getExtension('WEBGL_lose_context')?.loseContext()
+  } catch {
+    webglSupport = false
+  }
+  return webglSupport
+}
+
+class GLBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch(error: Error) {
+    webglSupport = false
+    console.warn('[holo-core] WebGL unavailable, showing the static core:', error.message)
+  }
+
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children
+  }
+}
+
+/** Static SVG stand-in for the WebGL core: same silhouette, themed, no GPU needed. */
+function CoreFallback() {
+  // two cores can be mounted at once (background + Projects stage): keep gradient ids unique
+  const beam = `core-beam-${useId().replace(/:/g, '')}`
+  const edge = 'rgb(var(--accent) / 0.8)'
+  const hidden = 'rgb(var(--accent) / 0.3)'
+  return (
+    <div aria-hidden className="relative grid h-full w-full place-items-center">
+      <div className="absolute inset-[22%] rounded-full bg-accent/15 blur-3xl" />
+      <svg
+        viewBox="0 0 200 220"
+        className="relative h-[72%] w-[72%] overflow-visible"
+        style={{ filter: 'drop-shadow(0 0 14px rgb(var(--accent) / 0.55))' }}
+      >
+        <defs>
+          <linearGradient id={beam} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor="rgb(var(--accent))" stopOpacity="0.35" />
+            <stop offset="1" stopColor="rgb(var(--accent))" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* pedestal + emitter beam */}
+        <path d="M58 192 L86 112 L114 112 L142 192 Z" fill={`url(#${beam})`} />
+        <ellipse cx="100" cy="194" rx="74" ry="15" fill="none" stroke="rgb(var(--accent) / 0.35)" />
+        <ellipse
+          cx="100"
+          cy="194"
+          rx="50"
+          ry="10"
+          fill="rgb(var(--accent) / 0.12)"
+          stroke="rgb(var(--accent-3) / 0.55)"
+          className="motion-safe:animate-pulse"
+        />
+
+        <g className="motion-safe:animate-float-slow">
+          {/* outer wire cube (isometric): hidden edges first, then the visible hull */}
+          <g fill="none" strokeWidth="1.1" strokeLinejoin="round">
+            <path d="M100 88 L100 20 M100 88 L159 122 M100 88 L41 122" stroke={hidden} strokeDasharray="3 4" />
+            <path d="M100 20 L159 54 L159 122 L100 156 L41 122 L41 54 Z" stroke={edge} />
+            <path d="M100 88 L159 54 M100 88 L41 54 M100 88 L100 156" stroke={edge} />
+          </g>
+          {/* inner cube + chip */}
+          <g fill="none" strokeWidth="1" stroke="rgb(var(--accent-2) / 0.8)">
+            <path d="M100 58 L126 73 L126 103 L100 118 L74 103 L74 73 Z" />
+            <path d="M100 88 L126 73 M100 88 L74 73 M100 88 L100 118" />
+          </g>
+          <rect x="91" y="79" width="18" height="18" rx="3" transform="rotate(45 100 88)" fill="rgb(var(--accent-3) / 0.85)" />
+          <circle cx="100" cy="88" r="20" fill="rgb(var(--accent-3) / 0.18)" />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
 export function HoloCore({
   className,
   paused = false,
@@ -472,20 +569,28 @@ export function HoloCore({
 
   useEffect(trackWindowPointer, [])
 
+  const fallback = <CoreFallback />
+
   return (
     <div className={className} style={{ maskImage: FEATHER, WebkitMaskImage: FEATHER }}>
-      <Canvas
-        dpr={[1, 1.75]}
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        camera={{ position: [0, 0.4, 8.6], fov: 40 }}
-        frameloop={paused ? 'never' : reduced ? 'demand' : 'always'}
-        style={{ pointerEvents: 'none' }}
-      >
-        <Suspense fallback={null}>
-          <Lights />
-          <Rig position={[0, 0.5, 0]} />
-        </Suspense>
-      </Canvas>
+      {hasWebGL() ? (
+        <GLBoundary fallback={fallback}>
+          <Canvas
+            dpr={[1, 1.75]}
+            gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+            camera={{ position: [0, 0.4, 8.6], fov: 40 }}
+            frameloop={paused ? 'never' : reduced ? 'demand' : 'always'}
+            style={{ pointerEvents: 'none' }}
+          >
+            <Suspense fallback={null}>
+              <Lights />
+              <Rig position={[0, 0.5, 0]} />
+            </Suspense>
+          </Canvas>
+        </GLBoundary>
+      ) : (
+        fallback
+      )}
     </div>
   )
 }

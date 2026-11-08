@@ -50,28 +50,34 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
     const root = scrollRoot()
     if (!root) return
 
-    const ids = toc.map((h) => h.id)
-    const els = ids
-      .map((hid) => document.getElementById(headingDomId(wu.id, hid)))
+    const els = toc
+      .map((h) => document.getElementById(headingDomId(wu.id, h.id)))
       .filter((e): e is HTMLElement => e !== null)
 
-    const visible: Record<string, boolean> = {}
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          const hid = (e.target as HTMLElement).dataset.toc
-          if (hid) visible[hid] = e.isIntersecting
-        }
-        const first = ids.find((hid) => visible[hid])
-        if (first) setActive(first)
-      },
-      { root, rootMargin: '0px 0px -72% 0px', threshold: 0 },
-    )
+    // the active heading is the last one whose top has passed the reading line
+    const computeActive = () => {
+      const rootTop = root.getBoundingClientRect().top
+      let current = els[0]?.dataset.toc ?? ''
+      for (const el of els) {
+        if (el.getBoundingClientRect().top - rootTop <= 96) current = el.dataset.toc ?? current
+        else break
+      }
+      if (current) setActive(current)
+    }
+
+    // IntersectionObserver rooted in the modal body drives the highlight;
+    // a scroll listener re-derives it so programmatic jumps update too
+    const io = new IntersectionObserver(computeActive, {
+      root,
+      rootMargin: '0px 0px -60% 0px',
+      threshold: [0, 1],
+    })
     els.forEach((el) => io.observe(el))
 
     const onScroll = () => {
       const max = root.scrollHeight - root.clientHeight
       setProgress(max > 0 ? Math.min(1, root.scrollTop / max) : 0)
+      computeActive()
     }
     root.addEventListener('scroll', onScroll, { passive: true })
     onScroll()

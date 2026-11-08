@@ -20,14 +20,31 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { HANDSHAKE_FLOW, HANDSHAKE_LINES, HANDSHAKE_SPECS, RULES, type Rule } from '@/data/contact'
 import { EASE } from './fields'
 
+// padded: the shared Terminal currently drops the final character of every line
+
 /** "$ nox --open-channel": a Noise XX handshake typed out, beside the same exchange as a ladder. */
 export function HandshakePanel() {
   const [run, setRun] = useState(0)
 
   return (
-    <HoloPanel title="Handshake" icon={KeyRound} badge="Noise XX" from="left" delay={0.05} tilt={5} float>
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <Terminal key={run} lines={HANDSHAKE_LINES} speed={12} height="h-[19rem]" />
+    <HoloPanel
+      title="Handshake"
+      icon={KeyRound}
+      badge="Noise XX"
+      from="left"
+      delay={0.05}
+      tilt={5}
+      float
+      className="h-full"
+      bodyClassName="flex flex-col lg:min-h-[calc(100%-58px)]"
+    >
+      <div className="grid flex-1 gap-4 md:grid-cols-2">
+        <Terminal
+          key={run}
+          lines={HANDSHAKE_LINES}
+          speed={12}
+          height="h-[19rem] md:h-full md:min-h-[19rem]"
+        />
         <div className="flex min-w-0 flex-col gap-3">
           <div className="rounded-lg border border-accent/20 bg-deep/40 p-3">
             <p className="mb-2.5 flex items-center justify-between font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted">
@@ -80,7 +97,15 @@ export function RulesPanel() {
   const { ref: countRef, value } = useCountUp(100, 1400)
 
   return (
-    <HoloPanel title="Rules of Engagement" icon={ShieldCheck} badge="Signed" from="right" delay={0.12} tilt={6}>
+    <HoloPanel
+      title="Rules of Engagement"
+      icon={ShieldCheck}
+      badge="Signed"
+      from="right"
+      delay={0.12}
+      tilt={6}
+      className="h-full"
+    >
       <div ref={ref}>
         <div className="flex items-center justify-between font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted">
           <span>Compliance checks</span>
@@ -105,7 +130,7 @@ export function RulesPanel() {
                 initial={{ opacity: 0, x: 18 }}
                 animate={inView ? { opacity: 1, x: 0 } : undefined}
                 transition={{ duration: reduced ? 0 : 0.5, delay: reduced ? 0 : 0.2 + i * 0.1, ease: EASE }}
-                className="group/rule flex items-start gap-3 rounded-lg border border-transparent p-2 transition-colors duration-300 hover:border-accent/25 hover:bg-accent/[0.05]"
+                className="group/rule flex items-start gap-3 rounded-lg border border-transparent px-2 py-1.5 transition-colors duration-300 hover:border-accent/25 hover:bg-accent/[0.05]"
               >
                 <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-accent/30 bg-accent/10 text-accent transition-all duration-300 group-hover/rule:scale-110 group-hover/rule:border-accent group-hover/rule:shadow-glow-sm">
                   <Icon aria-hidden className="h-4 w-4" />

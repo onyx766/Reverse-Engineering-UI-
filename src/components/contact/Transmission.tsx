@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import { Check, Mail, Monitor, Send, Server, type LucideIcon } from 'lucide-react'
 import { clamp, cn, seeded } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import type { Brief } from './lib'
+import { PROFILE } from '@/data/profile'
+import { crc32, type Brief } from './lib'
 import { EASE } from './fields'
 
 export type Delivery = 'pending' | 'ok' | 'fail'
@@ -13,29 +14,49 @@ interface Props {
   mode: 'mailto' | 'endpoint'
   host: string
   delivery: Delivery
+  /** server status line on success, or the human-readable failure, for the log */
+  detail?: string
   onDone: (result: 'ok' | 'fail') => void
 }
 
-const NORMAL = { encode: 1000, frame: 250, flight: 560, ack: 380, confirm: 460, nack: 900 }
+interface LogLine {
+  id: string
+  at: number
+  tag: string
+  text: string
+  tone?: 'ok' | 'err' | 'accent'
+}
+
+const NORMAL = { encode: 1000, frame: 260, flight: 560, ack: 380, confirm: 520, nack: 950 }
 const REDUCED = { encode: 0, frame: 0, flight: 0, ack: 0, confirm: 320, nack: 450 }
-const ROWS = 6
+const HEX_ROWS = 8
 
 type Stage = 'encode' | 'transmit' | 'await' | 'ack' | 'done' | 'nack'
+type FrameState = 'queued' | 'sent' | 'ack' | 'nack'
 
-const hex2 = (n: number) => n.toString(16).padStart(2, '0')
+const hex = (n: number, w: number) => n.toString(16).padStart(w, '0')
 const easeInOut = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2)
 
 /**
  * The "transmission" played after a valid submit: the message's real UTF-8
- * bytes scramble into an xxd-style dump, frames fly to the receiver with ACKs
- * coming back, and the submit button collapses into the progress bar.
+ * bytes scramble into an xxd-style dump, frames (with their real CRC-32s)
+ * fly to the receiver with ACKs coming back, and the submit button collapses
+ * into the progress bar it leaves behind.
  */
-export function Transmission({ brief, mode, host, delivery, onDone }: Props) {
+export function Transmission({ brief, mode, host, delivery, detail, onDone }: Props) {
   const reduced = useReducedMotion()
   const T = reduced ? REDUCED : NORMAL
+  const rootRef = useRef<HTMLDivElement>(null)
   const bytes = useMemo(() => new TextEncoder().encode(brief.message), [brief.message])
-  const frames = clamp(Math.ceil(bytes.length / 256), 3, 6)
-  const frameBytes = Math.ceil(bytes.length / frames)
+  const chunks = useMemo(() => {
+    const n = clamp(Math.ceil(bytes.length / 256), 3, 6)
+    const size = Math.ceil(bytes.length / n)
+    return Array.from({ length: n }, (_, i) => {
+      const part = bytes.subarray(i * size, Math.min(bytes.length, (i + 1) * size))
+      return { offset: i * size, len: part.length, crc: crc32(part) }
+    })
+  }, [bytes])
+  const frames = chunks.length
 
   const [t, setT] = useState(0)
   const resolvedAt = useRef<number | null>(delivery === 'pending' ? null : 0)
@@ -43,6 +64,10 @@ export function Transmission({ brief, mode, host, delivery, onDone }: Props) {
   const doneRef = useRef(onDone)
   doneRef.current = onDone
   const fired = useRef(false)
+
+  useEffect(() => {
+    rootRef.current?.focus({ preventScroll: true })
+  }, [])
 
   // one clock drives the whole sequence; it idles at 4 fps while waiting on the server
   useEffect(() => {
@@ -64,37 +89,46 @@ export function Transmission({ brief, mode, host, delivery, onDone }: Props) {
   if (delivery !== 'pending' && resolvedAt.current === null) resolvedAt.current = t
 
   const encodeP = T.encode ? clamp(t / T.encode, 0, 1) : 1
-  const tx = t - T.encode
   const launch = (i: number) => T.encode + i * T.frame
   const arrival = (i: number) => launch(i) + T.flight
   const flight = (i: number) =>
-    T.flight ? clamp((t - launch(i)) / T.flight, 0, 1) : tx >= 0 ? 1 : 0
+    T.flight ? clamp((t - launch(i)) / T.flight, 0, 1) : t >= launch(i) ? 1 : 0
   const allArrived = arrival(frames - 1)
+  const resolved = resolvedAt.current
+  // the final frame is only ACKed (or NACKed) after the earlier ACKs and the real delivery have settled
+  const settled = frames > 1 ? Math.max(allArrived, arrival(frames - 2) + T.ack) : allArrived
+  const finalAck = resolved === null ? Infinity : Math.max(settled, resolved)
+  const ackAt = (i: number) => (i < frames - 1 ? arrival(i) + T.ack : finalAck + T.ack)
 
   let sentFrac = 0
   let sent = 0
-  let acked = 0
   for (let i = 0; i < frames; i++) {
     sentFrac += flight(i)
     if (t >= launch(i)) sent++
-    if (t >= arrival(i) + T.ack) acked++
   }
   sentFrac /= frames
 
-  const resolved = resolvedAt.current
-  const confirmStart = resolved === null ? Infinity : Math.max(allArrived, resolved)
   const confirmP =
-    delivery === 'ok' && t >= confirmStart ? clamp((t - confirmStart) / T.confirm, 0, 1) : 0
+    delivery === 'ok' && t >= finalAck ? clamp((t - finalAck) / T.confirm, 0, 1) : 0
 
   let stage: Stage
   if (encodeP < 1) stage = 'encode'
   else if (t < allArrived) stage = 'transmit'
-  else if (delivery === 'pending') stage = 'await'
+  else if (t < finalAck) stage = 'await'
   else if (delivery === 'fail') stage = 'nack'
   else stage = confirmP < 1 ? 'ack' : 'done'
-  awaiting.current = stage === 'await'
-
+  // nothing moves while the server thinks, so the clock can idle
+  awaiting.current = delivery === 'pending' && t >= settled
   const failed = stage === 'nack'
+
+  const frameState = (i: number): FrameState => {
+    if (i === frames - 1 && failed) return 'nack'
+    if (t >= ackAt(i)) return 'ack'
+    if (t >= launch(i)) return 'sent'
+    return 'queued'
+  }
+  const acked = chunks.filter((_, i) => frameState(i) === 'ack').length
+
   const progress = failed
     ? 0.15 + sentFrac * 0.75
     : encodeP * 0.15 + sentFrac * 0.75 + confirmP * 0.1
@@ -104,179 +138,259 @@ export function Transmission({ brief, mode, host, delivery, onDone }: Props) {
     if (stage === 'done') {
       fired.current = true
       doneRef.current('ok')
-    } else if (stage === 'nack' && t - confirmStart >= T.nack) {
+    } else if (stage === 'nack' && t - finalAck >= T.nack) {
       fired.current = true
       doneRef.current('fail')
     }
-  }, [stage, t, confirmStart, T.nack])
+  }, [stage, t, finalAck, T.nack])
 
-  const recently = (at: number) => t >= at && t - at < 220
+  const recently = (at: number) => t >= at && t - at < 240
   let serverPulse = false
   let clientPulse = false
   for (let i = 0; i < frames; i++) {
     if (recently(arrival(i))) serverPulse = true
-    if (T.ack && recently(arrival(i) + T.ack)) clientPulse = true
+    if (T.ack && recently(ackAt(i))) clientPulse = true
   }
+
+  const log: LogLine[] = [
+    {
+      id: 'open',
+      at: 0,
+      tag: 'open',
+      text: mode === 'mailto' ? `mailto:${PROFILE.email}` : `POST https://${host}`,
+      tone: 'accent',
+    },
+    { id: 'enc', at: 0, tag: 'encode', text: `utf-8 · ${bytes.length} B → ${frames} frames` },
+  ]
+  if (encodeP >= 1)
+    log.push({
+      id: 'dig',
+      at: T.encode,
+      tag: brief.digest.algo,
+      text: `${brief.digest.hex.slice(0, 16)}…`,
+    })
+  chunks.forEach((c, i) => {
+    if (t >= launch(i))
+      log.push({ id: `tx${i}`, at: launch(i), tag: 'tx', text: `#${i + 1} len ${c.len} crc ${hex(c.crc, 8)}` })
+    if (frameState(i) === 'ack') log.push({ id: `ack${i}`, at: ackAt(i), tag: 'ack', text: `#${i + 1}`, tone: 'ok' })
+  })
+  if (mode === 'endpoint' && t >= allArrived)
+    log.push({ id: 'wait', at: allArrived, tag: 'wait', text: `response from ${host}…` })
+  if (failed) log.push({ id: 'err', at: finalAck, tag: 'error', text: detail ?? 'delivery failed', tone: 'err' })
+  if (delivery === 'ok' && t >= finalAck)
+    log.push({
+      id: 'fin',
+      at: finalAck,
+      tag: mode === 'mailto' ? 'handoff' : 'http',
+      text: mode === 'mailto' ? 'opening your default mail client' : (detail ?? `accepted by ${host}`),
+      tone: 'ok',
+    })
+  if (stage === 'done') log.push({ id: 'close', at: finalAck + T.confirm, tag: 'close', text: brief.ref })
+  log.sort((a, b) => a.at - b.at)
 
   const label: Record<Stage, string> = {
     encode: 'Encoding payload',
-    transmit: 'Transmitting',
+    transmit: `Transmitting frame ${Math.max(1, sent)} of ${frames}`,
     await: `Awaiting ACK from ${host}`,
     ack: mode === 'mailto' ? 'Handing off to your mail client' : 'ACK received',
     done: mode === 'mailto' ? 'Handed off' : 'Delivered',
     nack: 'Transmission failed',
   }
   const stepIndex = stage === 'encode' ? 0 : stage === 'transmit' || stage === 'await' || stage === 'nack' ? 1 : 2
+  const reveal = (delay: number) => ({
+    initial: { opacity: 0, y: reduced ? 0 : 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: reduced ? 0 : 0.5, delay: reduced ? 0 : delay, ease: EASE },
+  })
 
   return (
     <motion.div
+      ref={rootRef}
+      tabIndex={-1}
+      role="group"
+      aria-label="Transmitting your message"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.98, filter: 'blur(6px)' }}
       transition={{ duration: 0.35, ease: EASE }}
-      className="flex flex-1 flex-col gap-4"
+      className="flex flex-1 flex-col outline-none"
     >
-      {/* stepper + reference */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.15, ease: EASE }}
-        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
-      >
-        <ol className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em]">
-          {['Encode', 'Transmit', 'Deliver'].map((s, i) => {
-            const done = i < stepIndex || stage === 'done'
-            const active = i === stepIndex && stage !== 'done'
-            return (
-              <li key={s} className="flex items-center gap-1.5">
-                {i > 0 && (
+      <div className="flex flex-1 flex-col gap-4 pb-5">
+        {/* stepper + reference */}
+        <motion.div {...reveal(0.12)} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <ol className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em]">
+            {['Encode', 'Transmit', 'Deliver'].map((s, i) => {
+              const done = i < stepIndex || stage === 'done'
+              const active = i === stepIndex && stage !== 'done'
+              return (
+                <li key={s} className="flex items-center gap-1.5">
+                  {i > 0 && (
+                    <span
+                      aria-hidden
+                      className={cn('h-px w-3 sm:w-6', done || active ? 'bg-accent/70' : 'bg-accent/20')}
+                    />
+                  )}
                   <span
-                    aria-hidden
-                    className={cn('h-px w-4 sm:w-6', done || active ? 'bg-accent/70' : 'bg-accent/20')}
-                  />
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 transition-colors duration-300',
+                      active && failed
+                        ? 'border-rose-400/60 bg-rose-400/10 text-rose-300'
+                        : active
+                          ? 'border-accent/70 bg-accent/15 text-ink shadow-glow-sm'
+                          : done
+                            ? 'border-accent/40 text-accent'
+                            : 'border-accent/15 text-muted/60',
+                    )}
+                  >
+                    {done ? (
+                      <Check aria-hidden className="h-3 w-3" strokeWidth={3} />
+                    ) : (
+                      <span aria-hidden className="text-[9px] opacity-70">
+                        0{i + 1}
+                      </span>
+                    )}
+                    {s}
+                  </span>
+                </li>
+              )
+            })}
+          </ol>
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+            ref <span className="text-accent">{brief.ref}</span>
+          </span>
+        </motion.div>
+
+        <HexStream bytes={bytes} encodeP={encodeP} t={t} reduced={reduced} />
+
+        <motion.p
+          initial={false}
+          animate={{ opacity: encodeP >= 1 ? 1 : 0.35 }}
+          transition={{ duration: 0.4 }}
+          className="-mt-1 flex min-w-0 items-center gap-2 font-mono text-[10.5px] text-muted"
+        >
+          <span className="shrink-0 uppercase tracking-[0.14em] text-accent">{brief.digest.algo}</span>
+          <span className="truncate">
+            {encodeP >= 1
+              ? brief.digest.hex.length > 24
+                ? `${brief.digest.hex.slice(0, 20)}…${brief.digest.hex.slice(-12)}`
+                : brief.digest.hex
+              : 'computing…'}
+          </span>
+        </motion.p>
+
+        {/* packet lane */}
+        <motion.div {...reveal(0.22)} className="rounded-xl border border-accent/15 bg-deep/40 px-3 py-3">
+          <div className="flex items-center gap-3">
+            <Node icon={Monitor} label="you" active={clientPulse} />
+            <div className="relative h-12 min-w-0 flex-1 overflow-hidden">
+              <span
+                aria-hidden
+                className="absolute inset-x-0 top-[38%] h-px bg-gradient-to-r from-accent/60 via-accent/25 to-accent/60"
+              />
+              <span
+                aria-hidden
+                className="absolute inset-x-0 top-[72%] h-px"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(90deg, rgb(var(--accent-2) / 0.35) 0 4px, transparent 4px 9px)',
+                }}
+              />
+              {!reduced &&
+                chunks.map((_, i) => {
+                  const p = flight(i)
+                  if (p <= 0 || p >= 1) return null
+                  return (
+                    <span
+                      key={`f${i}`}
+                      aria-hidden
+                      className="absolute inset-0"
+                      style={{ transform: `translateX(${easeInOut(p) * 100}%)` }}
+                    >
+                      <span className="absolute left-0 top-[38%] flex -translate-x-full -translate-y-1/2 items-center">
+                        <span className="h-px w-10 bg-gradient-to-r from-transparent to-accent3" />
+                        <span className="h-2 w-3 rounded-[2px] bg-accent3 shadow-glow-sm" />
+                      </span>
+                    </span>
+                  )
+                })}
+              {!reduced &&
+                chunks.map((_, i) => {
+                  const from = ackAt(i) - T.ack
+                  const p = T.ack ? clamp((t - from) / T.ack, 0, 1) : 0
+                  if (p <= 0 || p >= 1 || frameState(i) === 'nack') return null
+                  return (
+                    <span
+                      key={`a${i}`}
+                      aria-hidden
+                      className="absolute inset-0"
+                      style={{ transform: `translateX(${(1 - easeInOut(p)) * 100}%)` }}
+                    >
+                      <span className="absolute left-0 top-[72%] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent2 shadow-glow-sm" />
+                    </span>
+                  )
+                })}
+            </div>
+            <Node
+              icon={mode === 'mailto' ? Mail : Server}
+              label={mode === 'mailto' ? 'mail client' : host}
+              active={serverPulse || stage === 'ack' || stage === 'done'}
+              failed={failed}
+            />
+          </div>
+        </motion.div>
+
+        {/* capture table: real offsets, lengths and CRC-32s of each frame */}
+        <motion.div
+          {...reveal(0.3)}
+          className="overflow-hidden rounded-xl border border-accent/15 bg-deep/40 font-mono text-[10.5px]"
+        >
+          <div className="grid grid-cols-[1.6rem_4.4rem_2.6rem_minmax(0,1fr)_3.4rem] gap-2 border-b border-accent/10 px-3 py-1.5 text-[9px] uppercase tracking-[0.16em] text-muted">
+            <span>#</span>
+            <span>offset</span>
+            <span>len</span>
+            <span>crc32</span>
+            <span className="text-right">state</span>
+          </div>
+          {chunks.map((c, i) => {
+            const st = frameState(i)
+            return (
+              <div
+                key={c.offset}
+                className={cn(
+                  'grid grid-cols-[1.6rem_4.4rem_2.6rem_minmax(0,1fr)_3.4rem] gap-2 px-3 py-[3px] transition-colors duration-300',
+                  st === 'sent' && 'bg-accent/[0.08]',
+                  st === 'nack' && 'bg-rose-400/[0.08]',
                 )}
+              >
+                <span className="text-muted/70">{String(i + 1).padStart(2, '0')}</span>
+                <span className="text-muted">0x{hex(c.offset, 4)}</span>
+                <span className="tabular-nums text-ink/80">{c.len}</span>
+                <span className={cn('truncate', st === 'queued' ? 'text-muted/40' : 'text-accent')}>
+                  {hex(c.crc, 8)}
+                </span>
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 transition-colors duration-300',
-                    active && failed
-                      ? 'border-rose-400/60 bg-rose-400/10 text-rose-300'
-                      : active
-                        ? 'border-accent/70 bg-accent/15 text-ink shadow-glow-sm'
-                        : done
-                          ? 'border-accent/40 text-accent'
-                          : 'border-accent/15 text-muted/60',
+                    'text-right uppercase tracking-[0.1em]',
+                    st === 'ack'
+                      ? 'text-emerald-300'
+                      : st === 'nack'
+                        ? 'text-rose-300'
+                        : st === 'sent'
+                          ? 'text-accent'
+                          : 'text-muted/45',
                   )}
                 >
-                  {done ? (
-                    <Check aria-hidden className="h-3 w-3" strokeWidth={3} />
-                  ) : (
-                    <span aria-hidden className="text-[9px] opacity-70">
-                      0{i + 1}
-                    </span>
-                  )}
-                  {s}
+                  {st}
                 </span>
-              </li>
+              </div>
             )
           })}
-        </ol>
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
-          ref <span className="text-accent">{brief.ref}</span>
-        </span>
-      </motion.div>
+        </motion.div>
 
-      <HexStream bytes={bytes} encodeP={encodeP} t={t} reduced={reduced} />
-
-      <motion.p
-        initial={false}
-        animate={{ opacity: encodeP >= 1 ? 1 : 0, y: encodeP >= 1 ? 0 : 6 }}
-        transition={{ duration: 0.4, ease: EASE }}
-        className="-mt-1 truncate font-mono text-[10.5px] text-muted"
-      >
-        <span className="uppercase tracking-[0.14em] text-accent">{brief.digest.algo}</span>{' '}
-        {brief.digest.hex.length > 24
-          ? `${brief.digest.hex.slice(0, 16)}…${brief.digest.hex.slice(-8)}`
-          : brief.digest.hex}
-      </motion.p>
-
-      {/* packet lane */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.25, ease: EASE }}
-        className="rounded-xl border border-accent/15 bg-deep/40 px-3 py-3"
-      >
-        <div className="flex items-center gap-3">
-          <Node icon={Monitor} label="you" active={clientPulse} />
-          <div className="relative h-12 min-w-0 flex-1 overflow-hidden">
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-[38%] h-px bg-gradient-to-r from-accent/60 via-accent/25 to-accent/60"
-            />
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-[72%] h-px"
-              style={{
-                backgroundImage:
-                  'repeating-linear-gradient(90deg, rgb(var(--accent-2) / 0.35) 0 4px, transparent 4px 9px)',
-              }}
-            />
-            {!reduced &&
-              Array.from({ length: frames }, (_, i) => {
-                const p = flight(i)
-                if (p <= 0 || p >= 1) return null
-                return (
-                  <span
-                    key={`f${i}`}
-                    aria-hidden
-                    className="absolute inset-0"
-                    style={{ transform: `translateX(${easeInOut(p) * 100}%)` }}
-                  >
-                    <span className="absolute left-0 top-[38%] flex -translate-x-full -translate-y-1/2 items-center">
-                      <span className="h-px w-10 bg-gradient-to-r from-transparent to-accent3" />
-                      <span className="h-2 w-3 rounded-[2px] bg-accent3 shadow-glow-sm" />
-                    </span>
-                  </span>
-                )
-              })}
-            {!reduced &&
-              Array.from({ length: frames }, (_, i) => {
-                const p = clamp((t - arrival(i)) / T.ack, 0, 1)
-                if (p <= 0 || p >= 1) return null
-                return (
-                  <span
-                    key={`a${i}`}
-                    aria-hidden
-                    className="absolute inset-0"
-                    style={{ transform: `translateX(${(1 - easeInOut(p)) * 100}%)` }}
-                  >
-                    <span className="absolute left-0 top-[72%] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent2 shadow-glow-sm" />
-                  </span>
-                )
-              })}
-          </div>
-          <Node
-            icon={mode === 'mailto' ? Mail : Server}
-            label={mode === 'mailto' ? 'mail client' : host}
-            active={serverPulse || stage === 'ack' || stage === 'done'}
-            failed={failed}
-          />
-        </div>
-        <div
-          aria-hidden
-          className="mt-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-muted"
-        >
-          <span>
-            frame <span className="tabular-nums text-ink">{sent}</span>/{frames} ·{' '}
-            {frameBytes.toLocaleString('en-US')} B
-          </span>
-          <span>
-            ack <span className="tabular-nums text-accent">{acked}</span>
-          </span>
-        </div>
-      </motion.div>
+        <TxLog lines={log} reduced={reduced} live={stage !== 'done' && !failed} />
+      </div>
 
       {/* status + the submit button collapsing into a progress bar */}
-      <div className="mt-auto pt-1">
+      <div>
         <div className="mb-2 flex items-center justify-between gap-3 font-mono text-[10.5px] uppercase tracking-[0.16em]">
           <span
             role="status"
@@ -293,8 +407,13 @@ export function Transmission({ brief, mode, host, delivery, onDone }: Props) {
             />
             <span className="truncate">{label[stage]}</span>
           </span>
-          <span aria-hidden className={cn('tabular-nums', failed ? 'text-rose-300' : 'text-ink')}>
-            {Math.round(progress * 100)}%
+          <span aria-hidden className="flex shrink-0 items-center gap-3">
+            <span className="hidden text-muted sm:inline">
+              ack <span className="tabular-nums text-accent">{acked}</span>/{frames}
+            </span>
+            <span className={cn('tabular-nums', failed ? 'text-rose-300' : 'text-ink')}>
+              {Math.round(progress * 100)}%
+            </span>
           </span>
         </div>
         <motion.div
@@ -341,6 +460,58 @@ export function Transmission({ brief, mode, host, delivery, onDone }: Props) {
             />
           )}
         </motion.div>
+      </div>
+    </motion.div>
+  )
+}
+
+const TAG_TONE = {
+  ok: 'text-emerald-300',
+  err: 'text-rose-300',
+  accent: 'text-accent',
+} as const
+
+/** Timestamped event log; grows into whatever height the panel has left. */
+function TxLog({ lines, reduced, live }: { lines: LogLine[]; reduced: boolean; live: boolean }) {
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = boxRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [lines.length])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: reduced ? 0 : 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduced ? 0 : 0.5, delay: reduced ? 0 : 0.36, ease: EASE }}
+      className="relative min-h-[150px] flex-1 overflow-hidden rounded-xl border border-accent/15 bg-deep/50"
+    >
+      <div className="flex items-center justify-between border-b border-accent/10 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
+        <span>tx.log</span>
+        <span className="tabular-nums">{lines.length} events</span>
+      </div>
+      <div
+        ref={boxRef}
+        aria-hidden
+        className="no-scrollbar absolute inset-x-0 bottom-0 top-[27px] overflow-y-auto px-3 py-2 font-mono text-[10.5px] leading-[1.8]"
+      >
+        {lines.map((l) => (
+          <motion.div
+            key={l.id}
+            initial={reduced ? false : { opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.25 }}
+            className="flex gap-3 whitespace-nowrap"
+          >
+            <span className="shrink-0 tabular-nums text-muted/50">+{(l.at / 1000).toFixed(3)}</span>
+            <span className={cn('w-[4.5rem] shrink-0', l.tone ? TAG_TONE[l.tone] : 'text-accent/80')}>
+              {l.tag}
+            </span>
+            <span className={cn('truncate', l.tone === 'err' ? 'text-rose-200/90' : 'text-ink/80')}>{l.text}</span>
+          </motion.div>
+        ))}
+        {live && <span className="mt-0.5 inline-block h-3 w-1.5 animate-blink bg-accent align-middle" />}
       </div>
     </motion.div>
   )
@@ -406,7 +577,7 @@ function HexStream({
     return () => ro.disconnect()
   }, [])
 
-  const visible = Math.min(bytes.length, ROWS * perRow)
+  const visible = Math.min(bytes.length, HEX_ROWS * perRow)
   const rows = Math.max(1, Math.ceil(visible / perRow))
   const locked = Math.floor(encodeP * visible)
   const rng = seeded(7 + Math.floor(t / 60))
@@ -415,9 +586,9 @@ function HexStream({
   return (
     <motion.div
       ref={boxRef}
-      initial={{ opacity: 0, y: 12, rotateX: -10 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 12, rotateX: reduced ? 0 : -10 }}
       animate={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
+      transition={{ duration: reduced ? 0 : 0.5, delay: reduced ? 0 : 0.06, ease: EASE }}
       className="relative overflow-hidden rounded-xl border border-accent/25 bg-deep/70 px-3 py-2.5 font-mono text-[10.5px] leading-[1.8] sm:text-[11px]"
     >
       {scanning && (
@@ -434,7 +605,7 @@ function HexStream({
       <div aria-hidden className="no-scrollbar overflow-x-auto">
         {Array.from({ length: rows }, (_, r) => (
           <div key={r} className="flex gap-3 whitespace-pre">
-            <span className="text-muted/50">{(r * perRow).toString(16).padStart(8, '0')}</span>
+            <span className="text-muted/50">{hex(r * perRow, 8)}</span>
             <span className="flex">
               {Array.from({ length: perRow }, (_, c) => {
                 const k = r * perRow + c
@@ -451,7 +622,6 @@ function HexStream({
                     key={c}
                     className={cn(
                       gap,
-                      'transition-colors duration-150',
                       isLocked
                         ? k >= locked - 3 && encodeP < 1
                           ? 'text-accent3'
@@ -459,7 +629,7 @@ function HexStream({
                         : 'text-muted/35',
                     )}
                   >
-                    {hex2(isLocked ? bytes[k] : Math.floor(rng() * 256))}
+                    {hex(isLocked ? bytes[k] : Math.floor(rng() * 256), 2)}
                   </span>
                 )
               })}
@@ -483,13 +653,9 @@ function HexStream({
         ))}
       </div>
       {bytes.length > visible && (
-        <div className="text-[10px] text-muted/55">
-          … +{(bytes.length - visible).toLocaleString('en-US')} B
-        </div>
+        <div className="text-[10px] text-muted/55">… +{(bytes.length - visible).toLocaleString('en-US')} B</div>
       )}
-      <span className="sr-only">
-        Encoding {bytes.length} bytes of message text.
-      </span>
+      <span className="sr-only">Encoding {bytes.length} bytes of message text.</span>
     </motion.div>
   )
 }

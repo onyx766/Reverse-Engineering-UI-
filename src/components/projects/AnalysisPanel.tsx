@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useInView, useMotionValue } from 'framer-motion'
+import { motion, useInView, useMotionValue } from 'framer-motion'
 import { Activity, Check, LoaderCircle } from 'lucide-react'
 import { HoloPanel } from '@/components/ui/HoloPanel'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -14,7 +14,20 @@ const RUN_MS = 2600
  * re-runs: the bar sweeps 0 → 100 %, the percentage counts with it and each
  * applicable stage ticks from spinner to check in turn. Runs only while visible.
  */
-export function AnalysisPanel({ project, className }: { project: Project; className?: string }) {
+export function AnalysisPanel({
+  project,
+  className,
+  badge = true,
+  density = 0,
+}: {
+  project: Project
+  className?: string
+  /** status chip in the header (dropped when the panel is narrow) */
+  badge?: boolean
+  /** 0 = roomy, 1 = short viewport, 2 = very short viewport (drops the footer) */
+  density?: 0 | 1 | 2
+}) {
+  const dense = density > 0
   const reduced = useReducedMotion()
   const rootRef = useRef<HTMLDivElement>(null)
   const inView = useInView(rootRef, { margin: '-30px' })
@@ -68,7 +81,7 @@ export function AnalysisPanel({ project, className }: { project: Project; classN
       <HoloPanel
         title="System Analysis"
         icon={Activity}
-        badge={complete ? 'done' : 'live'}
+        badge={badge ? (complete ? 'done' : 'live') : undefined}
         from="right"
         tilt={5}
         bodyClassName="p-3.5 sm:p-4"
@@ -81,7 +94,6 @@ export function AnalysisPanel({ project, className }: { project: Project; classN
           </span>
         </div>
 
-        {/* glowing progress bar */}
         <div
           className="relative mt-2.5 h-2 overflow-hidden rounded-full bg-accent/[0.12]"
           role="progressbar"
@@ -99,8 +111,7 @@ export function AnalysisPanel({ project, className }: { project: Project; classN
           )}
         </div>
 
-        {/* stage checklist */}
-        <ul className="mt-3.5 flex flex-col gap-1">
+        <ul className={cn('flex flex-col', dense ? 'mt-2.5 gap-[3px]' : 'mt-3 gap-1')}>
           {STAGES.map((s) => {
             const on = project.stages[s.id]
             const k = applicable.findIndex((a) => a.id === s.id)
@@ -116,7 +127,8 @@ export function AnalysisPanel({ project, className }: { project: Project; classN
               <li
                 key={s.id}
                 className={cn(
-                  'relative flex h-[34px] items-center gap-2.5 overflow-hidden rounded-lg border px-2.5 transition-colors duration-500',
+                  'relative flex items-center gap-2.5 overflow-hidden rounded-lg border px-2.5 transition-colors duration-500',
+                  dense ? 'h-[29px]' : 'h-[32px]',
                   state === 'done' && 'border-accent/25 bg-accent/[0.07]',
                   state === 'running' && 'border-accent/45 bg-accent/[0.12]',
                   (state === 'pending' || state === 'na') && 'border-transparent',
@@ -140,48 +152,24 @@ export function AnalysisPanel({ project, className }: { project: Project; classN
                     {state === 'na' ? ' (not applicable)' : state === 'done' ? ' (complete)' : state === 'running' ? ' (running)' : ' (pending)'}
                   </span>
                 </span>
-                <span className="grid h-5 w-8 shrink-0 place-items-center">
-                  <AnimatePresence mode="wait" initial={false}>
-                    {state === 'done' && (
-                      <motion.span
-                        key="done"
-                        initial={{ scale: 0.3, opacity: 0, rotate: -40 }}
-                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                        exit={{ scale: 0.3, opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 520, damping: 22 }}
-                        className="text-accent drop-shadow-[0_0_6px_rgb(var(--accent)/0.95)]"
-                      >
-                        <Check aria-hidden className="h-[18px] w-[18px]" strokeWidth={3} />
-                      </motion.span>
-                    )}
-                    {state === 'running' && (
-                      <motion.span key="run" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <LoaderCircle aria-hidden className="h-4 w-4 animate-spin text-accent3" />
-                      </motion.span>
-                    )}
-                    {state === 'pending' && (
-                      <motion.span
-                        key="pending"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        aria-hidden
-                        className="h-2 w-2 rounded-full border border-muted/50"
-                      />
-                    )}
-                    {state === 'na' && (
-                      <motion.span
-                        key="na"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        aria-hidden
-                        className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted/50"
-                      >
-                        n/a
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                {/* keyed mounts, no exit phase: rapid state changes can never strand an icon */}
+                <span className="grid h-5 w-8 shrink-0 place-items-center" aria-hidden>
+                  {state === 'done' && (
+                    <motion.span
+                      key={`done-${project.id}`}
+                      initial={{ scale: 0.3, opacity: 0, rotate: -40 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 22 }}
+                      className="text-accent drop-shadow-[0_0_6px_rgb(var(--accent)/0.95)]"
+                    >
+                      <Check className="h-[18px] w-[18px]" strokeWidth={3} />
+                    </motion.span>
+                  )}
+                  {state === 'running' && <LoaderCircle className="h-4 w-4 animate-spin text-accent3" />}
+                  {state === 'pending' && <span className="h-2 w-2 rounded-full border border-muted/50" />}
+                  {state === 'na' && (
+                    <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted/50">n/a</span>
+                  )}
                 </span>
                 {state === 'running' && !reduced && (
                   <span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-sweep bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
@@ -191,7 +179,13 @@ export function AnalysisPanel({ project, className }: { project: Project; classN
           })}
         </ul>
 
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-accent/15 pt-2.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted">
+        <div
+          className={cn(
+            'flex items-center justify-between gap-2 border-t border-accent/15 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted',
+            dense ? 'mt-2 pt-2' : 'mt-3 pt-2.5',
+            density === 2 && 'hidden',
+          )}
+        >
           <span className="truncate">
             <span className="text-accent">●</span> {KIND_LABEL[project.kind]}
           </span>

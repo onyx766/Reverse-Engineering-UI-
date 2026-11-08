@@ -27,6 +27,7 @@ import {
   Users,
   Wrench,
 } from 'lucide-react'
+import type { TermLine } from '@/components/ui/Terminal'
 import { PROFILE, STATS } from './profile'
 
 /* ── copy for the section headings ─────────────────────────────────── */
@@ -67,6 +68,8 @@ export interface IdField {
   value: string
   /** renders a pulsing status LED next to the value */
   live?: boolean
+  /** spans the full width of the field grid */
+  wide?: boolean
 }
 
 export interface IdCardData {
@@ -92,10 +95,15 @@ export const ID_CARD: IdCardData = {
   name: PROFILE.name,
   role: PROFILE.role,
   fields: [
-    { label: 'Specialisation', value: 'Binary & protocol RE' },
+    { label: 'Specialisation', value: 'Binary & protocol RE', wide: true },
     { label: 'Experience', value: '8 yrs' },
     { label: 'Base', value: PROFILE.location },
-    { label: 'Status', value: PROFILE.available ? 'Available' : 'Booked', live: PROFILE.available },
+    {
+      label: 'Status',
+      value: PROFILE.available ? 'Available for engagements' : 'Fully booked',
+      live: PROFILE.available,
+      wide: true,
+    },
   ],
   serial: 'NX-0847',
   issued: '2018.03',
@@ -112,6 +120,16 @@ export const ID_CARD: IdCardData = {
     body: 'Every engagement starts with written permission from the system owner, an agreed scope and a disclosure plan. No licence bypasses, no DRM circumvention, no access I was not given.',
   },
 }
+
+/** typed into the verification console under the badge (desktop) */
+export const BADGE_LOG: TermLine[] = [
+  { text: '$ gpg --verify nox-badge.json.sig nox-badge.json', tone: 'dim' },
+  { text: 'gpg: Signature made Mon 02 Nov 2026 09:14:22 CET', tone: 'dim' },
+  { text: `gpg:                using EDDSA key ${ID_CARD.pgp.fingerprint.replace(/\s+/g, '')}`, tone: 'dim' },
+  { text: `gpg: Good signature from "${PROFILE.name} <${PROFILE.email}>" [ultimate]`, tone: 'ok' },
+  { text: '$ jq -r .scope nox-badge.json', tone: 'dim' },
+  { text: 'authorised engagements only · written scope required', tone: 'warn' },
+]
 
 /* ── bio ───────────────────────────────────────────────────────────── */
 

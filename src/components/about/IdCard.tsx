@@ -12,8 +12,7 @@ import { clamp, cn, seeded } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import type { IdCardData } from '@/data/about'
 import { CardBack, CardFront, Face, type FaceMotion } from './IdCardFaces'
-
-const EASE = [0.22, 1, 0.36, 1] as const
+import { EASE } from './fx'
 
 const facing = (deg: number) => {
   const a = ((deg % 360) + 360) % 360
@@ -149,10 +148,10 @@ export function IdCard({ data }: { data: IdCardData }) {
                 className="preserve-3d relative grid"
                 style={{ rotateY: flip, scale: flipScale, z: flipZ }}
               >
-                <Face visibility={frontVisibility} motion={faceMotion}>
+                <Face showing={!flipped} visibility={frontVisibility} motion={faceMotion}>
                   <CardFront data={data} motion={faceMotion} />
                 </Face>
-                <Face back visibility={backVisibility} motion={faceMotion}>
+                <Face back showing={flipped} visibility={backVisibility} motion={faceMotion}>
                   <CardBack data={data} />
                 </Face>
               </motion.div>
@@ -161,6 +160,14 @@ export function IdCard({ data }: { data: IdCardData }) {
             <button
               type="button"
               onClick={() => setFlips((f) => f + 1)}
+              onFocus={(e) => {
+                // a tall target that is only partly on screen is not scrolled by the browser on focus
+                const el = e.currentTarget
+                const r = el.getBoundingClientRect()
+                if (el.matches(':focus-visible') && (r.top < 90 || r.bottom > window.innerHeight)) {
+                  el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' })
+                }
+              }}
               aria-pressed={flipped}
               aria-label={
                 flipped ? 'Flip the ID card back to its front' : 'Flip the ID card to read its back'
@@ -203,7 +210,7 @@ export function IdCard({ data }: { data: IdCardData }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.9, ease: EASE }}
-        className="relative z-10 -mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted"
+        className="relative z-10 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted"
       >
         <span className="flex items-center gap-1" aria-hidden>
           {(['A', 'B'] as const).map((side) => {

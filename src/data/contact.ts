@@ -199,16 +199,17 @@ export const CHANNELS: Channel[] = [
   },
 ]
 
+/** Shown while PROFILE.available is true; the booked copy takes over when it is false. */
 export const AVAILABILITY = {
   status: 'Accepting new engagements',
   detail: 'Two project slots open this quarter',
+  bookedStatus: 'Fully booked',
+  bookedDetail: 'Send a brief anyway: it joins the waitlist for the next free slot',
 }
 
 export interface EngagementStep {
   id: string
   title: string
-  /** short label for the step rail */
-  short: string
   duration: string
   body: string
   deliverable: string
@@ -218,7 +219,6 @@ export const ENGAGEMENT_STEPS: EngagementStep[] = [
   {
     id: 'intro',
     title: 'Intro call',
-    short: 'Intro call',
     duration: '30 min · free',
     body: 'We walk through the target, what “done” looks like and any hard deadlines. You leave with a straight answer on feasibility.',
     deliverable: 'Feasibility + rough estimate',
@@ -226,7 +226,6 @@ export const ENGAGEMENT_STEPS: EngagementStep[] = [
   {
     id: 'scope',
     title: 'Scope & authorisation',
-    short: 'Scope & auth',
     duration: '1–2 days',
     body: 'A written statement of work, proof that you own or may analyse the target, and an NDA if you need one. Nothing is touched before it is signed.',
     deliverable: 'Signed SOW + authorisation',
@@ -234,7 +233,6 @@ export const ENGAGEMENT_STEPS: EngagementStep[] = [
   {
     id: 'analysis',
     title: 'Analysis',
-    short: 'Analysis',
     duration: '1–6 weeks',
     body: 'Static and dynamic work in an isolated lab, with a short written progress note every week and findings shared as they land.',
     deliverable: 'Weekly progress notes',
@@ -242,7 +240,6 @@ export const ENGAGEMENT_STEPS: EngagementStep[] = [
   {
     id: 'handoff',
     title: 'Report & handoff',
-    short: 'Handoff',
     duration: '2–3 days',
     body: 'A technical report, annotated IDA / Ghidra databases, working parsers or PoC code, and a walkthrough call with your team.',
     deliverable: 'Report, databases, code',
@@ -305,12 +302,14 @@ export const HANDSHAKE_FLOW: Exchange[] = [
   { label: 'e · 32 B', dir: 'up', tone: 'info' },
   { label: 'e, ee, s, es · 96 B', dir: 'down', tone: 'info' },
   { label: 's, se · 64 B', dir: 'up', tone: 'info' },
-  { label: 'transport · encrypted', dir: 'down', tone: 'ok' },
+  { label: 'transport · AEAD', dir: 'down', tone: 'ok' },
 ]
 
 export const HANDSHAKE_SPECS = [
   { label: 'DH', value: 'X25519' },
   { label: 'Cipher', value: 'ChaCha20-Poly1305' },
   { label: 'Hash', value: 'BLAKE2s' },
-  { label: 'Auth', value: 'Mutual' },
+  { label: 'Auth', value: 'Mutual (XX)' },
+  { label: 'Round trips', value: '1.5 RTT' },
+  { label: 'Max message', value: '65,535 B' },
 ]

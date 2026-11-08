@@ -18,7 +18,7 @@ const CODE39: Record<string, string> = {
 const WIDE = 2.5
 const QUIET = 10
 
-export function code39(value: string) {
+function code39(value: string) {
   const text = `*${value.toUpperCase().replace(/[^0-9A-Z. $/+%-]/g, '')}*`
   const bars: { x: number; w: number }[] = []
   let x = QUIET

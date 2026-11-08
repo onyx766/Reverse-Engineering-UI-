@@ -3,7 +3,7 @@ import { motion, useInView } from 'framer-motion'
 import { Pause, Play, RotateCcw, StepForward, type LucideIcon } from 'lucide-react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
-import { isFocusVisible, isMouse } from './dom'
+import { isFocusVisible, isMouse, useDismiss } from './dom'
 
 export interface Reg {
   name: string
@@ -157,6 +157,8 @@ export function DebuggerView({
     if (!inView) setPinReg(null)
   }, [inView])
 
+  useDismiss(ref, pinReg !== null, () => setPinReg(null))
+
   const advance = () => {
     setRunning(false)
     setStep((v) => (v >= len ? 0 : v + 1))
@@ -181,7 +183,7 @@ export function DebuggerView({
 
   const status = done
     ? { label: 'returned', tone: 'border-emerald-400/40 text-emerald-300', dot: 'bg-emerald-400' }
-    : ticking
+    : auto && !holding
       ? { label: 'running', tone: 'border-accent/40 text-accent', dot: 'bg-accent animate-pulse' }
       : {
           label: auto ? 'hold' : 'break',
@@ -248,7 +250,7 @@ export function DebuggerView({
                 onBlur={() => setFocusReg(null)}
                 onClick={() => setPinReg((p) => (p === r.name ? null : r.name))}
                 className={cn(
-                  'relative flex w-full items-center justify-between gap-2 overflow-hidden rounded-md border px-1.5 py-[3px] text-left transition-colors duration-300 [@media(pointer:coarse)]:min-h-10',
+                  'relative flex w-full items-center gap-2.5 overflow-hidden rounded-md border px-1.5 py-[3px] text-left transition-colors duration-300 sm:gap-3 [@media(pointer:coarse)]:min-h-10',
                   open
                     ? 'border-accent/50 bg-accent/15'
                     : 'border-transparent hover:border-accent/30 hover:bg-accent/[0.07]',
@@ -264,10 +266,10 @@ export function DebuggerView({
                     className="pointer-events-none absolute inset-0 bg-accent/25"
                   />
                 )}
-                <span className="relative text-accent">{r.name}</span>
+                <span className="relative w-[3ch] shrink-0 text-accent">{r.name}</span>
                 <span
                   className={cn(
-                    'relative truncate tabular-nums transition-colors duration-500',
+                    'relative min-w-0 truncate tabular-nums transition-colors duration-500',
                     changed ? 'text-accent3' : open ? 'text-ink' : 'text-muted',
                   )}
                 >
@@ -348,10 +350,19 @@ export function DebuggerView({
         role="list"
       >
         <motion.div
-          className="py-1"
+          className="relative py-1"
           animate={{ y: -first * LINE_H }}
           transition={{ type: 'spring', stiffness: 220, damping: 30 }}
         >
+          {!done && (
+            <motion.span
+              aria-hidden
+              className="absolute inset-x-0 top-1 h-5 border-l-2 border-accent bg-accent/15"
+              initial={false}
+              animate={{ y: s * LINE_H }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            />
+          )}
           {trace.map((c, i) => {
             const active = i === s
             return (
@@ -360,8 +371,8 @@ export function DebuggerView({
                 role="listitem"
                 aria-current={active ? 'step' : undefined}
                 className={cn(
-                  'flex h-5 items-center gap-2.5 px-1.5 transition-colors duration-300',
-                  active ? 'bg-accent/15 text-ink' : i < s ? 'text-muted/50' : 'text-muted',
+                  'relative flex h-5 items-center gap-2.5 px-1.5 transition-colors duration-200',
+                  active ? 'text-ink' : i < s ? 'text-muted/50' : 'text-muted',
                 )}
               >
                 <span className={cn('w-2 shrink-0 text-accent', !active && 'opacity-0')}>▸</span>
@@ -462,7 +473,7 @@ function CtrlButton({
       aria-label={label}
       title={label}
       className={cn(
-        'group relative inline-flex h-8 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-accent/30 bg-accent/[0.06] font-mono text-[10px] uppercase tracking-[0.14em] text-muted transition-all duration-300 hover:border-accent/70 hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm active:scale-95 [@media(pointer:coarse)]:h-10',
+        'group relative inline-flex h-8 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-accent/30 bg-accent/[0.06] font-mono text-[10px] uppercase tracking-[0.14em] text-muted transition-[color,background-color,border-color,box-shadow] duration-300 hover:border-accent/70 hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm active:bg-accent/30 [@media(pointer:coarse)]:h-10',
         text ? 'px-2.5 [@media(pointer:coarse)]:px-3.5' : 'w-8 [@media(pointer:coarse)]:w-10',
       )}
     >

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import { cn, seeded } from '@/lib/utils'
-import { BOOT } from './content'
+import { BOOT } from '@/data/site'
 
 const STORAGE_KEY = 'nox:booted'
-const RUN_MS = 2150
+const RUN_MS = 2200
 const LINE_START_MS = 380
 const LINE_GAP_MS = 250
+/** a stalled frame (chunk parse, shader compile) advances the intro by at most this */
+const MAX_FRAME_MS = 50
 const EXIT_S = 0.62
 const EXIT_DELAY_S = 0.06
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -16,6 +18,24 @@ const rand = seeded(4096)
 const STAMPS = BOOT.log.map((_, i) =>
   ((LINE_START_MS + i * LINE_GAP_MS) / 1000 + rand() * 0.0009).toFixed(4),
 )
+
+const SCROLL_KEYS = new Set([' ', 'Spacebar', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End'])
+
+// progress steps land just after each log line appears
+const P_TIMES = [150, 470, 790, 1110, 1430, 1770, 2080]
+const P_VALUES = [0, 0.14, 0.31, 0.5, 0.68, 0.87, 1]
+
+function progressAt(ms: number) {
+  if (ms <= P_TIMES[0]) return 0
+  for (let i = 1; i < P_TIMES.length; i++) {
+    if (ms <= P_TIMES[i]) {
+      const t = (ms - P_TIMES[i - 1]) / (P_TIMES[i] - P_TIMES[i - 1])
+      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+      return P_VALUES[i - 1] + (P_VALUES[i] - P_VALUES[i - 1]) * e
+    }
+  }
+  return 1
+}
 
 /** Boot runs once per browser session, never with ?noboot or reduced motion. */
 export function shouldRunBoot(): boolean {
@@ -57,29 +77,39 @@ export function BootSequence({ onReveal, onDone }: { onReveal: () => void; onDon
 
   const finish = useCallback(() => setPhase('exit'), [])
 
+  // frame-driven clock: a busy main thread pauses the intro instead of skipping it
   useEffect(() => {
-    const timers = BOOT.log.map((_, i) =>
-      window.setTimeout(() => setLines(i + 1), LINE_START_MS + i * LINE_GAP_MS),
-    )
-    const fill = animate(progress, [0, 0.14, 0.31, 0.5, 0.68, 0.87, 1], {
-      duration: 1.9,
-      delay: 0.15,
-      times: [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1],
-      ease: 'easeInOut',
-    })
-    const end = window.setTimeout(finish, RUN_MS)
-    return () => {
-      timers.forEach((t) => window.clearTimeout(t))
-      fill.stop()
-      window.clearTimeout(end)
+    if (phase !== 'run') return
+    let raf = 0
+    let last = performance.now()
+    let elapsed = 0
+    let shown = 0
+    const tick = (now: number) => {
+      elapsed += Math.min(Math.max(0, now - last), MAX_FRAME_MS)
+      last = now
+      let count = 0
+      while (count < BOOT.log.length && elapsed >= LINE_START_MS + count * LINE_GAP_MS) count++
+      if (count !== shown) {
+        shown = count
+        setLines(count)
+      }
+      progress.set(progressAt(elapsed))
+      if (elapsed >= RUN_MS) {
+        finish()
+        return
+      }
+      raf = requestAnimationFrame(tick)
     }
-  }, [progress, finish])
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [phase, progress, finish])
 
   useEffect(() => {
     if (phase !== 'run') return
     const onKey = (e: KeyboardEvent) => {
-      // the key only skips the intro; it must not also trigger a shortcut underneath
+      // the key only skips the intro: no shortcut underneath, no page scroll
       e.stopPropagation()
+      if (SCROLL_KEYS.has(e.key)) e.preventDefault()
       finish()
     }
     window.addEventListener('keydown', onKey, true)
@@ -287,7 +317,7 @@ function Backdrop() {
       />
 
       <HudCorner className="left-4 top-4 sm:left-6 sm:top-6" text={BOOT.hud.topLeft} />
-      <HudCorner className="right-4 top-4 flex-row-reverse sm:right-6 sm:top-6" text={BOOT.hud.topRight} flip="x" />
+      <HudCorner className="right-4 top-4 hidden flex-row-reverse sm:flex sm:right-6 sm:top-6" text={BOOT.hud.topRight} flip="x" />
       <HudCorner className="bottom-4 left-4 hidden items-end sm:flex sm:bottom-6 sm:left-6" text={BOOT.hud.bottomLeft} flip="y" />
       <HudCorner className="bottom-4 right-4 hidden flex-row-reverse items-end sm:flex sm:bottom-6 sm:right-6" text={BOOT.hud.bottomRight} flip="xy" />
     </>

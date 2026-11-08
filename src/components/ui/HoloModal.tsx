@@ -194,7 +194,7 @@ function ModalPanel({
               )}
               <h2
                 id={titleId}
-                className="truncate font-display text-[17px] font-bold tracking-wide text-ink sm:text-xl"
+                className="line-clamp-2 font-display text-[17px] font-bold leading-tight tracking-wide text-ink sm:truncate sm:text-xl"
               >
                 {title}
               </h2>

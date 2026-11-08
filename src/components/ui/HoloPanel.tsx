@@ -27,9 +27,11 @@ export interface HoloPanelProps {
 
 /**
  * The building block of the whole portfolio: a holographic glass pane that
- * actually lives in 3D — it tilts toward the cursor, its contents sit on
- * raised Z planes so they parallax against the glass, and a light follows
- * the pointer across the surface.
+ * tilts toward the cursor while a light follows the pointer across it.
+ *
+ * The pane is deliberately one flat layer: the glass (backdrop-filter +
+ * overflow hidden) flattens 3D anyway, and nested preserve-3d / translateZ
+ * planes made Chrome drop clicks on transformed children inside the body.
  */
 export function HoloPanel({
   children,
@@ -122,16 +124,16 @@ export function HoloPanel({
       transition={{ duration: 0.85, delay, ease: [0.22, 1, 0.36, 1] }}
       style={{ transformPerspective: 1300, rotateX, rotateY }}
       className={cn(
-        'group/panel preserve-3d relative rounded-2xl',
+        'group/panel relative rounded-2xl',
         onClick && 'cursor-pointer',
         className,
       )}
     >
       {/* floating bob sits on its own wrapper so it never fights the tilt */}
-      <div className={cn('preserve-3d h-full', float && !reduced && 'animate-float-slow')}>
+      <div className={cn('h-full', float && !reduced && 'animate-float-slow')}>
         <div
           className={cn(
-            'glass preserve-3d relative h-full overflow-hidden rounded-2xl transition-[box-shadow,border-color] duration-500',
+            'glass relative h-full overflow-hidden rounded-2xl transition-[box-shadow,border-color] duration-500',
             'group-hover/panel:border-accent/60',
           )}
           style={{
@@ -171,10 +173,7 @@ export function HoloPanel({
 
           {/* header */}
           {(title || badge) && (
-            <div
-              className="preserve-3d relative flex items-center gap-2.5 border-b border-accent/15 px-4 py-3 sm:px-5"
-              style={{ transform: 'translateZ(26px)' }}
-            >
+            <div className="relative flex items-center gap-2.5 border-b border-accent/15 px-4 py-3 sm:px-5">
               {Icon && (
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-accent/35 bg-accent/10 text-accent shadow-glow-sm transition-transform duration-500 group-hover/panel:scale-110">
                   <Icon className="h-4 w-4" />
@@ -193,13 +192,7 @@ export function HoloPanel({
             </div>
           )}
 
-          {/* body — raised so it parallaxes against the glass */}
-          <div
-            className={cn('preserve-3d relative p-4 sm:p-5', bodyClassName)}
-            style={{ transform: 'translateZ(34px)' }}
-          >
-            {children}
-          </div>
+          <div className={cn('relative p-4 sm:p-5', bodyClassName)}>{children}</div>
         </div>
 
         {/* ground glow beneath the pane */}

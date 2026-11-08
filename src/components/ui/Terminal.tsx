@@ -49,9 +49,12 @@ export function Terminal({
       if (line >= lines.length) return
       const full = lines[line].text
       char += 1
+      // snapshot the cursor: React may run this updater after line/char advance
+      const l = line
+      const c = char
       setShown((prev) => {
-        const next = prev.slice(0, line)
-        next[line] = full.slice(0, char)
+        const next = prev.slice(0, l)
+        next[l] = full.slice(0, c)
         return next
       })
       if (char >= full.length) {
@@ -71,6 +74,10 @@ export function Terminal({
     if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight
   }, [shown])
 
+  // done only once the last line is fully typed (not merely started)
+  const finished =
+    shown.length >= lines.length && shown[lines.length - 1] === lines[lines.length - 1]?.text
+
   return (
     <div
       ref={boxRef}
@@ -83,12 +90,12 @@ export function Terminal({
       {shown.map((text, i) => (
         <div key={i} className={cn('whitespace-pre-wrap', TONE[lines[i]?.tone ?? 'dim'])}>
           {text}
-          {i === shown.length - 1 && shown.length < lines.length && (
+          {i === shown.length - 1 && !finished && (
             <span className="ml-0.5 inline-block h-3 w-1.5 animate-blink bg-accent align-middle" />
           )}
         </div>
       ))}
-      {shown.length >= lines.length && (
+      {finished && (
         <div className="text-accent">
           ${' '}
           <span className="ml-0.5 inline-block h-3 w-1.5 animate-blink bg-accent align-middle" />

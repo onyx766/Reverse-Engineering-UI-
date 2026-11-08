@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Background } from '@/components/layout/Background'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { SectionBoundary } from '@/components/layout/SectionBoundary'
+import { SectionBoundary, SilentBoundary } from '@/components/layout/SectionBoundary'
 import { BootSequence, shouldRunBoot } from '@/components/fx/BootSequence'
 import { SectionTransition } from '@/components/fx/SectionTransition'
 import { CursorAura } from '@/components/fx/CursorAura'
@@ -18,17 +18,19 @@ const HoloCore = lazy(() =>
 )
 
 /**
- * Where the background hologram sits per section. Projects is absent on
- * purpose: it mounts its own hologram on its stage, so this one fades out.
+ * Where the background hologram sits per section. Projects and Tools are
+ * absent on purpose: each builds its own centrepiece on its stage (WebGL core
+ * / orbital toolkit), so this one fades out and stops rendering there.
  * Size changes use scale (cheap) rather than width/height (canvas resize).
  */
 const CORE_PLACEMENT: Partial<Record<SectionId, string>> = {
-  home: 'scale-[0.82] opacity-45',
-  expertise: 'scale-100 opacity-60',
-  tools: 'scale-95 opacity-50',
-  writeups: 'scale-[0.88] opacity-30',
-  about: 'scale-90 opacity-45',
-  contact: 'scale-95 opacity-55',
+  // phones stack the hero copy over the core, so it steps back there
+  home: 'scale-[0.82] opacity-25 md:opacity-45',
+  // content-dense sections: keep the core as ambience, never competing with text
+  expertise: 'scale-100 opacity-35',
+  writeups: 'scale-[0.88] opacity-20',
+  about: 'scale-90 opacity-30',
+  contact: 'scale-95 opacity-30',
 }
 
 const MAIN_ID = 'main-content'
@@ -77,16 +79,19 @@ export default function App() {
       <Background />
       <Navbar ready={revealed} />
 
-      <Suspense fallback={<CorePlaceholder />}>
-        <HoloCore
-          paused={!placement}
-          className={cn(
-            'pointer-events-none fixed left-1/2 top-1/2 -z-[5] h-[min(70vh,640px)] w-[min(70vw,640px)] -translate-x-1/2 -translate-y-1/2',
-            'transition-[opacity,transform] duration-700 ease-out',
-            placement ?? 'scale-75 opacity-0',
-          )}
-        />
-      </Suspense>
+      <SilentBoundary>
+        <Suspense fallback={<CorePlaceholder />}>
+          <HoloCore
+            paused={!placement}
+            className={cn(
+              // square on every screen: a tall portrait canvas narrows the camera's view and clips the cube
+              'pointer-events-none fixed left-1/2 top-1/2 -z-[5] h-[min(70vh,86vw,640px)] w-[min(70vh,86vw,640px)] -translate-x-1/2 -translate-y-1/2',
+              'transition-[opacity,transform] duration-700 ease-out',
+              placement ?? 'scale-75 opacity-0',
+            )}
+          />
+        </Suspense>
+      </SilentBoundary>
 
       <motion.main
         id={MAIN_ID}

@@ -38,15 +38,18 @@ export interface FaceMotion {
 export function Face({
   children,
   back = false,
+  showing,
   visibility,
   motion: m,
 }: {
   children: ReactNode
   back?: boolean
+  /** this side is the one facing the viewer */
+  showing: boolean
   visibility: MotionValue<string>
   motion: FaceMotion
 }) {
-  const glare = useMotionTemplate`radial-gradient(circle at ${m.gx}% ${m.gy}%, rgb(var(--ink) / 0.22), transparent 46%)`
+  const glare = useMotionTemplate`radial-gradient(circle at ${m.gx}% ${m.gy}%, rgb(var(--ink) / 0.16), transparent 42%)`
   const foilPos = useMotionTemplate`${m.gx}% ${m.gy}%`
   const sparkleMask = useMotionTemplate`radial-gradient(circle at ${m.gx}% ${m.gy}%, black 0%, transparent 55%)`
 
@@ -84,7 +87,7 @@ export function Face({
           backgroundSize: '240% 240%',
           backgroundPosition: foilPos,
           mixBlendMode: 'color-dodge',
-          opacity: m.hovered ? 0.55 : 0.16,
+          opacity: m.hovered ? 0.36 : 0.14,
         }}
       />
       <motion.div
@@ -106,7 +109,7 @@ export function Face({
       />
 
       {/* idle sheen */}
-      {m.live && !m.hovered && (
+      {m.live && !m.hovered && showing && (
         <motion.div
           aria-hidden
           className="pointer-events-none absolute -inset-y-1/4 left-0 w-1/3"
@@ -187,7 +190,7 @@ export function CardFront({ data, motion: m }: { data: IdCardData; motion: FaceM
 
       <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-accent/25 bg-accent/20">
         {data.fields.map((f) => (
-          <div key={f.label} className="bg-deep/90 px-3 py-2">
+          <div key={f.label} className={cn('bg-deep/90 px-3 py-2', f.wide && 'col-span-2')}>
             <dt className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-muted">{f.label}</dt>
             <dd className="mt-0.5 flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-ink">
               {f.live && <Led />}

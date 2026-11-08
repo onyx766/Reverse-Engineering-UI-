@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { motion } from 'framer-motion'
+import { useRef, type ReactNode } from 'react'
+import { motion, useInView } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { EASE } from './meta'
 
@@ -19,8 +19,11 @@ export function SubHeading({
   className?: string
   id?: string
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-60px' })
+
   return (
-    <div className={cn('flex flex-wrap items-end justify-between gap-x-6 gap-y-3', className)}>
+    <div ref={ref} className={cn('flex flex-wrap items-end justify-between gap-x-6 gap-y-3', className)}>
       <motion.div
         initial={{ opacity: 0, x: -24, filter: 'blur(8px)' }}
         whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
@@ -60,8 +63,7 @@ export function SubHeading({
       <motion.span
         aria-hidden
         initial={{ scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true, margin: '-60px' }}
+        animate={{ scaleX: inView ? 1 : 0 }}
         transition={{ duration: 1, delay: 0.15, ease: EASE }}
         className="h-px w-full origin-left bg-gradient-to-r from-accent/70 via-accent/20 to-transparent"
       />

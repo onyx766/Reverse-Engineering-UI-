@@ -1,7 +1,6 @@
 import { Suspense, lazy, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import type { ShardId } from '@/data/projects'
-import { cn } from '@/lib/utils'
 import { CfgBody, DisasmBody, HexBody, HttpBody, ShardFrame, WaveBody } from './shards'
 
 const HoloCore = lazy(() =>
@@ -45,14 +44,14 @@ const FULL: StageDesign = {
   cy: 214,
   shards: [
     { id: 'disasm', left: 0, top: 26, width: 258, turn: 14, bob: { dur: 7.5, delay: -1 } },
-    { id: 'hex', left: 28, top: 250, width: 252, turn: 14, bob: { dur: 8.5, delay: -4 } },
+    { id: 'hex', left: 2, top: 250, width: 290, turn: 14, bob: { dur: 8.5, delay: -4 } },
     { id: 'cfg', left: 650, top: 0, width: 212, turn: -14, bob: { dur: 8, delay: -2.5 } },
     { id: 'http', left: 636, top: 150, width: 244, turn: -14, bob: { dur: 7, delay: -5 } },
     { id: 'wave', left: 646, top: 322, width: 234, turn: -14, bob: { dur: 9, delay: -3 } },
   ],
   traces: [
     { id: 't-disasm', shard: 'disasm', d: 'M258 118 H298 L328 148 H352', nodes: [{ x: 298, y: 118 }, { x: 352, y: 148, tone: 'end' }] },
-    { id: 't-hex', shard: 'hex', d: 'M280 300 H306 L336 270 H358', nodes: [{ x: 306, y: 300 }, { x: 358, y: 270, tone: 'end' }] },
+    { id: 't-hex', shard: 'hex', d: 'M292 300 H310 L338 272 H358', nodes: [{ x: 310, y: 300 }, { x: 358, y: 272, tone: 'end' }] },
     { id: 't-cfg', shard: 'cfg', d: 'M650 78 H612 L578 112 H530', nodes: [{ x: 612, y: 78 }, { x: 530, y: 112, tone: 'end' }] },
     { id: 't-http', shard: 'http', d: 'M636 224 H602 L584 206 H532', nodes: [{ x: 602, y: 224 }, { x: 532, y: 206, tone: 'end' }] },
     { id: 't-wave', shard: 'wave', d: 'M646 358 H610 L572 320 H530', nodes: [{ x: 610, y: 358 }, { x: 530, y: 320, tone: 'end' }] },
@@ -126,14 +125,13 @@ export function DesktopStage({ hot, running, visible, width, compact }: StagePro
   const design = compact ? COMPACT : FULL
   const k = Math.min(1.2, Math.max(0.62, width / design.w))
   const allHot = hot.length > 1
-  const core = compact ? 'min(470px, 42vw)' : 'min(560px, 44vw)'
+  const core = compact ? 'min(480px, 43vw)' : 'min(620px, 45vw)'
 
   return (
     <div className="pointer-events-none relative w-full" style={{ height: design.h * k }}>
-      {/* hologram */}
       <motion.div
         className="absolute left-1/2"
-        style={{ width: core, height: core, top: design.cy * k, x: '-50%', y: '-50%' }}
+        style={{ width: core, height: core, top: design.cy * k + 20, x: '-50%', y: '-50%' }}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1.1, ease: EASE, delay: 0.1 }}
@@ -150,6 +148,7 @@ export function DesktopStage({ hot, running, visible, width, compact }: StagePro
 
       {/* shards + traces, laid out in design pixels */}
       <div
+        aria-hidden
         className="absolute left-1/2 top-0"
         style={{
           width: design.w,
@@ -212,8 +211,8 @@ function Traces({ design, hot, running }: { design: StageDesign; hot: ShardId[];
           <g key={t.id}>
             <motion.path
               d={t.d}
-              stroke={isHot ? 'rgb(var(--accent) / 0.55)' : 'rgb(var(--accent) / 0.2)'}
-              strokeWidth={isHot ? 2.2 : 1.2}
+              stroke={isHot ? 'rgb(var(--accent) / 0.6)' : 'rgb(var(--accent) / 0.3)'}
+              strokeWidth={isHot ? 2.4 : 1.5}
               strokeLinecap="round"
               strokeLinejoin="round"
               initial={{ pathLength: 0 }}
@@ -223,8 +222,8 @@ function Traces({ design, hot, running }: { design: StageDesign; hot: ShardId[];
             />
             <motion.path
               d={t.d}
-              stroke={isHot ? 'rgb(var(--accent-3))' : deco ? 'rgb(var(--accent) / 0.45)' : 'rgb(var(--accent) / 0.6)'}
-              strokeWidth={isHot ? 1.8 : 1.1}
+              stroke={isHot ? 'rgb(var(--accent-3))' : deco ? 'rgb(var(--accent) / 0.6)' : 'rgb(var(--accent-3) / 0.75)'}
+              strokeWidth={isHot ? 2 : 1.3}
               strokeLinecap="round"
               strokeDasharray="6 10"
               filter={isHot ? 'url(#pjTraceGlow)' : undefined}
@@ -250,7 +249,7 @@ function Traces({ design, hot, running }: { design: StageDesign; hot: ShardId[];
                     style={{
                       transformBox: 'fill-box',
                       transformOrigin: 'center',
-                      animation: 'pulseRing 1.8s ease-out infinite',
+                      animation: 'pj-ring 1.8s ease-out infinite',
                     }}
                   />
                 )}
@@ -306,7 +305,8 @@ export function CompactStage({ hot, running, visible }: StageProps) {
       </motion.div>
 
       <motion.div
-        className={cn('relative -mt-[22%] grid grid-cols-2 gap-2.5 sm:-mt-[14%] sm:grid-cols-3')}
+        aria-hidden
+        className="relative -mt-[22%] grid grid-cols-2 gap-2.5 sm:-mt-[14%] sm:grid-cols-3"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3, ease: EASE }}

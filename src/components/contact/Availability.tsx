@@ -1,10 +1,11 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useInView } from 'framer-motion'
-import { Activity, CalendarCheck, MoonStar, Sun, Timer } from 'lucide-react'
+import { Activity, CalendarCheck, FileLock2, MoonStar, Sun, Timer } from 'lucide-react'
 import { HoloPanel } from '@/components/ui/HoloPanel'
 import { cn } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { AVAILABILITY, CONTACT, OWNER_TZ } from '@/data/contact'
+import { PROFILE } from '@/data/profile'
 import { EASE } from './fields'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -117,22 +118,46 @@ export function Availability() {
   const pos = ((h + m / 60 + s / 3600) / 24) * 100
   const isDay = h >= 7 && h < 19
   const live = inView && !reduced
+  const open = PROFILE.available
 
   return (
-    <HoloPanel title="Availability" icon={Activity} badge="Live" from="right" delay={0.12} tilt={6}>
-      <div ref={ref} className="flex flex-col gap-4">
+    <HoloPanel
+      title="Availability"
+      icon={Activity}
+      badge="Live"
+      from="right"
+      delay={0.12}
+      tilt={5}
+      className="h-full"
+      bodyClassName="flex flex-col lg:min-h-[calc(100%-58px)]"
+    >
+      <div ref={ref} className="flex flex-1 flex-col gap-4">
         <div className="flex items-start gap-3">
           <span aria-hidden className="relative mt-1 flex h-3 w-3 shrink-0">
             {live && (
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
+              <span
+                className={cn(
+                  'absolute inline-flex h-full w-full animate-ping rounded-full',
+                  open ? 'bg-emerald-400/70' : 'bg-amber-400/70',
+                )}
+              />
             )}
-            <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_12px_rgb(52_211_153/0.85)]" />
+            <span
+              className={cn(
+                'relative inline-flex h-3 w-3 rounded-full',
+                open
+                  ? 'bg-emerald-400 shadow-[0_0_12px_rgb(52_211_153/0.85)]'
+                  : 'bg-amber-400 shadow-[0_0_12px_rgb(251_191_36/0.85)]',
+              )}
+            />
           </span>
           <div className="min-w-0">
             <p className="font-display text-[13.5px] font-bold uppercase tracking-[0.12em] text-ink">
-              {AVAILABILITY.status}
+              {open ? AVAILABILITY.status : AVAILABILITY.bookedStatus}
             </p>
-            <p className="mt-0.5 text-[14px] text-muted">{AVAILABILITY.detail}</p>
+            <p className="mt-0.5 text-[14px] text-muted">
+              {open ? AVAILABILITY.detail : AVAILABILITY.bookedDetail}
+            </p>
           </div>
         </div>
 
@@ -153,7 +178,7 @@ export function Availability() {
                 <span aria-hidden className="flex">
                   <Digit d={hh[0]} reduced={reduced} />
                   <Digit d={hh[1]} reduced={reduced} />
-                  <span className={cn('w-[0.4em] text-center text-accent', live && 'animate-blink')}>:</span>
+                  <span className={cn('w-[0.4em] text-center text-accent', live && 'animate-pulse')}>:</span>
                   <Digit d={mm[0]} reduced={reduced} />
                   <Digit d={mm[1]} reduced={reduced} />
                   <span className="w-[0.4em] text-center text-accent/60">:</span>
@@ -254,7 +279,8 @@ export function Availability() {
           />
         </div>
 
-        <p className="border-l-2 border-accent/40 pl-3 text-[14px] leading-relaxed text-muted">
+        <p className="mt-auto flex gap-2.5 border-t border-accent/15 pt-4 text-[14px] leading-relaxed text-muted">
+          <FileLock2 aria-hidden className="mt-1 h-4 w-4 shrink-0 text-accent" />
           {CONTACT.bookingNote}
         </p>
       </div>

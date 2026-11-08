@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
 import { PROFICIENCY_LABEL, type Proficiency } from '@/data/tools'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
@@ -25,9 +26,14 @@ export function ProficiencyMeter({
   className?: string
 }) {
   const reduced = useReducedMotion()
+  const ref = useRef<HTMLDivElement>(null)
+  // observe the meter itself: a scaleX(0) fill has no area and may never report as visible
+  const inView = useInView(ref, { once: true, margin: '-20px' })
+  const filled = reduced || inView
 
   return (
     <div
+      ref={ref}
       role="img"
       aria-label={`Proficiency ${level} of 5, ${PROFICIENCY_LABEL[level]}`}
       className={cn('relative flex items-center gap-[3px]', className)}
@@ -44,8 +50,7 @@ export function ProficiencyMeter({
             <motion.span
               className="absolute inset-0 origin-left bg-gradient-to-r from-accent to-accent2 shadow-glow-sm"
               initial={reduced ? false : { scaleX: 0, opacity: 0.4 }}
-              whileInView={{ scaleX: 1, opacity: 1 }}
-              viewport={{ once: true, margin: '-20px' }}
+              animate={filled ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0.4 }}
               transition={{ duration: 0.45, delay: delay + i * 0.09, ease: EASE }}
             />
           )}

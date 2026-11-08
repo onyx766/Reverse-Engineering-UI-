@@ -249,25 +249,7 @@
   }
 }
 
-/* Infinite perspective-grid scroll (legacy; the floor now uses fxGridRoll). */
-@keyframes gridScroll {
-  from {
-    background-position:
-      0 0,
-      0 0;
-  }
-  to {
-    background-position:
-      0 68px,
-      68px 0;
-  }
-}
-
-/*
- * Global FX loops. All of them animate transform/opacity only, so they run
- * on the compositor; Background flags itself with data-fx-paused while the
- * tab is hidden (or motion is reduced) and everything inside freezes.
- */
+/* Global FX loops: transform/opacity only (compositor), frozen by [data-fx-paused]. */
 @keyframes fxGridRoll {
   from {
     transform: translate3d(0, 0, 0);
@@ -305,15 +287,6 @@
     opacity: 0.3;
   }
 }
-@keyframes fxBeam {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
-}
 @keyframes waveScroll {
   from {
     transform: translate3d(0, 0, 0);
@@ -334,9 +307,6 @@
   }
   .fx-strip {
     animation: fxStrip 6s ease-in-out infinite alternate;
-  }
-  .fx-beam {
-    animation: fxBeam 10s ease-in-out infinite;
   }
 }
 
