@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { Background } from '@/components/layout/Background'
 import { Navbar } from '@/components/layout/Navbar'
 import { useTheme } from '@/theme/ThemeProvider'
 import { THEMES } from '@/theme/themes'
@@ -40,17 +41,7 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden scene">
-      {/* ambient wash — recolours with the active section */}
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 transition-[background] duration-700"
-        style={{
-          background: `radial-gradient(90rem 60rem at 50% -10%, rgb(var(--accent) / 0.20), transparent 60%),
-                       radial-gradient(60rem 40rem at 8% 108%, rgb(var(--accent-2) / 0.16), transparent 60%),
-                       radial-gradient(50rem 40rem at 95% 60%, rgb(var(--accent-3) / 0.10), transparent 60%),
-                       rgb(var(--deep))`,
-        }}
-      />
-
+      <Background />
       <Navbar />
 
       <main className="mx-auto flex min-h-[200vh] max-w-6xl flex-col items-center px-6 pt-48 text-center">
