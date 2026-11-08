@@ -142,14 +142,26 @@ export const NAV_ITEMS: SectionId[] = [
   'about',
 ]
 
+/**
+ * Writes the palette as per-channel custom properties. index.css registers
+ * those channels with @property and transitions them, so the whole UI
+ * morphs smoothly from one section's palette to the next.
+ */
 export function applyTheme(theme: Theme) {
   const root = document.documentElement
-  root.style.setProperty('--accent', theme.accent)
-  root.style.setProperty('--accent-2', theme.accent2)
-  root.style.setProperty('--accent-3', theme.accent3)
-  root.style.setProperty('--surface', theme.surface)
-  root.style.setProperty('--deep', theme.deep)
-  root.style.setProperty('--ink', theme.ink)
-  root.style.setProperty('--muted', theme.muted)
+  const write = (name: string, triplet: string) => {
+    const [r, g, b] = triplet.split(' ')
+    root.style.setProperty(`--${name}-r`, r)
+    root.style.setProperty(`--${name}-g`, g)
+    root.style.setProperty(`--${name}-b`, b)
+  }
+  write('accent', theme.accent)
+  write('accent-2', theme.accent2)
+  write('accent-3', theme.accent3)
+  write('surface', theme.surface)
+  write('deep', theme.deep)
+  write('ink', theme.ink)
+  write('muted', theme.muted)
   root.dataset.theme = theme.id
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.gl.fog)
 }

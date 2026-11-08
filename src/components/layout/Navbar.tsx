@@ -15,6 +15,7 @@ import { useTheme } from '@/theme/ThemeProvider'
 import { NAV_ITEMS, THEMES, type SectionId } from '@/theme/themes'
 import { HoloLogo } from '@/components/ui/HoloLogo'
 import { MagneticButton } from '@/components/ui/MagneticButton'
+import { preloadSection } from '@/sections/registry'
 import { cn } from '@/lib/utils'
 
 const ICONS: Record<SectionId, typeof Home> = {
@@ -162,6 +163,7 @@ export function Navbar() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.05 + i * 0.045 }}
                     onClick={() => go(id)}
+                    aria-current={active ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-3 rounded-xl px-4 py-3 font-display text-sm uppercase tracking-[0.16em] transition-all',
                       active
@@ -198,6 +200,9 @@ function NavLink({
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => preloadSection(id)}
+      onFocus={() => preloadSection(id)}
+      aria-current={active ? 'page' : undefined}
       className={cn(
         'group relative whitespace-nowrap rounded-xl px-3 py-2.5 font-display text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors duration-300 xl:px-3.5 xl:text-[12.5px]',
         active ? 'text-ink' : 'text-muted hover:text-ink',

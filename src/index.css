@@ -2,19 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Each palette colour is split into registered numeric channels so the
+ * browser can interpolate them: switching sections then morphs every
+ * gradient, glow and border in the UI instead of snapping. Browsers
+ * without @property simply snap to the new palette.
+ */
+@property --accent-r { syntax: '<number>'; inherits: true; initial-value: 34; }
+@property --accent-g { syntax: '<number>'; inherits: true; initial-value: 211; }
+@property --accent-b { syntax: '<number>'; inherits: true; initial-value: 238; }
+@property --accent-2-r { syntax: '<number>'; inherits: true; initial-value: 45; }
+@property --accent-2-g { syntax: '<number>'; inherits: true; initial-value: 212; }
+@property --accent-2-b { syntax: '<number>'; inherits: true; initial-value: 191; }
+@property --accent-3-r { syntax: '<number>'; inherits: true; initial-value: 125; }
+@property --accent-3-g { syntax: '<number>'; inherits: true; initial-value: 211; }
+@property --accent-3-b { syntax: '<number>'; inherits: true; initial-value: 252; }
+@property --surface-r { syntax: '<number>'; inherits: true; initial-value: 8; }
+@property --surface-g { syntax: '<number>'; inherits: true; initial-value: 20; }
+@property --surface-b { syntax: '<number>'; inherits: true; initial-value: 28; }
+@property --deep-r { syntax: '<number>'; inherits: true; initial-value: 3; }
+@property --deep-g { syntax: '<number>'; inherits: true; initial-value: 8; }
+@property --deep-b { syntax: '<number>'; inherits: true; initial-value: 13; }
+@property --ink-r { syntax: '<number>'; inherits: true; initial-value: 226; }
+@property --ink-g { syntax: '<number>'; inherits: true; initial-value: 243; }
+@property --ink-b { syntax: '<number>'; inherits: true; initial-value: 248; }
+@property --muted-r { syntax: '<number>'; inherits: true; initial-value: 129; }
+@property --muted-g { syntax: '<number>'; inherits: true; initial-value: 163; }
+@property --muted-b { syntax: '<number>'; inherits: true; initial-value: 177; }
+
 @layer base {
   :root {
-    /* Defaults — overwritten at runtime by the theme engine (home palette). */
-    --accent: 34 211 238;
-    --accent-2: 45 212 191;
-    --accent-3: 125 211 252;
-    --surface: 8 20 28;
-    --deep: 3 8 13;
-    --ink: 226 243 248;
-    --muted: 129 163 177;
+    /* Channel defaults (home palette) — the theme engine writes these at runtime. */
+    --accent-r: 34;
+    --accent-g: 211;
+    --accent-b: 238;
+    --accent-2-r: 45;
+    --accent-2-g: 212;
+    --accent-2-b: 191;
+    --accent-3-r: 125;
+    --accent-3-g: 211;
+    --accent-3-b: 252;
+    --surface-r: 8;
+    --surface-g: 20;
+    --surface-b: 28;
+    --deep-r: 3;
+    --deep-g: 8;
+    --deep-b: 13;
+    --ink-r: 226;
+    --ink-g: 243;
+    --ink-b: 248;
+    --muted-r: 129;
+    --muted-g: 163;
+    --muted-b: 177;
 
-    --theme-ms: 700ms;
+    /* "R G B" triplets consumed everywhere as rgb(var(--accent) / alpha) */
+    --accent: var(--accent-r) var(--accent-g) var(--accent-b);
+    --accent-2: var(--accent-2-r) var(--accent-2-g) var(--accent-2-b);
+    --accent-3: var(--accent-3-r) var(--accent-3-g) var(--accent-3-b);
+    --surface: var(--surface-r) var(--surface-g) var(--surface-b);
+    --deep: var(--deep-r) var(--deep-g) var(--deep-b);
+    --ink: var(--ink-r) var(--ink-g) var(--ink-b);
+    --muted: var(--muted-r) var(--muted-g) var(--muted-b);
+
+    --theme-ms: 900ms;
     --ease-holo: cubic-bezier(0.22, 1, 0.36, 1);
+
+    transition-property:
+      --accent-r, --accent-g, --accent-b,
+      --accent-2-r, --accent-2-g, --accent-2-b,
+      --accent-3-r, --accent-3-g, --accent-3-b,
+      --surface-r, --surface-g, --surface-b,
+      --deep-r, --deep-g, --deep-b,
+      --ink-r, --ink-g, --ink-b,
+      --muted-r, --muted-g, --muted-b;
+    transition-duration: var(--theme-ms);
+    transition-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
 
     color-scheme: dark;
   }
@@ -35,9 +97,6 @@
     color: rgb(var(--ink));
     font-family: theme('fontFamily.sans');
     overflow-x: hidden;
-    transition:
-      background-color var(--theme-ms) var(--ease-holo),
-      color var(--theme-ms) var(--ease-holo);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -83,8 +142,8 @@
         rgb(var(--surface) / 0.86) 0%,
         rgb(var(--deep) / 0.72) 100%
       );
-    backdrop-filter: blur(16px) saturate(140%);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
     border: 1px solid rgb(var(--accent) / 0.28);
     box-shadow:
       0 0 0 1px rgb(var(--accent) / 0.07) inset,
@@ -92,9 +151,8 @@
       0 24px 60px -24px rgb(0 0 0 / 0.9),
       0 0 34px -12px rgb(var(--accent) / 0.45);
     transition:
-      border-color var(--theme-ms) var(--ease-holo),
-      box-shadow var(--theme-ms) var(--ease-holo),
-      background var(--theme-ms) var(--ease-holo);
+      border-color 0.4s var(--ease-holo),
+      box-shadow 0.4s var(--ease-holo);
   }
 
   .glass-strong {
@@ -104,8 +162,8 @@
         rgb(var(--surface) / 0.95) 0%,
         rgb(var(--deep) / 0.88) 100%
       );
-    backdrop-filter: blur(22px) saturate(150%);
     -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
     border: 1px solid rgb(var(--accent) / 0.38);
   }
 
@@ -162,6 +220,21 @@
   .gpu {
     transform: translateZ(0);
     will-change: transform, opacity;
+  }
+  /* thin themed scrollbar for scrollable panes inside panels/modals */
+  .holo-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--accent) / 0.5) transparent;
+  }
+  .holo-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .holo-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .holo-scroll::-webkit-scrollbar-thumb {
+    border: 0;
   }
 }
 

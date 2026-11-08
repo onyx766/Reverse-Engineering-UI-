@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber'
 import { Edges, Float } from '@react-three/drei'
 import * as THREE from 'three'
@@ -392,6 +392,25 @@ function Pedestal({ color, alt }: { color: THREE.Color; alt: THREE.Color }) {
   )
 }
 
+/*
+ * The canvas sits behind the page content, so it never receives pointer
+ * events itself — track the pointer at window level instead.
+ */
+const windowPointer = { x: 0, y: 0 }
+let pointerTracked = false
+function trackWindowPointer() {
+  if (pointerTracked) return
+  pointerTracked = true
+  window.addEventListener(
+    'pointermove',
+    (e) => {
+      windowPointer.x = (e.clientX / window.innerWidth) * 2 - 1
+      windowPointer.y = -((e.clientY / window.innerHeight) * 2 - 1)
+    },
+    { passive: true },
+  )
+}
+
 /** Whole assembly — tilts toward the pointer. */
 function Rig(props: ThreeElements['group']) {
   const group = useRef<THREE.Group>(null)
@@ -400,7 +419,7 @@ function Rig(props: ThreeElements['group']) {
 
   useFrame((state, dt) => {
     if (!group.current) return
-    const { x, y } = state.pointer
+    const { x, y } = windowPointer
     const tx = reduced ? 0 : y * 0.22
     const ty = reduced ? 0 : x * 0.5
     group.current.rotation.x += (tx - group.current.rotation.x) * Math.min(1, dt * 2.4)
@@ -438,8 +457,17 @@ function Lights() {
   )
 }
 
-export function HoloCore({ className }: { className?: string }) {
+export function HoloCore({
+  className,
+  paused = false,
+}: {
+  className?: string
+  /** stops the render loop (e.g. while this instance is faded out) */
+  paused?: boolean
+}) {
   const reduced = useReducedMotion()
+
+  useEffect(trackWindowPointer, [])
 
   return (
     <div className={className}>
@@ -447,7 +475,8 @@ export function HoloCore({ className }: { className?: string }) {
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         camera={{ position: [0, 0.4, 8.6], fov: 40 }}
-        frameloop={reduced ? 'demand' : 'always'}
+        frameloop={paused ? 'never' : reduced ? 'demand' : 'always'}
+        style={{ pointerEvents: 'none' }}
       >
         <Suspense fallback={null}>
           <Lights />
