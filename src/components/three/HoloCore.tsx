@@ -457,6 +457,9 @@ function Lights() {
   )
 }
 
+/** The pedestal rings expand past the canvas bounds — feather the edges so they fade instead of clipping. */
+const FEATHER = 'radial-gradient(50% 50% at 50% 50%, #000 66%, transparent 100%)'
+
 export function HoloCore({
   className,
   paused = false,
@@ -470,7 +473,7 @@ export function HoloCore({
   useEffect(trackWindowPointer, [])
 
   return (
-    <div className={className}>
+    <div className={className} style={{ maskImage: FEATHER, WebkitMaskImage: FEATHER }}>
       <Canvas
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}

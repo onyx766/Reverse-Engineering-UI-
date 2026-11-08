@@ -1,8 +1,13 @@
-import { Suspense, lazy, useEffect } from 'react'
+import { Suspense, lazy, useEffect, useState, type MouseEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Background } from '@/components/layout/Background'
 import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
 import { SectionBoundary } from '@/components/layout/SectionBoundary'
+import { BootSequence, shouldRunBoot } from '@/components/fx/BootSequence'
+import { SectionTransition } from '@/components/fx/SectionTransition'
+import { CursorAura } from '@/components/fx/CursorAura'
+import { useSectionHotkeys } from '@/components/fx/useSectionHotkeys'
 import { SECTIONS, preloadSection } from '@/sections/registry'
 import { useTheme } from '@/theme/ThemeProvider'
 import { SECTION_ORDER, type SectionId } from '@/theme/themes'
@@ -26,10 +31,21 @@ const CORE_PLACEMENT: Partial<Record<SectionId, string>> = {
   contact: 'scale-95 opacity-55',
 }
 
+const MAIN_ID = 'main-content'
+
+/*
+ * Stacking order: Background -z-10 < HoloCore -z-[5] < main / footer <
+ * drawer z-40 < navbar z-50 < section-switch FX z-[70] < HoloModal z-[80] <
+ * cursor aura z-[90] < boot overlay z-[100].
+ */
 export default function App() {
   const { section, epoch } = useTheme()
   const placement = CORE_PLACEMENT[section]
   const Current = SECTIONS[section]
+  const [booting, setBooting] = useState(shouldRunBoot)
+  const [revealed, setRevealed] = useState(() => !booting)
+
+  useSectionHotkeys()
 
   // warm every section chunk once the browser is idle so nav switches are instant
   useEffect(() => {
@@ -42,10 +58,24 @@ export default function App() {
     return () => clearTimeout(t)
   }, [])
 
+  const skipToContent = (e: MouseEvent<HTMLAnchorElement>) => {
+    // hash routing would read "#main-content" as a section, so focus manually
+    e.preventDefault()
+    document.getElementById(MAIN_ID)?.focus()
+  }
+
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-x-clip">
+      <a
+        href={`#${MAIN_ID}`}
+        onClick={skipToContent}
+        className="sr-only rounded-xl border border-accent bg-deep px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-accent shadow-glow focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[95]"
+      >
+        Skip to content
+      </a>
+
       <Background />
-      <Navbar />
+      <Navbar ready={revealed} />
 
       <Suspense fallback={<CorePlaceholder />}>
         <HoloCore
@@ -58,7 +88,14 @@ export default function App() {
         />
       </Suspense>
 
-      <main className="relative">
+      <motion.main
+        id={MAIN_ID}
+        tabIndex={-1}
+        className="relative flex-1 outline-none"
+        initial={false}
+        animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
+        transition={{ duration: 0.9, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+      >
         <AnimatePresence
           mode="wait"
           onExitComplete={() => window.scrollTo({ top: 0, behavior: 'instant' })}
@@ -77,7 +114,15 @@ export default function App() {
             </SectionBoundary>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </motion.main>
+
+      <Footer />
+
+      <SectionTransition />
+      <CursorAura />
+      {booting && (
+        <BootSequence onReveal={() => setRevealed(true)} onDone={() => setBooting(false)} />
+      )}
     </div>
   )
 }

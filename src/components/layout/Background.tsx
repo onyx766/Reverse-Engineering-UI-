@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion'
-import { useTheme } from '@/theme/ThemeProvider'
-import { useMousePosition } from '@/hooks/useMousePosition'
+import { useEffect } from 'react'
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { usePageVisible } from '@/components/fx/hooks'
 import { ParticleField } from './ParticleField'
 import { seeded } from '@/lib/utils'
 
@@ -17,24 +17,65 @@ const BARS = Array.from({ length: 14 }, () => ({
   op: 0.12 + rand() * 0.3,
 }))
 
+/** Ceiling rig spotlights: soft conic cones, angle in degrees (180 = straight down). */
+const BEAMS = [
+  { left: '16%', angle: 172, spread: 13, dur: 9, delay: 0, op: 0.1 },
+  { left: '50%', angle: 180, spread: 16, dur: 11, delay: -3.5, op: 0.12 },
+  { left: '84%', angle: 188, spread: 13, dur: 10, delay: -6, op: 0.1 },
+]
+
 /**
- * The environment the whole portfolio floats inside.
- * Seven stacked layers, every one of them tinted by the active section theme:
- * wash → aurora → neon strips → grid floor → grid ceiling → particles → scanlines/vignette/noise.
+ * The lab the whole portfolio floats inside. Every layer is tinted by the
+ * active section palette: wash → aurora → spotlights → neon strips →
+ * horizon → grid floor/ceiling → floor rings → particles → scanlines/grain/vignette.
+ *
+ * Performance budget (iGPU): no blur filters on large layers, pointer
+ * parallax through motion values (zero React renders per move), and every
+ * loop is a compositor-only transform/opacity animation that pauses while
+ * the tab is hidden.
  */
 export function Background() {
-  const { section } = useTheme()
-  const { x, y } = useMousePosition(0.08)
   const reduced = useReducedMotion()
+  const visible = usePageVisible()
+  const paused = reduced || !visible
 
-  const px = reduced ? 0 : x
-  const py = reduced ? 0 : y
+  const mx = useMotionValue(0)
+  const my = useMotionValue(0)
+  const px = useSpring(mx, { stiffness: 60, damping: 22, mass: 1 })
+  const py = useSpring(my, { stiffness: 60, damping: 22, mass: 1 })
+
+  useEffect(() => {
+    if (reduced) {
+      mx.set(0)
+      my.set(0)
+      return
+    }
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
+      mx.set((e.clientX / window.innerWidth) * 2 - 1)
+      my.set((e.clientY / window.innerHeight) * 2 - 1)
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => window.removeEventListener('pointermove', onMove)
+  }, [reduced, mx, my])
+
+  const auroraX = useTransform(px, (v) => v * -26)
+  const auroraY = useTransform(py, (v) => v * -18)
+  const stripsX = useTransform(px, (v) => v * -12)
+  const stripsY = useTransform(py, (v) => v * -8)
+  const floorOrigin = useTransform(px, (v) => `${50 + v * 6}% 0%`)
+  const floorTransform = useTransform(py, (v) => `rotateX(74deg) translateY(${v * 10}px)`)
+  const ceilingTransform = useTransform(py, (v) => `rotateX(-72deg) translateY(${v * -8}px)`)
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div
+      aria-hidden
+      data-fx-paused={paused ? 'true' : undefined}
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
       {/* 1 — base wash */}
       <div
-        className="absolute inset-0 transition-[background] duration-700"
+        className="absolute inset-0"
         style={{
           background: `radial-gradient(95rem 62rem at 50% -12%, rgb(var(--accent) / 0.20), transparent 62%),
                        radial-gradient(62rem 44rem at 6% 106%, rgb(var(--accent-2) / 0.16), transparent 62%),
@@ -43,23 +84,35 @@ export function Background() {
         }}
       />
 
-      {/* 2 — drifting aurora blobs */}
-      <motion.div
-        className="absolute inset-0"
-        style={{ x: px * -26, y: py * -18 }}
-        transition={{ type: 'tween', ease: 'linear', duration: 0 }}
-      >
-        <Blob className="left-[6%] top-[12%] h-[34rem] w-[34rem]" delay={0} />
-        <Blob className="right-[4%] top-[28%] h-[28rem] w-[28rem]" delay={2.4} alt />
-        <Blob className="bottom-[6%] left-[32%] h-[30rem] w-[30rem]" delay={4.1} />
+      {/* 2 — drifting aurora (pre-softened gradients instead of a blur filter) */}
+      <motion.div className="absolute inset-0" style={{ x: auroraX, y: auroraY }}>
+        <Blob className="-left-[6%] top-[0%] h-[46rem] w-[46rem]" delay={0} />
+        <Blob className="-right-[8%] top-[18%] h-[40rem] w-[40rem]" delay={-7} alt />
+        <Blob className="-bottom-[10%] left-[24%] h-[42rem] w-[42rem]" delay={-12} />
       </motion.div>
 
-      {/* 3 — distant neon strips (the server-room glow in the reference) */}
-      <motion.div className="absolute inset-0" style={{ x: px * -12, y: py * -8 }}>
+      {/* 3 — ceiling spotlights */}
+      {BEAMS.map((b) => (
+        <span
+          key={b.left}
+          className="fx-beam absolute top-0 h-[88vh] w-[90vw] -translate-x-1/2"
+          style={{
+            left: b.left,
+            background: `conic-gradient(from ${b.angle - b.spread}deg at 50% -4%, transparent 0deg, rgb(var(--accent) / ${b.op}) ${b.spread}deg, transparent ${b.spread * 2}deg)`,
+            maskImage: 'linear-gradient(to bottom, black 10%, transparent 92%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 10%, transparent 92%)',
+            animationDuration: `${b.dur}s`,
+            animationDelay: `${b.delay}s`,
+          }}
+        />
+      ))}
+
+      {/* 4 — distant neon strips (the server-room glow in the reference) */}
+      <motion.div className="absolute inset-0" style={{ x: stripsX, y: stripsY }}>
         {BARS.map((b, i) => (
-          <motion.span
-            key={`${section}-${i}`}
-            className="absolute rounded-full"
+          <span
+            key={i}
+            className="fx-strip absolute rounded-full"
             style={{
               top: `${b.top}%`,
               left: `${b.left}%`,
@@ -67,44 +120,54 @@ export function Background() {
               height: b.vertical ? b.w : b.h,
               background: `linear-gradient(${b.vertical ? '180deg' : '90deg'}, transparent, rgb(var(--accent) / ${b.op}), transparent)`,
               boxShadow: `0 0 12px rgb(var(--accent) / ${b.op * 0.8})`,
+              animationDuration: `${b.dur}s`,
+              animationDelay: `${-b.delay}s`,
             }}
-            animate={reduced ? undefined : { opacity: [0.25, 1, 0.45, 0.9, 0.3] }}
-            transition={{ duration: b.dur, delay: b.delay, repeat: Infinity, ease: 'easeInOut' }}
           />
         ))}
       </motion.div>
 
-      {/* 4 — perspective grid floor */}
-      <div
-        className="absolute inset-x-0 bottom-0 h-[58vh]"
-        style={{ perspective: '520px', perspectiveOrigin: `${50 + px * 6}% 0%` }}
-      >
+      {/* 5 — horizon: haze and bloom are centred ON the horizon so neither side ends in an edge */}
+      <div className="absolute inset-x-0 top-[42vh]">
         <div
-          className="absolute inset-x-[-60%] bottom-[-18%] top-0 origin-bottom bg-grid transition-[background-image] duration-700"
-          style={{
-            transform: `rotateX(74deg) translateY(${py * 10}px)`,
-            backgroundSize: '68px 68px',
-            animation: reduced ? undefined : 'gridScroll 9s linear infinite',
-            maskImage: 'linear-gradient(to top, black 8%, transparent 78%)',
-            WebkitMaskImage: 'linear-gradient(to top, black 8%, transparent 78%)',
-          }}
-        />
-        {/* horizon bloom */}
-        <div
-          className="absolute inset-x-0 top-0 h-28 transition-[background] duration-700"
+          className="absolute inset-x-0 -top-[18vh] h-[36vh]"
           style={{
             background:
-              'radial-gradient(60% 100% at 50% 100%, rgb(var(--accent) / 0.26), transparent 70%)',
+              'linear-gradient(to bottom, transparent, rgb(var(--accent) / 0.05) 35%, rgb(var(--accent) / 0.08) 50%, rgb(var(--accent) / 0.04) 66%, transparent)',
+          }}
+        />
+        <div
+          className="absolute left-1/2 top-0 h-[26vh] w-[130vw] -translate-x-1/2 -translate-y-1/2"
+          style={{
+            background:
+              'radial-gradient(closest-side, rgb(var(--accent) / 0.2), rgb(var(--accent) / 0.08) 45%, rgb(var(--accent) / 0.02) 75%, transparent)',
           }}
         />
       </div>
 
-      {/* 5 — grid ceiling */}
-      <div className="absolute inset-x-0 top-0 h-[34vh]" style={{ perspective: '620px' }}>
-        <div
-          className="absolute inset-x-[-50%] bottom-0 top-[-14%] origin-top bg-grid opacity-60 transition-[background-image] duration-700"
+      {/* 6 — perspective grid floor, rolling toward the viewer */}
+      <motion.div
+        className="absolute inset-x-0 bottom-0 h-[58vh]"
+        style={{ perspective: '520px', perspectiveOrigin: floorOrigin }}
+      >
+        <motion.div
+          className="absolute inset-x-[-60%] bottom-[-18%] top-0 origin-bottom overflow-hidden"
           style={{
-            transform: `rotateX(-72deg) translateY(${py * -8}px)`,
+            transform: floorTransform,
+            maskImage: 'linear-gradient(to top, black 6%, rgb(0 0 0 / 0.55) 34%, transparent 72%)',
+            WebkitMaskImage: 'linear-gradient(to top, black 6%, rgb(0 0 0 / 0.55) 34%, transparent 72%)',
+          }}
+        >
+          <div className="fx-grid-roll absolute inset-x-0 -top-[68px] bottom-0 bg-grid" style={{ backgroundSize: '68px 68px' }} />
+        </motion.div>
+      </motion.div>
+
+      {/* 7 — grid ceiling */}
+      <div className="absolute inset-x-0 top-0 h-[34vh]" style={{ perspective: '620px' }}>
+        <motion.div
+          className="absolute inset-x-[-50%] bottom-0 top-[-14%] origin-top bg-grid opacity-60"
+          style={{
+            transform: ceilingTransform,
             backgroundSize: '84px 84px',
             maskImage: 'linear-gradient(to bottom, black 2%, transparent 72%)',
             WebkitMaskImage: 'linear-gradient(to bottom, black 2%, transparent 72%)',
@@ -112,14 +175,29 @@ export function Background() {
         />
       </div>
 
-      {/* 6 — particle motes */}
-      <div className="absolute inset-0">
-        <ParticleField />
+      {/* 8 — floor rings echoing the emitter pedestal */}
+      <div className="absolute inset-x-0 bottom-0 hidden h-[40vh] sm:block" style={{ perspective: '700px' }}>
+        <div
+          className="absolute left-1/2 top-[18%] h-[120vh] w-[120vh] -translate-x-1/2 rounded-full"
+          style={{
+            transform: 'rotateX(78deg)',
+            transformOrigin: '50% 0%',
+            background:
+              'radial-gradient(closest-side, transparent 58%, rgb(var(--accent) / 0.12) 60%, transparent 62%, transparent 76%, rgb(var(--accent-2) / 0.09) 78%, transparent 80%, transparent 93%, rgb(var(--accent) / 0.07) 95%, transparent 97%)',
+            maskImage: 'linear-gradient(to bottom, black, transparent 70%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 70%)',
+          }}
+        />
       </div>
 
-      {/* 7 — CRT scanlines, sweeping beam, noise, vignette */}
+      {/* 9 — particle motes */}
+      <div className="absolute inset-0">
+        <ParticleField paused={!visible} />
+      </div>
+
+      {/* 10 — CRT scanlines, sweeping beam, grain, vignette */}
       <div
-        className="absolute inset-0 opacity-[0.055] mix-blend-screen"
+        className="absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
             'repeating-linear-gradient(0deg, rgb(var(--ink)) 0px, rgb(var(--ink)) 1px, transparent 1px, transparent 3px)',
@@ -127,7 +205,7 @@ export function Background() {
       />
       {!reduced && (
         <div
-          className="absolute inset-x-0 h-24 animate-scanline opacity-20"
+          className="absolute inset-x-0 top-0 h-24 animate-scanline opacity-20"
           style={{
             background:
               'linear-gradient(to bottom, transparent, rgb(var(--accent) / 0.35), transparent)',
@@ -135,7 +213,7 @@ export function Background() {
         />
       )}
       <div
-        className="absolute inset-0 opacity-[0.16] mix-blend-overlay"
+        className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")",
@@ -152,30 +230,16 @@ export function Background() {
   )
 }
 
-function Blob({
-  className,
-  delay,
-  alt,
-}: {
-  className?: string
-  delay: number
-  alt?: boolean
-}) {
-  const reduced = useReducedMotion()
+function Blob({ className, delay, alt }: { className?: string; delay: number; alt?: boolean }) {
+  const c = alt ? '--accent-2' : '--accent'
+  const a = alt ? 0.3 : 0.27
   return (
-    <motion.div
-      className={`absolute rounded-full blur-[110px] transition-[background] duration-700 ${className}`}
+    <div
+      className={`fx-aurora absolute rounded-full ${className ?? ''}`}
       style={{
-        background: alt
-          ? 'radial-gradient(circle, rgb(var(--accent-2) / 0.34), transparent 68%)'
-          : 'radial-gradient(circle, rgb(var(--accent) / 0.30), transparent 68%)',
+        background: `radial-gradient(closest-side, rgb(var(${c}) / ${a}), rgb(var(${c}) / ${a * 0.72}) 22%, rgb(var(${c}) / ${a * 0.38}) 46%, rgb(var(${c}) / ${a * 0.12}) 72%, transparent)`,
+        animationDelay: `${delay}s`,
       }}
-      animate={
-        reduced
-          ? undefined
-          : { scale: [1, 1.16, 0.95, 1], x: [0, 34, -22, 0], y: [0, -28, 18, 0] }
-      }
-      transition={{ duration: 18, delay, repeat: Infinity, ease: 'easeInOut' }}
     />
   )
 }

@@ -249,7 +249,7 @@
   }
 }
 
-/* Infinite perspective-grid scroll used by the background floor. */
+/* Infinite perspective-grid scroll (legacy; the floor now uses fxGridRoll). */
 @keyframes gridScroll {
   from {
     background-position:
@@ -261,4 +261,87 @@
       0 68px,
       68px 0;
   }
+}
+
+/*
+ * Global FX loops. All of them animate transform/opacity only, so they run
+ * on the compositor; Background flags itself with data-fx-paused while the
+ * tab is hidden (or motion is reduced) and everything inside freezes.
+ */
+@keyframes fxGridRoll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 68px, 0);
+  }
+}
+@keyframes fxAurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(34px, -28px, 0) scale(1.16);
+  }
+  66% {
+    transform: translate3d(-22px, 18px, 0) scale(0.95);
+  }
+}
+@keyframes fxStrip {
+  0% {
+    opacity: 0.25;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  75% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+@keyframes fxBeam {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes waveScroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@layer components {
+  .fx-grid-roll {
+    animation: fxGridRoll 9s linear infinite;
+    will-change: transform;
+  }
+  .fx-aurora {
+    animation: fxAurora 18s ease-in-out infinite;
+    will-change: transform;
+  }
+  .fx-strip {
+    animation: fxStrip 6s ease-in-out infinite alternate;
+  }
+  .fx-beam {
+    animation: fxBeam 10s ease-in-out infinite;
+  }
+}
+
+[data-fx-paused='true'] *,
+[data-fx-paused='true'] *::before,
+[data-fx-paused='true'] *::after {
+  animation-play-state: paused !important;
 }

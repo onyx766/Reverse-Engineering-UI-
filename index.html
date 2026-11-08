@@ -4,19 +4,67 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#03080d" />
+    <meta name="color-scheme" content="dark" />
+    <title>Nox — Reverse Engineer & Systems Developer</title>
     <meta
       name="description"
-      content="Nox — Reverse Engineer & Systems Developer. Binary analysis, protocol reversing, file-format reconstruction and tooling."
+      content="Nox — Reverse Engineer & Systems Developer. Binary analysis, protocol reversing, file-format reconstruction and tooling for authorised engagements."
     />
-    <title>Nox — Reverse Engineer & Systems Developer</title>
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Nox" />
+    <meta property="og:title" content="Nox — Reverse Engineer & Systems Developer" />
+    <meta
+      property="og:description"
+      content="Eight years taking software apart: binaries, protocols and file formats, documented and rebuilt. A holographic lab portfolio."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Nox — Reverse Engineer & Systems Developer" />
+    <meta
+      name="twitter:description"
+      content="Binary analysis, protocol reversing, file-format reconstruction and tooling for authorised engagements."
+    />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* lab colour before the bundle's CSS arrives (no white flash). Body only:
+         an html background would stop body's propagating to the canvas and
+         paint over the negative z-index background layers. */
+      body {
+        background: #03080d;
+        color: #e2f3f8;
+      }
+    </style>
   </head>
   <body>
+    <noscript>
+      <div
+        style="min-height: 100vh; display: grid; place-items: center; padding: 24px; font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; background: radial-gradient(60rem 40rem at 50% 30%, rgba(34, 211, 238, 0.14), transparent 70%), #03080d; color: #e2f3f8;"
+      >
+        <div
+          style="max-width: 34rem; border: 1px solid rgba(34, 211, 238, 0.4); border-radius: 16px; padding: 28px; background: rgba(8, 20, 28, 0.9); box-shadow: 0 0 40px rgba(34, 211, 238, 0.18);"
+        >
+          <p style="margin: 0 0 6px; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: #22d3ee;">
+            // nox lab · offline
+          </p>
+          <h1 style="margin: 0 0 12px; font-size: 22px; letter-spacing: 0.08em;">JavaScript is required</h1>
+          <p style="margin: 0; font-size: 13px; line-height: 1.7; color: #81a3b1;">
+            This portfolio renders its holographic lab with JavaScript and WebGL. Enable JavaScript and reload, or
+            reach Nox directly at
+            <a href="mailto:contact@nox.re" style="color: #22d3ee;">contact@nox.re</a>.
+          </p>
+        </div>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
