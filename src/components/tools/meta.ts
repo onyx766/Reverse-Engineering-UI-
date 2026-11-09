@@ -48,6 +48,25 @@ export function toolsFor(filter: CategoryFilter) {
   return filter === 'all' ? TOOLS : TOOLS.filter((t) => t.category === filter)
 }
 
+type Deferred = 'arsenal' | 'routine' | 'lab'
+
+/** Measured heights (xl, lg, md, sm, phone) of the deferred blocks at their initial state. */
+const RESERVED: Record<Deferred, [number, number, number, number, number]> = {
+  arsenal: [2030, 2720, 3830, 3910, 2000],
+  routine: [561, 1096, 1114, 1114, 1430],
+  lab: [520, 608, 888, 854, 910],
+}
+
+/**
+ * Height to hold for a block while it waits to mount, so the page length (and
+ * every scroll target below it) stays put when it arrives.
+ */
+export function reserve(block: Deferred) {
+  const w = typeof window === 'undefined' ? 1440 : window.innerWidth
+  const [xl, lg, md, sm, xs] = RESERVED[block]
+  return w >= 1280 ? xl : w >= 1024 ? lg : w >= 768 ? md : w >= 640 ? sm : xs
+}
+
 /** Scrolls a block into view below the fixed navbar. */
 export function scrollToId(id: string) {
   const el = document.getElementById(id)

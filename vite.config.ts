@@ -12,10 +12,14 @@ export default defineConfig({
   server: { host: true, port: 5173, strictPort: true, open: false },
   build: {
     target: 'es2020',
+    // the three chunk (~815 KB, ~219 KB gzip) is inherently large and only ever
+    // loaded lazily behind the first paint; warn about anything bigger than it
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         manualChunks: {
-          three: ['three', '@react-three/fiber', '@react-three/drei'],
+          // only HoloCore (lazy) uses these; drei was replaced by small local pieces
+          three: ['three', '@react-three/fiber'],
           motion: ['framer-motion'],
         },
       },

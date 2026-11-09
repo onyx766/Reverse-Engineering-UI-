@@ -28,7 +28,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import type { TermLine } from '@/components/ui/Terminal'
-import { PROFILE, STATS } from './profile'
+import { AVAILABILITY_STATUS, PGP_KEY, PROFILE, STATS } from './profile'
 
 /* ── copy for the section headings ─────────────────────────────────── */
 
@@ -40,7 +40,9 @@ export const ABOUT_COPY = {
     lead: 'The person you call when the only documentation left is the binary itself.',
   },
   timeline: {
-    eyebrow: 'Career log · 2018 → 2026',
+    // short on purpose: the shared heading tracks its eyebrow out to 0.8em while
+    // it fades in, and anything longer wraps for a moment on a 360px phone
+    eyebrow: 'Career log',
     title: 'Eight Years, Six Chapters',
     subtitle:
       'From CTF crackmes and a malware triage queue to leading a tooling team and running my own practice. Every chapter built on the one before it.',
@@ -58,8 +60,13 @@ export const ABOUT_COPY = {
   stats: {
     eyebrow: 'Telemetry',
     title: 'By the Numbers',
+    /** shown after the career span, e.g. "2018 → 2026 · self-reported" */
+    note: 'self-reported',
   },
 }
+
+/** "Years Reversing" from the shared hero stats, so every "8 years" on the site agrees. */
+const yearsReversing = STATS.find((s) => /year/i.test(s.label))?.value ?? 8
 
 /* ── holographic ID card ───────────────────────────────────────────── */
 
@@ -96,11 +103,11 @@ export const ID_CARD: IdCardData = {
   role: PROFILE.role,
   fields: [
     { label: 'Specialisation', value: 'Binary & protocol RE', wide: true },
-    { label: 'Experience', value: '8 yrs' },
+    { label: 'Experience', value: `${yearsReversing} yrs` },
     { label: 'Base', value: PROFILE.location },
     {
       label: 'Status',
-      value: PROFILE.available ? 'Available for engagements' : 'Fully booked',
+      value: PROFILE.available ? AVAILABILITY_STATUS.open : AVAILABILITY_STATUS.booked,
       live: PROFILE.available,
       wide: true,
     },
@@ -110,24 +117,24 @@ export const ID_CARD: IdCardData = {
   manifesto:
     'Every binary is a stack of decisions someone else compiled. I read them back: patiently, legally, and with notes good enough that nobody has to do it twice.',
   signature: 'Nox',
-  pgp: {
-    algo: 'ed25519',
-    // placeholder: replace with the fingerprint of your published key
-    fingerprint: '7E3A 91C4 0B52 D8F1 6A2E 4C90 B7D3 1F85 E06A 29CB',
-  },
+  // OWNER: the key itself lives in PGP_KEY (src/data/profile.ts), shared with Contact
+  pgp: PGP_KEY,
   authorised: {
     title: 'Authorised work only',
     body: 'Every engagement starts with written permission from the system owner, an agreed scope and a disclosure plan. No licence bypasses, no DRM circumvention, no access I was not given.',
   },
 }
 
-/** typed into the verification console under the badge (desktop) */
+/**
+ * Typed into the verification console under the badge (desktop). The console
+ * word-wraps, so file names carry no hyphen to split on in the narrow column.
+ */
 export const BADGE_LOG: TermLine[] = [
-  { text: '$ gpg --verify nox-badge.json.sig nox-badge.json', tone: 'dim' },
+  { text: '$ gpg --verify badge.json.sig badge.json', tone: 'dim' },
   { text: 'gpg: Signature made Mon 02 Nov 2026 09:14:22 CET', tone: 'dim' },
   { text: `gpg:                using EDDSA key ${ID_CARD.pgp.fingerprint.replace(/\s+/g, '')}`, tone: 'dim' },
   { text: `gpg: Good signature from "${PROFILE.name} <${PROFILE.email}>" [ultimate]`, tone: 'ok' },
-  { text: '$ jq -r .scope nox-badge.json', tone: 'dim' },
+  { text: '$ jq -r .scope badge.json', tone: 'dim' },
   { text: 'authorised engagements only · written scope required', tone: 'warn' },
 ]
 
@@ -373,6 +380,7 @@ export type FunStat =
       label: string
       value: number
       suffix?: string
+      /** "{writeups}" is filled in with the number of public write-ups (src/data/writeups.ts) */
       note: string
       icon: LucideIcon
     }
@@ -389,20 +397,37 @@ export type FunStat =
 const toolsPublished = STATS.find((s) => /tool/i.test(s.label))?.value ?? 14
 
 export const FUN_STATS: FunStat[] = [
-  { kind: 'count', label: 'CTF top-10 finishes', value: 31, note: 'rev & pwn categories', icon: Trophy },
-  { kind: 'count', label: 'Write-ups published', value: 42, note: 'teardowns & tooling notes', icon: FileText },
+  {
+    kind: 'count',
+    label: 'CTF top-10 finishes',
+    // OWNER: your real count (team placings in events where you played rev / pwn)
+    value: 31,
+    note: 'team placings · I play rev & pwn',
+    icon: Trophy,
+  },
+  {
+    kind: 'count',
+    label: 'Technical reports',
+    // OWNER: your real count of delivered reports, client and internal. The public
+    // write-up count in the note fills itself in from src/data/writeups.ts.
+    value: 42,
+    // " " keeps the count on the same line as the words it counts
+    note: 'private, under NDA · {writeups} public write-ups',
+    icon: FileText,
+  },
   {
     kind: 'count',
     label: 'Open-source tools',
     value: toolsPublished,
-    note: 'loaders, parsers, Frida scripts',
+    note: 'loaders, dissectors, emulation harnesses',
     icon: Package,
   },
   {
     kind: 'count',
     label: 'Coordinated disclosures',
+    // OWNER: your real count
     value: 19,
-    note: 'every one fixed before publication',
+    note: 'vendor first, on an agreed timeline',
     icon: ShieldCheck,
   },
   {

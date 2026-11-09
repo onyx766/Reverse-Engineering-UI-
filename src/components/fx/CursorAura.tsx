@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useTheme } from '@/theme/ThemeProvider'
+import { morphVars } from '@/theme/themes'
 import { useMediaQuery } from './hooks'
 
 const INTERACTIVE = [
@@ -28,6 +30,7 @@ export function CursorAura() {
 }
 
 function Aura() {
+  const { theme } = useTheme()
   const x = useMotionValue(-200)
   const y = useMotionValue(-200)
   const ringX = useSpring(x, { stiffness: 340, damping: 30, mass: 0.55 })
@@ -124,7 +127,8 @@ function Aura() {
   }, [x, y, ringX, ringY, dotX, dotY, shown, hot, press])
 
   return (
-    <>
+    // its own palette scope: the ring morphs with the navbar instead of snapping at the swap
+    <div className="palette-morph" style={morphVars(theme)}>
       {/* trailing ring + reticle */}
       <motion.div
         aria-hidden
@@ -170,6 +174,6 @@ function Aura() {
         className="pointer-events-none fixed left-0 top-0 z-[90] -ml-[3px] -mt-[3px] h-[6px] w-[6px] rounded-full bg-accent3 shadow-glow-sm mix-blend-screen"
         style={{ x: dotX, y: dotY, opacity, scale: dotScale }}
       />
-    </>
+    </div>
   )
 }

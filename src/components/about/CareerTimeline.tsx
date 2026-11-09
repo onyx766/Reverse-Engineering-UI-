@@ -2,13 +2,27 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useMotionValueEvent, useSpring, useTransform } from 'framer-motion'
 import { Chip } from '@/components/ui/Chip'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { cn } from '@/lib/utils'
+import { clamp, cn } from '@/lib/utils'
 import { CAREER_NOW, type CareerEntry } from '@/data/about'
 import { useScrollProgress } from './useScrollProgress'
-import { EASE, GLOW_HOVER, SWEEP } from './fx'
+import { EASE, GLOW_HOVER, SWEEP, entrance } from './fx'
 
 /** distance from the top of a row to the centre of its node, in px */
 const NODE_Y = 28
+/** half the node size where the readout shows (lg: h-11) */
+const NODE_R = 22
+/** the year readout hangs this far below the playhead, and is this tall */
+const CHIP_TOP = 12
+const CHIP_H = 19
+/** the readout fades over this many px as it closes in on a node */
+const CHIP_FADE = 12
+
+/** 2021.27 → "2021.04", the same year.month stamp the ID card uses */
+const stamp = (y: number) => {
+  const year = Math.floor(y + 1e-6)
+  const month = Math.min(12, Math.floor((y - year) * 12) + 1)
+  return `${year}.${String(month).padStart(2, '0')}`
+}
 
 /**
  * Vertical career log. The spine fills with light as the reader scrolls, a
@@ -63,16 +77,29 @@ export function CareerTimeline({
   const year = useTransform(progress, (v) => {
     const last = entries[entries.length - 1]
     if (!stops.length || !last) return ''
+    // the light has reached the end of an open-ended chapter: that is today
+    if (v >= 0.995 && last.end === null) return 'now'
     const xs = [...stops, 1]
     const ys = [...entries.map((e) => e.start), last.end ?? CAREER_NOW]
-    if (v <= xs[0]) return ys[0].toFixed(1)
+    if (v <= xs[0]) return stamp(ys[0])
     for (let i = 0; i < xs.length - 1; i++) {
       if (v <= xs[i + 1]) {
         const t = (v - xs[i]) / Math.max(1e-6, xs[i + 1] - xs[i])
-        return (ys[i] + (ys[i + 1] - ys[i]) * t).toFixed(1)
+        return stamp(ys[i] + (ys[i + 1] - ys[i]) * t)
       }
     }
-    return ys[ys.length - 1].toFixed(1)
+    return stamp(ys[ys.length - 1])
+  })
+  // the readout never slides under a node: it dissolves just before touching one
+  // and reappears once the playhead has carried it past
+  const chipOpacity = useTransform(progress, (v) => {
+    const top = v * height + CHIP_TOP
+    let gap = Infinity
+    for (const s of stops) {
+      const node = s * height
+      gap = Math.min(gap, Math.max(node - NODE_R - (top + CHIP_H), top - (node + NODE_R)))
+    }
+    return clamp(gap / CHIP_FADE, 0, 1)
   })
 
   return (
@@ -103,7 +130,19 @@ export function CareerTimeline({
           {!reduced && (
             <span className="absolute -left-3 -top-3 h-6 w-6 animate-pulse-ring rounded-full border border-accent3/80" />
           )}
-          <motion.span className="absolute left-0 top-3 hidden -translate-x-1/2 whitespace-nowrap rounded border border-accent/50 bg-deep/90 px-1.5 py-px font-mono text-[9.5px] tracking-[0.12em] text-accent3 shadow-glow-sm lg:block">
+        </motion.div>
+      </div>
+
+      {/* year readout (desktop): rides the playhead on a layer above the nodes */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden w-px -translate-x-1/2 lg:block"
+      >
+        <motion.div className="absolute left-0 top-0" style={{ y: headY, opacity: chipOpacity }}>
+          <motion.span
+            className="absolute left-0 -translate-x-1/2 whitespace-nowrap rounded border border-accent/50 bg-deep/90 px-1.5 py-px font-mono text-[9.5px] uppercase leading-[15px] tracking-[0.12em] text-accent3 shadow-glow-sm"
+            style={{ top: CHIP_TOP }}
+          >
             {year}
           </motion.span>
         </motion.div>
@@ -188,7 +227,7 @@ function Row({
           )}
         />
         <motion.article
-          initial={{ opacity: 0, x: even ? -40 : 40, rotateY: even ? 10 : -10, filter: 'blur(10px)' }}
+          initial={entrance(reduced, { opacity: 0, x: even ? -40 : 40, rotateY: even ? 10 : -10, filter: 'blur(10px)' })}
           whileInView={{ opacity: 1, x: 0, rotateY: 0, filter: 'blur(0px)' }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.8, ease: EASE }}
@@ -252,7 +291,7 @@ function Row({
         )}
       >
         <motion.span
-          initial={{ opacity: 0, y: 24 }}
+          initial={entrance(reduced, { opacity: 0, y: 24 })}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.9, delay: 0.15, ease: EASE }}

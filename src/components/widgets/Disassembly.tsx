@@ -326,9 +326,10 @@ export function Disassembly({
                 {focusIdx !== null ? 'inspect' : 'exec'}
               </span>
               <span className="shrink-0 tabular-nums text-muted/70">{info.addr}</span>
-              {info.bytes && <span className="min-w-0 truncate text-accent3/90">{info.bytes}</span>}
+              {/* the encoding is the point of this bar: it never truncates, the xref hint gives way */}
+              {info.bytes && <span className="shrink-0 text-accent3/90">{info.bytes}</span>}
               {info.xref && (
-                <span className="ml-auto hidden shrink-0 pl-2 text-accent2/90 lg:inline">{info.xref}</span>
+                <span className="ml-auto hidden min-w-0 truncate pl-2 text-accent2/90 lg:inline">{info.xref}</span>
               )}
             </div>
             <div className="truncate text-muted">

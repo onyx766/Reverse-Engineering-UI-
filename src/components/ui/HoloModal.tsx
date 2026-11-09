@@ -148,7 +148,7 @@ function ModalPanel({
           exit={{ opacity: 0, y: 32, rotateX: -10, scale: 0.96, filter: 'blur(8px)' }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
-            'glass-strong relative mx-auto flex max-h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-2xl shadow-glow-lg outline-none sm:max-h-[88vh]',
+            'glass-strong relative mx-auto flex max-h-[calc(100dvh-1rem)] w-full flex-col overflow-clip rounded-2xl shadow-glow-lg outline-none sm:max-h-[88vh]',
             WIDTH[size],
           )}
         >
@@ -163,13 +163,16 @@ function ModalPanel({
           />
           <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
           <Brackets />
+          {/* a full-size layer slid by transform (compositor only; reduced motion skips it) */}
           <motion.span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 z-10 h-16 bg-gradient-to-b from-transparent via-accent/25 to-transparent"
-            initial={{ top: '-10%', opacity: 0 }}
-            animate={{ top: '110%', opacity: [0, 1, 0] }}
+            className="pointer-events-none absolute inset-0 z-10"
+            initial={{ y: '-10%', opacity: 0 }}
+            animate={{ y: '110%', opacity: [0, 1, 0] }}
             transition={{ duration: 1.1, ease: 'easeInOut', delay: 0.1 }}
-          />
+          >
+            <span className="absolute inset-x-0 top-0 h-16 -translate-y-1/2 bg-gradient-to-b from-transparent via-accent/25 to-transparent" />
+          </motion.span>
 
           {progress && (
             <motion.span
@@ -208,7 +211,7 @@ function ModalPanel({
               type="button"
               onClick={() => closeRef.current()}
               aria-label="Close dialog"
-              className="group grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent/30 bg-accent/5 text-muted transition-all duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm"
+              className="group grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-accent/30 bg-accent/5 text-muted transition-all duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm focus-visible:border-accent focus-visible:text-ink"
             >
               <X className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
             </button>

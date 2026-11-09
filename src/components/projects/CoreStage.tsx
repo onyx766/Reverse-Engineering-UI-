@@ -1,4 +1,4 @@
-import { Suspense, lazy, type ReactNode } from 'react'
+import { Suspense, lazy, startTransition, useEffect, useState, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import type { ShardId } from '@/data/projects'
 import { CfgBody, DisasmBody, HexBody, HttpBody, ShardFrame, WaveBody } from './shards'
@@ -32,6 +32,10 @@ interface StageDesign {
   /** hologram centre in design units */
   cx: number
   cy: number
+  /** hologram canvas edge as a share of the space between the side panels, clamped in px */
+  core: { share: number; min: number; max: number }
+  /** shards clip long lines with a fade (narrow composition) */
+  clip?: boolean
   shards: ShardSpot[]
   traces: Trace[]
 }
@@ -42,6 +46,7 @@ const FULL: StageDesign = {
   h: 440,
   cx: 440,
   cy: 214,
+  core: { share: 0.78, min: 420, max: 640 },
   shards: [
     { id: 'disasm', left: 0, top: 26, width: 258, turn: 14, bob: { dur: 7.5, delay: -1 } },
     { id: 'hex', left: 2, top: 250, width: 290, turn: 14, bob: { dur: 8.5, delay: -4 } },
@@ -64,23 +69,29 @@ const FULL: StageDesign = {
   ],
 }
 
-/** Narrow desktop (1024–1279px): three shards, tighter arc. */
+/**
+ * Narrow desktop (1024–1243px): three shards hug a smaller hologram so the
+ * readouts stay legible (≈9–11px) instead of shrinking with the full layout.
+ */
 const COMPACT: StageDesign = {
-  w: 660,
-  h: 430,
-  cx: 330,
-  cy: 214,
+  w: 540,
+  h: 392,
+  cx: 270,
+  cy: 192,
+  core: { share: 0.76, min: 320, max: 470 },
+  clip: true,
   shards: [
-    { id: 'disasm', left: 0, top: 36, width: 232, turn: 14, bob: { dur: 7.5, delay: -1 } },
-    { id: 'http', left: 430, top: 60, width: 230, turn: -14, bob: { dur: 7, delay: -5 } },
-    { id: 'wave', left: 440, top: 252, width: 220, turn: -14, bob: { dur: 9, delay: -3 } },
+    { id: 'disasm', left: 0, top: 26, width: 212, turn: 14, bob: { dur: 7.5, delay: -1 } },
+    { id: 'http', left: 328, top: 10, width: 212, turn: -14, bob: { dur: 7, delay: -5 } },
+    { id: 'wave', left: 318, top: 214, width: 222, turn: -14, bob: { dur: 9, delay: -3 } },
   ],
   traces: [
-    { id: 't-disasm', shard: 'disasm', d: 'M232 120 H252 L274 142 H286', nodes: [{ x: 252, y: 120 }, { x: 286, y: 142, tone: 'end' }] },
-    { id: 't-http', shard: 'http', d: 'M430 130 H410 L390 150 H376', nodes: [{ x: 410, y: 130 }, { x: 376, y: 150, tone: 'end' }] },
-    { id: 't-wave', shard: 'wave', d: 'M440 290 H414 L392 268 H378', nodes: [{ x: 414, y: 290 }, { x: 378, y: 268, tone: 'end' }] },
-    { id: 'd-top-r', d: 'M350 92 V52 L376 26 H430', nodes: [{ x: 430, y: 26, tone: 'rose' }] },
-    { id: 'd-top-l', d: 'M310 92 V60 L284 34 H236', nodes: [{ x: 236, y: 34, tone: 'rose' }] },
+    { id: 't-disasm', shard: 'disasm', d: 'M212 118 H226 L244 136 H256', nodes: [{ x: 226, y: 118 }, { x: 256, y: 136, tone: 'end' }] },
+    { id: 't-http', shard: 'http', d: 'M328 92 H314 L296 110 H286', nodes: [{ x: 314, y: 92 }, { x: 286, y: 110, tone: 'end' }] },
+    { id: 't-wave', shard: 'wave', d: 'M318 252 H302 L284 234 H276', nodes: [{ x: 302, y: 252 }, { x: 276, y: 234, tone: 'end' }] },
+    { id: 'd-top-r', d: 'M284 78 V48 L300 32', nodes: [{ x: 300, y: 32, tone: 'rose' }] },
+    { id: 'd-top-l', d: 'M256 78 V42 L238 24 H222', nodes: [{ x: 222, y: 24, tone: 'rose' }] },
+    { id: 'd-low', d: 'M40 214 V250 L64 274 H112', nodes: [{ x: 40, y: 214 }, { x: 112, y: 274, tone: 'rose' }] },
   ],
 }
 
@@ -92,19 +103,52 @@ interface StageProps {
   visible: boolean
 }
 
-function shardBody(id: ShardId, running: boolean, compact = false): ReactNode {
+function shardBody(id: ShardId, running: boolean, compact = false, clip = compact): ReactNode {
   switch (id) {
     case 'disasm':
-      return <DisasmBody running={running} compact={compact} />
+      return <DisasmBody running={running} compact={compact} clip={clip} />
     case 'hex':
       return <HexBody running={running} compact={compact} />
     case 'cfg':
       return <CfgBody running={running} />
     case 'http':
-      return <HttpBody running={running} compact={compact} />
+      return <HttpBody running={running} compact={compact} clip={clip} />
     case 'wave':
       return <WaveBody compact={compact} />
   }
+}
+
+/**
+ * The stage builds its own WebGL context. Creating it (and compiling its shaders)
+ * waits until the section's enter animation has played and the main thread is
+ * idle, so it never stacks onto the section-switch frame. HoloCore stays
+ * invisible until warm and then fades in, so the wait does not show.
+ */
+function useCoreReady(delay = 450) {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    let idle = 0
+    const go = () => startTransition(() => setReady(true))
+    const timer = setTimeout(() => {
+      if ('requestIdleCallback' in window) idle = window.requestIdleCallback(go, { timeout: 700 })
+      else go()
+    }, delay)
+    return () => {
+      clearTimeout(timer)
+      if (idle) window.cancelIdleCallback(idle)
+    }
+  }, [delay])
+  return ready
+}
+
+function StageCore({ paused }: { paused: boolean }) {
+  const ready = useCoreReady()
+  if (!ready) return <CoreFallback />
+  return (
+    <Suspense fallback={<CoreFallback />}>
+      <HoloCore className="absolute inset-0" paused={paused} />
+    </Suspense>
+  )
 }
 
 function CoreFallback() {
@@ -125,7 +169,8 @@ export function DesktopStage({ hot, running, visible, width, compact }: StagePro
   const design = compact ? COMPACT : FULL
   const k = Math.min(1.2, Math.max(0.62, width / design.w))
   const allHot = hot.length > 1
-  const core = compact ? 'min(480px, 43vw)' : 'min(620px, 45vw)'
+  // the hologram scales with the free space, so 1280 reads as a smaller 1440, not a crowded one
+  const core = Math.round(Math.min(design.core.max, Math.max(design.core.min, width * design.core.share)))
 
   return (
     <div className="pointer-events-none relative w-full" style={{ height: design.h * k }}>
@@ -141,9 +186,7 @@ export function DesktopStage({ hot, running, visible, width, compact }: StagePro
           className="absolute inset-[18%] rounded-full blur-3xl"
           style={{ background: 'radial-gradient(circle, rgb(var(--accent) / 0.22), transparent 70%)' }}
         />
-        <Suspense fallback={<CoreFallback />}>
-          <HoloCore className="absolute inset-0" paused={!visible} />
-        </Suspense>
+        <StageCore paused={!visible} />
       </motion.div>
 
       {/* shards + traces, laid out in design pixels */}
@@ -176,8 +219,9 @@ export function DesktopStage({ hot, running, visible, width, compact }: StagePro
                 dim={!isHot && !allHot}
                 turn={s.turn}
                 bob={running ? s.bob : undefined}
+                clip={design.clip}
               >
-                {shardBody(s.id, running)}
+                {shardBody(s.id, running, false, design.clip)}
               </ShardFrame>
             </motion.div>
           )
@@ -280,7 +324,7 @@ export function CompactStage({ hot, running, visible }: StageProps) {
   const shard = (id: ShardId, className?: string) => {
     const isHot = hot.includes(id)
     return (
-      <ShardFrame key={id} id={id} hot={isHot} dim={!isHot && !allHot} className={className}>
+      <ShardFrame key={id} id={id} hot={isHot} dim={!isHot && !allHot} className={className} clip>
         {shardBody(id, running, true)}
       </ShardFrame>
     )
@@ -299,9 +343,7 @@ export function CompactStage({ hot, running, visible }: StageProps) {
           className="absolute inset-[18%] rounded-full blur-3xl"
           style={{ background: 'radial-gradient(circle, rgb(var(--accent) / 0.22), transparent 70%)' }}
         />
-        <Suspense fallback={<CoreFallback />}>
-          <HoloCore className="absolute inset-0" paused={!visible} />
-        </Suspense>
+        <StageCore paused={!visible} />
       </motion.div>
 
       <motion.div

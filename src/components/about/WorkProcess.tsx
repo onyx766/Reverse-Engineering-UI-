@@ -4,7 +4,7 @@ import { PackageCheck } from 'lucide-react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
 import type { ProcessStep } from '@/data/about'
-import { EASE, GLOW_ACTIVE, SWEEP } from './fx'
+import { EASE, GLOW_ACTIVE, SWEEP, entrance } from './fx'
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(() => window.matchMedia(query).matches)
@@ -74,7 +74,7 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
         return (
           <motion.li
             key={step.title}
-            initial={{ opacity: 0, y: 34, rotateX: -12, filter: 'blur(10px)' }}
+            initial={entrance(reduced, { opacity: 0, y: 34, rotateX: -12, filter: 'blur(10px)' })}
             whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.75, delay: i * 0.08, ease: EASE }}
@@ -127,8 +127,9 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
               }}
               onKeyDown={(e) => onKey(e, i)}
               className={cn(
-                'glass group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-[transform,border-color,box-shadow] duration-500',
-                on ? cn(GLOW_ACTIVE, 'xl:-translate-y-2') : 'hover:border-accent/50',
+                // scroll margins keep a card that receives focus clear of the fixed navbar
+                'glass group relative flex h-full scroll-mb-6 flex-col overflow-hidden rounded-2xl p-5 transition-[transform,border-color,box-shadow] duration-500',
+                on ? cn(GLOW_ACTIVE, 'motion-safe:xl:-translate-y-2') : 'hover:border-accent/50',
               )}
             >
               <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
@@ -166,7 +167,7 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
                   <p className="font-mono text-[9.5px] uppercase tracking-[0.22em] text-muted">
                     Phase {pad(i + 1)}
                   </p>
-                  <h3 className="font-display text-[15px] font-bold leading-tight tracking-wide text-ink xl:min-h-[2.5em]">
+                  <h3 className="text-balance font-display text-[15px] font-bold leading-tight tracking-wide text-ink xl:min-h-[2.5em]">
                     {step.title}
                   </h3>
                 </div>
@@ -176,7 +177,7 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
                 <div
                   className={cn(
                     'flex flex-col transition-all duration-500 xl:[grid-area:1/1]',
-                    on && 'xl:-translate-y-2 xl:opacity-0',
+                    on && 'motion-safe:xl:-translate-y-2 xl:opacity-0',
                   )}
                 >
                   <p className="text-[14.5px] leading-relaxed text-muted">{step.summary}</p>
@@ -185,13 +186,17 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
                     className="mt-auto hidden items-center gap-1.5 pt-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-accent/70 xl:inline-flex"
                   >
                     <span className="h-px w-4 bg-accent/50" />
-                    {step.details.length} checks · hover
+                    <span>
+                      {step.details.length} checks ·{' '}
+                      <span className="[@media(hover:none)]:hidden">hover</span>
+                      <span className="hidden [@media(hover:none)]:inline">tap</span>
+                    </span>
                   </span>
                 </div>
                 <ul
                   className={cn(
                     'space-y-1.5 transition-all duration-500 xl:[grid-area:1/1]',
-                    on ? 'xl:translate-y-0 xl:opacity-100 xl:delay-100' : 'xl:translate-y-3 xl:opacity-0',
+                    on ? 'xl:translate-y-0 xl:opacity-100 xl:delay-100' : 'motion-safe:xl:translate-y-3 xl:opacity-0',
                   )}
                 >
                   {step.details.map((d) => (

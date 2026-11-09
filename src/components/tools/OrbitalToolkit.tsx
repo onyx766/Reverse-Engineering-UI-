@@ -27,19 +27,25 @@ interface RingDef {
   period: number
   dir: 1 | -1
   phase: number
-  /** where the ring's label sits, radians */
+  /**
+   * where the ring's tag sits, radians. Up on the far half: badges there are small
+   * discs that sweep past quickly, whereas at the ring's ends they linger and would
+   * keep covering it
+   */
   labelAt: number
 }
 
 const RINGS: RingDef[] = [
-  { r: 158, incl: 63, rot: -15, period: 56, dir: 1, phase: 0.4, labelAt: Math.PI + 0.42 },
-  { r: 244, incl: 67, rot: 11, period: 80, dir: -1, phase: 1.05, labelAt: -0.3 },
-  { r: 330, incl: 71, rot: -5, period: 104, dir: 1, phase: 0.18, labelAt: Math.PI - 0.26 },
+  { r: 158, incl: 63, rot: -15, period: 56, dir: 1, phase: 0.4, labelAt: -Math.PI / 2 - 0.75 },
+  { r: 244, incl: 67, rot: 11, period: 80, dir: -1, phase: 1.05, labelAt: -Math.PI / 2 + 0.75 },
+  { r: 330, incl: 71, rot: -5, period: 104, dir: 1, phase: 0.18, labelAt: -Math.PI / 2 - 0.75 },
 ]
 
 const DEG = Math.PI / 180
 const PERSPECTIVE = 2600
 const TAU = Math.PI * 2
+/** viewport px hidden under the fixed navbar */
+const NAV_CLEARANCE = 100
 
 interface Orbiter {
   tool: Tool
@@ -167,15 +173,24 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
   const anchorRef = useRef<HTMLDivElement>(null)
   const leaderRef = useRef<HTMLSpanElement>(null)
 
-  const positions = useRef<{ x: number; y: number }[]>([])
+  /** badge centres plus their current half-extents (stage px) and depth (-1 far … 1 near, 2 = the shown badge) */
+  const positions = useRef<{ x: number; y: number; hw: number; hh: number; z: number }[]>([])
+  const labelPos = useRef<{ x: number; y: number }[]>([])
+  /** badges on the far half collapse to bare monogram discs (wide stages only) */
+  const farState = useRef<boolean[]>([])
+  const labelHidden = useRef<boolean[]>([])
+  /** how far each badge has faded behind nearer ones (0…1, eased); outlives render-loop restarts */
+  const occludedRef = useRef<number[]>([])
   const sim = useRef({ t: 0, speed: 1, gx: 0, gy: 0 })
   const pointer = useRef({ tx: 0, ty: 0 })
   const shownRef = useRef(shown)
   shownRef.current = shown
   const highlightRef = useRef(highlight)
   highlightRef.current = highlight
-  const geom = useRef({ cx, cy, k, inclShift, W: width })
-  geom.current = { cx, cy, k, inclShift, W: width }
+  // pills shrink a touch on mid-size stages so passing badges collide less
+  const sz = compact ? 1 : clamp(0.6 + 0.45 * k, 0.9, 1)
+  const geom = useRef({ cx, cy, k, inclShift, W: width, compact, sz })
+  geom.current = { cx, cy, k, inclShift, W: width, compact, sz }
 
   const clearTimer = useRef<number>()
   const lastPointer = useRef<string>('mouse')
@@ -195,13 +210,21 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
     let lastGy = Number.NaN
     let lastT = Number.NaN
     let force = true
+    // full pill width (disc + padding + label), read once per run: the label keeps its
+    // scrollWidth while a far badge has it collapsed to max-width 0
+    const pillW = badgeRefs.current.map((el) => {
+      const label = el && el.children.length > 1 ? (el.lastElementChild as HTMLElement) : null
+      return 60 + (label?.scrollWidth ?? 0)
+    })
+    const baseOpacity: number[] = []
+    const occluded = occludedRef.current
 
     const frame = (now: number, live: boolean) => {
       const m = sim.current
       const g = geom.current
       const shownId = shownRef.current
+      const dt = live ? Math.min(0.05, (now - last) / 1000) : 0
       if (live) {
-        const dt = Math.min(0.05, (now - last) / 1000)
         last = now
         m.speed += ((shownId ? 0 : 1) - m.speed) * Math.min(1, dt * 4.2)
         if (shownId && m.speed < 1e-3) m.speed = 0
@@ -222,6 +245,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
           frontRefs.current[ri]?.setAttribute('d', front)
           glowRefs.current[ri]?.setAttribute('d', front)
           const p = project(ring, ring.labelAt, g.inclShift, m.gx, m.gy, g.k)
+          labelPos.current[ri] = { x: g.cx + p.x, y: g.cy + p.y }
           const label = labelRefs.current[ri]
           if (label) label.style.transform = `translate3d(${(g.cx + p.x).toFixed(1)}px, ${(g.cy + p.y).toFixed(1)}px, 0)`
         })
@@ -238,19 +262,65 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         const p = project(ring, o.angle + ring.dir * (m.t / ring.period) * TAU, g.inclShift, m.gx, m.gy, g.k)
         const x = g.cx + p.x
         const y = g.cy + p.y
-        positions.current[i] = { x, y }
-        const el = badgeRefs.current[i]
-        if (!el) return
         const depth = (p.z + 1) / 2
         const isShown = shownId === o.tool.id
+        const scale = isShown ? 1.05 : (0.64 + 0.3 * depth) * g.sz
+        const wide = !g.compact && !(farState.current[i] ?? false)
+        positions.current[i] = { x, y, hw: ((wide ? pillW[i] : 40) * scale) / 2, hh: 20 * scale, z: isShown ? 2 : p.z }
+        const el = badgeRefs.current[i]
+        if (!el) return
         const dim = hi !== null && o.tool.category !== hi
-        const scale = isShown ? 1.05 : 0.64 + 0.3 * depth
-        const opacity = isShown ? 1 : (0.36 + 0.64 * depth) * (dim ? 0.2 : 1)
+        // the near half stays solid so it cleanly hides whatever passes behind it
+        baseOpacity[i] = isShown ? 1 : clamp(0.28 + 1.25 * depth, 0.28, 1) * (dim ? 0.2 : 1)
         el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(3)})`
-        el.style.opacity = opacity.toFixed(3)
+        // hysteresis keeps a badge riding the horizon from flickering between states
+        const wasFar = farState.current[i] ?? false
+        const isFar = !g.compact && !isShown && (wasFar ? p.z < 0.04 : p.z < -0.12)
+        if (isFar !== wasFar) {
+          farState.current[i] = isFar
+          if (isFar) el.dataset.far = ''
+          else delete el.dataset.far
+        }
         el.style.zIndex = isShown
           ? '160'
           : String(p.z >= 0 ? 80 + Math.round(p.z * 60) : 20 + Math.round((p.z + 1) * 40))
+      })
+
+      // a badge sliding behind a nearer one dims its disc and label (its solid body stays, so
+      // nothing shows through), so a crossing reads as depth rather than as one label cut off by another
+      const ease = live ? Math.min(1, dt * 6) : 1
+      const pos = positions.current
+      ORBITERS.forEach((_, i) => {
+        const el = badgeRefs.current[i]
+        const a = pos[i]
+        if (!el || !a) return
+        let cover = 0
+        for (let j = 0; j < pos.length; j++) {
+          const b = pos[j]
+          if (j === i || !b || b.z <= a.z) continue
+          const ox = Math.min(a.x + a.hw, b.x + b.hw) - Math.max(a.x - a.hw, b.x - b.hw)
+          const oy = Math.min(a.y + a.hh, b.y + b.hh) - Math.max(a.y - a.hh, b.y - b.hh)
+          if (ox > 0 && oy > 0) cover += (ox * oy) / (4 * a.hw * a.hh)
+        }
+        const prev = occluded[i] ?? 0
+        occluded[i] = prev + (Math.min(1, cover * 4) - prev) * ease
+        el.style.opacity = baseOpacity[i].toFixed(3)
+        const fade = (1 - 0.55 * occluded[i]).toFixed(2)
+        if (el.style.getPropertyValue('--occ') !== fade) el.style.setProperty('--occ', fade)
+      })
+
+      // a ring tag steps aside only while a badge actually overlaps it (tag ≈ 24 × 15 px,
+      // sitting just above the ring and reaching outward, away from the core)
+      labelRefs.current.forEach((label, ri) => {
+        const lp = labelPos.current[ri]
+        if (!label || !lp) return
+        const tx = lp.x + (Math.cos(RINGS[ri].labelAt) < 0 ? -16 : 16)
+        const ty = lp.y - 12
+        const covered = positions.current.some((q) => Math.abs(q.x - tx) < q.hw + 16 && Math.abs(q.y - ty) < q.hh + 11)
+        if (covered !== (labelHidden.current[ri] ?? false)) {
+          labelHidden.current[ri] = covered
+          label.style.opacity = covered ? '0' : '1'
+        }
       })
 
       BEADS.forEach((b, i) => {
@@ -286,11 +356,23 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
     return () => cancelAnimationFrame(raf)
   }, [width, H, compact, reduced, inView, shown, highlight])
 
+  // the card opens away from the core, unless that side would run under the navbar
+  // or off the bottom of the screen and the other side has more room
   useLayoutEffect(() => {
     if (!shown || !(shown in ORBIT_INDEX)) return
     const pos = positions.current[ORBIT_INDEX[shown]]
-    if (pos) setPlacement(pos.y < cy + 8 ? 'above' : 'below')
-  }, [shown, cy])
+    const stage = stageRef.current?.getBoundingClientRect()
+    if (!pos || !stage) return
+    const card = anchorRef.current?.querySelector<HTMLElement>('[role=tooltip]')?.offsetHeight ?? 200
+    const need = card + 36
+    const y = stage.top + pos.y
+    const roomAbove = y - NAV_CLEARANCE
+    const roomBelow = window.innerHeight - y
+    let side: 'above' | 'below' = pos.y < cy + 8 ? 'above' : 'below'
+    if (side === 'above' && roomAbove < need && roomBelow > roomAbove) side = 'below'
+    else if (side === 'below' && roomBelow < need && roomAbove > roomBelow) side = 'above'
+    setPlacement(side)
+  }, [shown, cy, stageRef])
 
   // a tap anywhere else dismisses a touch selection
   useEffect(() => {
@@ -428,25 +510,26 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
           ))}
         </svg>
 
-        {RINGS.map((_, ri) => (
-          <span
-            key={ri}
-            ref={(el) => {
-              labelRefs.current[ri] = el
-            }}
-            aria-hidden
-            className="pointer-events-none absolute left-0 top-0 z-[12]"
-          >
+        {!compact &&
+          RINGS.map((_, ri) => (
             <span
-              className={cn(
-                'absolute -translate-y-[130%] rounded-sm border border-accent/30 bg-deep/70 px-1 font-mono text-[8.5px] leading-[1.5] tracking-[0.12em] text-accent/90',
-                Math.cos(RINGS[ri].labelAt) < 0 ? 'left-1' : 'right-1',
-              )}
+              key={ri}
+              ref={(el) => {
+                labelRefs.current[ri] = el
+              }}
+              aria-hidden
+              className="pointer-events-none absolute left-0 top-0 z-[12] transition-opacity duration-300"
             >
-              R{ri}
+              <span
+                className={cn(
+                  'absolute -translate-y-[130%] rounded-sm border border-accent/30 bg-deep/70 px-1 font-mono text-[8.5px] leading-[1.5] tracking-[0.12em] text-accent/90',
+                  Math.cos(RINGS[ri].labelAt) < 0 ? 'right-1' : 'left-1',
+                )}
+              >
+                R{ri}
+              </span>
             </span>
-          </span>
-        ))}
+          ))}
 
         <ul
           aria-hidden
@@ -520,9 +603,9 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                   onOpen(t.id)
                 }}
                 className={cn(
-                  'absolute left-0 top-0 flex items-center rounded-full border opacity-0 will-change-transform',
-                  'transition-[border-color,box-shadow,background-color] duration-300',
-                  compact ? 'h-10 w-10 justify-center' : 'h-10 gap-2 pl-1 pr-3.5',
+                  'group/badge absolute left-0 top-0 flex items-center rounded-full border opacity-0 will-change-transform',
+                  'transition-[border-color,box-shadow,background-color,padding] duration-500',
+                  compact ? 'h-10 w-10 justify-center' : 'h-10 pl-1 pr-3.5 data-[far]:pr-1',
                   isShown
                     ? 'border-accent shadow-glow'
                     : isHi
@@ -530,9 +613,10 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                       : 'border-accent/35 hover:border-accent/70',
                 )}
                 style={{
+                  // solid base layer: nothing behind a pill may show through its label
                   background: isShown
-                    ? 'linear-gradient(135deg, rgb(var(--accent) / 0.32), rgb(var(--surface) / 0.96) 60%)'
-                    : 'linear-gradient(135deg, rgb(var(--surface) / 0.94), rgb(var(--deep) / 0.9))',
+                    ? 'linear-gradient(135deg, rgb(var(--accent) / 0.32), rgb(var(--surface) / 0.96) 60%), rgb(var(--surface))'
+                    : 'linear-gradient(135deg, rgb(var(--surface) / 0.94), rgb(var(--deep) / 0.9)), rgb(var(--deep))',
                 }}
               >
                 <span
@@ -544,13 +628,14 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                   style={{
                     background:
                       'radial-gradient(circle at 34% 30%, rgb(var(--accent-3) / 0.5), rgb(var(--accent) / 0.22) 55%, rgb(var(--deep) / 0.92))',
+                    opacity: 'var(--occ, 1)',
                   }}
                 >
                   {t.mono}
                 </span>
                 {!compact && (
-                  <span className="whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/90">
-                    {t.short}
+                  <span className="ml-2 max-w-[8rem] overflow-hidden whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/90 transition-[max-width,margin,opacity] duration-500 group-data-[far]/badge:ml-0 group-data-[far]/badge:max-w-0 group-data-[far]/badge:opacity-0">
+                    <span style={{ opacity: 'var(--occ, 1)' }}>{t.short}</span>
                   </span>
                 )}
               </button>
@@ -590,8 +675,9 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                     id={tooltipId}
                     role="tooltip"
                     data-orbit-hit
-                    initial={{ y: placement === 'above' ? 12 : -12, scale: 0.94, filter: 'blur(6px)' }}
-                    animate={{ y: 0, scale: 1, filter: 'blur(0px)' }}
+                    // no filter here: a filtered ancestor would switch off the card's backdrop blur
+                    initial={{ y: placement === 'above' ? 12 : -12, scale: 0.94 }}
+                    animate={{ y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: EASE }}
                     onPointerEnter={(e) => {
                       if (e.pointerType === 'mouse') cancelClear()
@@ -610,15 +696,17 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         </div>
       </div>
 
-      <p className="mt-1 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted/80">
-        {compact ? (
-          'tap a node to inspect · tap again for details'
-        ) : (
-          <>
-            hover or focus a node <span className="text-accent/70">·</span> ← → to cycle{' '}
-            <span className="text-accent/70">·</span> enter for details
-          </>
-        )}
+      <p className="mt-1 text-balance px-2 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted/80">
+        <span className="[@media(hover:none)]:hidden">
+          hover or focus a node <span className="text-accent/70">·</span> ← → to cycle{' '}
+          <span className="text-accent/70">·</span> enter for details
+        </span>
+        {/* phones: two clean lines rather than a separator dangling at the end of the first */}
+        <span className="hidden [@media(hover:none)]:inline">
+          <span className="max-sm:block">tap a node to inspect</span>
+          <span className="text-accent/70 max-sm:hidden"> · </span>
+          <span className="max-sm:block">tap again for details</span>
+        </span>
       </p>
     </div>
   )
@@ -719,8 +807,12 @@ function Core({ cx, cy, size, caption }: { cx: number; cy: number; size: number;
 
       <div
         aria-hidden
-        className="pointer-events-none absolute z-[72] -translate-x-1/2 -translate-y-full text-center"
-        style={{ left: cx, top: cy - size / 2 + 2 }}
+        className="pointer-events-none absolute z-[72] -translate-x-1/2 -translate-y-full px-6 pb-0.5 pt-1.5 text-center"
+        style={{
+          left: cx,
+          top: cy - size / 2 + 4,
+          background: 'radial-gradient(closest-side, rgb(var(--deep) / 0.9), rgb(var(--deep) / 0.6) 55%, transparent)',
+        }}
       >
         <p className="font-display text-[13px] font-bold tracking-[0.2em] text-ink [text-shadow:0_0_12px_rgb(var(--accent)/0.8)]">
           {ORBIT_CORE.label}
@@ -758,7 +850,7 @@ function Beam({ top, bottom, k }: { top: number; bottom: number; k: number }) {
         ].map((p) => (
           <span
             key={p.left}
-            className="absolute top-0 h-[5%] w-[2px] animate-scanline rounded-full bg-accent3/80"
+            className="absolute top-0 h-[9%] w-[3px] animate-scanline rounded-full bg-gradient-to-b from-transparent via-accent3/55 to-transparent blur-[0.5px]"
             style={{ left: p.left, animationDelay: p.delay, animationDuration: p.dur }}
           />
         ))}

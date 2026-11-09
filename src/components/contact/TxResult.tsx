@@ -15,7 +15,9 @@ import type { Brief } from './lib'
 import { EASE } from './fields'
 
 const ACTION =
-  'group relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 font-display text-[11px] font-bold uppercase tracking-[0.16em] transition-[color,background-color,border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5'
+  'group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 font-display text-[11px] font-bold uppercase tracking-[0.16em] transition-[color,background-color,border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 sm:w-auto'
+/** phones stack the actions full width; wider screens set them in a centred row */
+const ACTIONS = 'flex w-full max-w-xs flex-col gap-2.5 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center'
 const PRIMARY = 'border-accent/60 bg-accent/15 text-ink hover:border-accent hover:bg-accent/25 hover:shadow-glow'
 const SECONDARY =
   'border-accent/30 bg-transparent text-accent hover:border-accent hover:bg-accent/10 hover:text-ink hover:shadow-glow-sm'
@@ -191,7 +193,7 @@ export function TxSuccess({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
+      <div className={ACTIONS}>
         <Action icon={RotateCcw} onClick={onReset} primary>
           Send another
         </Action>
@@ -245,7 +247,7 @@ export function TxError({
       <p className="w-full max-w-md rounded-xl border border-rose-400/30 bg-rose-400/[0.06] px-4 py-3 text-left font-mono text-[11px] leading-relaxed text-rose-200/90">
         <span className="text-rose-300">error</span> {reason}
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
+      <div className={ACTIONS}>
         <Action icon={RotateCcw} onClick={onRetry} primary>
           Retry
         </Action>

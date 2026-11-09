@@ -4,31 +4,40 @@
 
 /*
  * Each palette colour is split into registered numeric channels so the
- * browser can interpolate them: switching sections then morphs every
- * gradient, glow and border in the UI instead of snapping. Browsers
- * without @property simply snap to the new palette.
+ * browser can interpolate them: switching sections morphs every gradient,
+ * glow and border of the persistent chrome instead of snapping. Browsers
+ * without @property simply snap.
+ *
+ * Cost model: a custom-property change re-styles every descendant of the
+ * element it happens on (Chrome does not stop at descendants that override
+ * it). So :root never animates: it snaps once per switch, at the swap,
+ * when the outgoing section is gone and the incoming one is a placeholder.
+ * The visible morph runs on `.palette-morph` scopes (background, navbar,
+ * cursor), which carry their own channels (morphVars() in theme/themes.ts)
+ * and hold a few hundred nodes at most. The channels are not inherited:
+ * descendants inherit the resolved "R G B" triplets.
  */
-@property --accent-r { syntax: '<number>'; inherits: true; initial-value: 34; }
-@property --accent-g { syntax: '<number>'; inherits: true; initial-value: 211; }
-@property --accent-b { syntax: '<number>'; inherits: true; initial-value: 238; }
-@property --accent-2-r { syntax: '<number>'; inherits: true; initial-value: 45; }
-@property --accent-2-g { syntax: '<number>'; inherits: true; initial-value: 212; }
-@property --accent-2-b { syntax: '<number>'; inherits: true; initial-value: 191; }
-@property --accent-3-r { syntax: '<number>'; inherits: true; initial-value: 125; }
-@property --accent-3-g { syntax: '<number>'; inherits: true; initial-value: 211; }
-@property --accent-3-b { syntax: '<number>'; inherits: true; initial-value: 252; }
-@property --surface-r { syntax: '<number>'; inherits: true; initial-value: 8; }
-@property --surface-g { syntax: '<number>'; inherits: true; initial-value: 20; }
-@property --surface-b { syntax: '<number>'; inherits: true; initial-value: 28; }
-@property --deep-r { syntax: '<number>'; inherits: true; initial-value: 3; }
-@property --deep-g { syntax: '<number>'; inherits: true; initial-value: 8; }
-@property --deep-b { syntax: '<number>'; inherits: true; initial-value: 13; }
-@property --ink-r { syntax: '<number>'; inherits: true; initial-value: 226; }
-@property --ink-g { syntax: '<number>'; inherits: true; initial-value: 243; }
-@property --ink-b { syntax: '<number>'; inherits: true; initial-value: 248; }
-@property --muted-r { syntax: '<number>'; inherits: true; initial-value: 129; }
-@property --muted-g { syntax: '<number>'; inherits: true; initial-value: 163; }
-@property --muted-b { syntax: '<number>'; inherits: true; initial-value: 177; }
+@property --accent-r { syntax: '<number>'; inherits: false; initial-value: 34; }
+@property --accent-g { syntax: '<number>'; inherits: false; initial-value: 211; }
+@property --accent-b { syntax: '<number>'; inherits: false; initial-value: 238; }
+@property --accent-2-r { syntax: '<number>'; inherits: false; initial-value: 45; }
+@property --accent-2-g { syntax: '<number>'; inherits: false; initial-value: 212; }
+@property --accent-2-b { syntax: '<number>'; inherits: false; initial-value: 191; }
+@property --accent-3-r { syntax: '<number>'; inherits: false; initial-value: 125; }
+@property --accent-3-g { syntax: '<number>'; inherits: false; initial-value: 211; }
+@property --accent-3-b { syntax: '<number>'; inherits: false; initial-value: 252; }
+@property --surface-r { syntax: '<number>'; inherits: false; initial-value: 8; }
+@property --surface-g { syntax: '<number>'; inherits: false; initial-value: 20; }
+@property --surface-b { syntax: '<number>'; inherits: false; initial-value: 28; }
+@property --deep-r { syntax: '<number>'; inherits: false; initial-value: 3; }
+@property --deep-g { syntax: '<number>'; inherits: false; initial-value: 8; }
+@property --deep-b { syntax: '<number>'; inherits: false; initial-value: 13; }
+@property --ink-r { syntax: '<number>'; inherits: false; initial-value: 226; }
+@property --ink-g { syntax: '<number>'; inherits: false; initial-value: 243; }
+@property --ink-b { syntax: '<number>'; inherits: false; initial-value: 248; }
+@property --muted-r { syntax: '<number>'; inherits: false; initial-value: 129; }
+@property --muted-g { syntax: '<number>'; inherits: false; initial-value: 163; }
+@property --muted-b { syntax: '<number>'; inherits: false; initial-value: 177; }
 
 @layer base {
   :root {
@@ -64,19 +73,9 @@
     --ink: var(--ink-r) var(--ink-g) var(--ink-b);
     --muted: var(--muted-r) var(--muted-g) var(--muted-b);
 
-    --theme-ms: 900ms;
+    /* matches the section exit, so the morph is over before the next section mounts */
+    --theme-ms: 460ms;
     --ease-holo: cubic-bezier(0.22, 1, 0.36, 1);
-
-    transition-property:
-      --accent-r, --accent-g, --accent-b,
-      --accent-2-r, --accent-2-g, --accent-2-b,
-      --accent-3-r, --accent-3-g, --accent-3-b,
-      --surface-r, --surface-g, --surface-b,
-      --deep-r, --deep-g, --deep-b,
-      --ink-r, --ink-g, --ink-b,
-      --muted-r, --muted-g, --muted-b;
-    transition-duration: var(--theme-ms);
-    transition-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
 
     color-scheme: dark;
   }
@@ -87,6 +86,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* anchor jumps, scrollIntoView and keyboard focus all land clear of the fixed navbar (ends at 88px) */
+    scroll-padding-top: 7rem;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -134,6 +135,27 @@
 }
 
 @layer components {
+  /* Chrome that morphs between palettes (see the cost model at the top). */
+  .palette-morph {
+    --accent: var(--accent-r) var(--accent-g) var(--accent-b);
+    --accent-2: var(--accent-2-r) var(--accent-2-g) var(--accent-2-b);
+    --accent-3: var(--accent-3-r) var(--accent-3-g) var(--accent-3-b);
+    --surface: var(--surface-r) var(--surface-g) var(--surface-b);
+    --deep: var(--deep-r) var(--deep-g) var(--deep-b);
+    --ink: var(--ink-r) var(--ink-g) var(--ink-b);
+    --muted: var(--muted-r) var(--muted-g) var(--muted-b);
+    transition-property:
+      --accent-r, --accent-g, --accent-b,
+      --accent-2-r, --accent-2-g, --accent-2-b,
+      --accent-3-r, --accent-3-g, --accent-3-b,
+      --surface-r, --surface-g, --surface-b,
+      --deep-r, --deep-g, --deep-b,
+      --ink-r, --ink-g, --ink-b,
+      --muted-r, --muted-g, --muted-b;
+    transition-duration: var(--theme-ms);
+    transition-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+  }
+
   /* ── Glass holo panel ─────────────────────────────────────────── */
   .glass {
     background:

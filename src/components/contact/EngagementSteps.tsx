@@ -18,8 +18,9 @@ const CYCLE_MS = 2800
 /**
  * The engagement pipeline: four glass cards on a light rail. While visible the
  * "current" step steps along the rail; hovering a card takes over the highlight.
+ * `className` replaces the default top margin (e.g. when a wrapper owns the spacing).
  */
-export function EngagementSteps() {
+export function EngagementSteps({ className = 'mt-16 sm:mt-20' }: { className?: string } = {}) {
   const steps = ENGAGEMENT_STEPS
   const n = steps.length
   const listRef = useRef<HTMLOListElement>(null)
@@ -38,7 +39,7 @@ export function EngagementSteps() {
   const lit = hover ?? active
 
   return (
-    <section aria-labelledby={titleId} className="mt-16 sm:mt-20">
+    <section aria-labelledby={titleId} className={className}>
       <div className="mb-8 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-end">
         <div>
           <motion.p
@@ -69,8 +70,8 @@ export function EngagementSteps() {
           transition={{ duration: 0.7, delay: 0.15 }}
           className="max-w-md text-[14.5px] leading-relaxed text-muted lg:max-w-sm lg:text-right"
         >
-          Nothing is analysed until scope and authorisation are signed. Typical projects run 3–8 weeks end to
-          end.
+          Nothing is analysed until scope and authorisation are signed. Typical engagements run 4–10 weeks
+          from intro call to handoff.
         </motion.p>
       </div>
 
@@ -99,6 +100,7 @@ export function EngagementSteps() {
             index={i}
             lit={i === lit}
             done={i < lit}
+            last={i === n - 1}
             reduced={reduced}
             onHover={setHover}
           />
@@ -113,6 +115,7 @@ function StepCard({
   index,
   lit,
   done,
+  last,
   reduced,
   onHover,
 }: {
@@ -120,6 +123,7 @@ function StepCard({
   index: number
   lit: boolean
   done: boolean
+  last: boolean
   reduced: boolean
   onHover: (i: number | null) => void
 }) {
@@ -135,6 +139,16 @@ function StepCard({
       onMouseLeave={() => onHover(null)}
       className="group relative flex flex-col items-center"
     >
+      {/* single-column phones: a short rail carries the pipeline into the next step */}
+      {!last && (
+        <span
+          aria-hidden
+          className={cn(
+            'absolute -bottom-5 left-1/2 h-5 w-px -translate-x-1/2 transition-colors duration-500 sm:hidden',
+            done ? 'bg-accent/70' : 'bg-accent/30',
+          )}
+        />
+      )}
       <span
         className={cn(
           'relative z-10 grid h-14 w-14 place-items-center rounded-2xl border bg-surface transition-all duration-500',

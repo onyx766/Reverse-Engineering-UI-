@@ -413,11 +413,14 @@ function Gear({
   return (
     <g transform={`translate(${cx} ${cy})`}>
       <motion.g animate={{ rotate: hover ? hoverTurn : 0 }} transition={{ duration: 1.2, ease: EASE }}>
+        {/* turns only while lit, like every other illustration: an idle SVG spin repaints every frame
+            (index rows and Home sit outside the stage's off-screen pause); pausing keeps the angle */}
         <g
           style={{
             transformBox: 'fill-box',
             transformOrigin: 'center',
             animation: `${dir === 1 ? 'pj-spin' : 'pj-spin-rev'} ${dur}s linear infinite`,
+            animationPlayState: hover ? 'running' : 'paused',
           }}
         >
           <path

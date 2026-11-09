@@ -1,4 +1,5 @@
 import type { TermLine } from '@/components/ui/Terminal'
+import { STATS } from './profile'
 
 /* ───────────────────────────── categories ───────────────────────────── */
 
@@ -216,7 +217,7 @@ with bn.load("updaterd") as bv:
     snippet: {
       lang: 'shell',
       code: `# who calls the decrypt init in a stripped ARM binary?
-r2 -A -qc 'axt @ sym.imp.EVP_DecryptInit_ex' squashfs-root/usr/bin/updaterd
+r2 -A -qc 'axt @ sym.imp.EVP_DecryptInit_ex' updaterd
 
 # every function with "crypt" in its name, via JSON + jq
 r2 -A -qc 'aflj' updaterd | jq -r '.[] | select(.name | test("crypt")) | .name'`,
@@ -243,8 +244,10 @@ r2 -A -qc 'aflj' updaterd | jq -r '.[] | select(.name | test("crypt")) | .name'`
     tags: ['ScyllaHide', 'Scylla', 'Tracing'],
     snippet: {
       lang: 'x64dbg script',
-      code: `bp VirtualProtect
-SetBreakpointCondition VirtualProtect, "r8 == 0x20"
+      code: `// log every flip to PAGE_EXECUTE_READ (r8d = flNewProtect) without ever pausing
+bp VirtualProtect
+SetBreakpointCondition VirtualProtect, 0
+SetBreakpointLogCondition VirtualProtect, "r8d == 0x20"
 SetBreakpointLog VirtualProtect, "VirtualProtect({p:rcx}, {x:rdx}) -> PAGE_EXECUTE_READ"
 erun`,
     },
@@ -355,6 +358,7 @@ Interceptor.attach(libcrypto.getExportByName("EVP_DecryptUpdate"), {
   },
   onLeave() {
     const n = this.outl.readS32();
+    if (this.out.isNull() || n <= 0) return;  // AAD pass, or no full block yet
     console.log(hexdump(this.out, { length: Math.min(n, 64), ansi: true }));
   },
 });`,
@@ -379,7 +383,7 @@ Interceptor.attach(libcrypto.getExportByName("EVP_DecryptUpdate"), {
     tags: ['drcov', 'drwrap', 'drltrace'],
     snippet: {
       lang: 'shell',
-      code: `drrun -t drcov -dump_text -- ./parser crash_0042.bin
+      code: `drrun -t drcov -- ./parser crash_0042.bin
 # -> drcov.parser.04121.0000.proc.log  (load into Lighthouse / Lightkeeper)`,
     },
   },
@@ -420,19 +424,24 @@ Interceptor.attach(libcrypto.getExportByName("EVP_DecryptUpdate"), {
     snippet: {
       lang: 'python · Unicorn',
       code: `from unicorn import Uc, UC_ARCH_ARM, UC_MODE_THUMB
-from unicorn.arm_const import UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_LR
+from unicorn.arm_const import UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_SP, UC_ARM_REG_LR
 
-CODE, BUF, STOP = 0x10000, 0x80000, 0x13000
-mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
-mu.mem_map(CODE, 0x4000)
-mu.mem_map(BUF, 0x1000)
-mu.mem_write(CODE, routine)            # bytes lifted from the binary
-mu.mem_write(BUF, blob)
-mu.reg_write(UC_ARM_REG_R0, BUF)
-mu.reg_write(UC_ARM_REG_R1, len(blob))
-mu.reg_write(UC_ARM_REG_LR, STOP | 1)  # return lands on STOP
-mu.emu_start(CODE | 1, STOP)           # | 1 = Thumb
-print(bytes(mu.mem_read(BUF, len(blob))))`,
+STACK, BUF = 0x7F000000, 0x7E000000
+
+def decode(image: bytes, base: int, fn: int, blob: bytes) -> bytes:
+    """Run the Thumb routine decode(buf, len) at fn over a copy of blob."""
+    mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
+    mu.mem_map(base, (len(image) + 0xFFF) & ~0xFFF)  # non-PIE: file offset 0 sits at base
+    mu.mem_write(base, image)
+    mu.mem_map(STACK, 0x10000)
+    mu.mem_map(BUF, 0x10000)
+    mu.mem_write(BUF, blob)
+    mu.reg_write(UC_ARM_REG_SP, STACK + 0x8000)
+    mu.reg_write(UC_ARM_REG_R0, BUF)
+    mu.reg_write(UC_ARM_REG_R1, len(blob))
+    mu.reg_write(UC_ARM_REG_LR, base | 1)  # the routine returns to base...
+    mu.emu_start(fn | 1, base)             # ...where emulation stops; | 1 = Thumb
+    return bytes(mu.mem_read(BUF, len(blob)))`,
     },
   },
   {
@@ -481,19 +490,30 @@ sudo chroot squashfs-root /usr/bin/qemu-arm-static -g 1234 \\
     snippet: {
       lang: 'lua · Wireshark',
       code: `local p = Proto("camctl", "Camera Control Protocol")
-local f_op  = ProtoField.uint16("camctl.op",  "Opcode",   base.HEX)
-local f_len = ProtoField.uint32("camctl.len", "Length",   base.DEC)
-local f_seq = ProtoField.uint32("camctl.seq", "Sequence", base.DEC)
-p.fields = { f_op, f_len, f_seq }
+local f_op   = ProtoField.uint16("camctl.op",   "Opcode",   base.HEX)
+local f_len  = ProtoField.uint32("camctl.len",  "Length",   base.DEC)
+local f_seq  = ProtoField.uint32("camctl.seq",  "Sequence", base.DEC)
+local f_body = ProtoField.bytes("camctl.body",  "Body")
+p.fields = { f_op, f_len, f_seq, f_body }
 
-function p.dissector(buf, pinfo, tree)
-  if buf:len() < 10 then return 0 end
+-- 10-byte header, then len bytes of body
+local function pdu_len(buf, pinfo, offset)
+  return 10 + buf(offset + 2, 4):le_uint()
+end
+
+local function dissect_pdu(buf, pinfo, tree)
   pinfo.cols.protocol = "CAMCTL"
-  local t = tree:add(p, buf(0, 10))
+  local t = tree:add(p, buf())
   t:add_le(f_op,  buf(0, 2))
   t:add_le(f_len, buf(2, 4))
   t:add_le(f_seq, buf(6, 4))
-  return 10
+  if buf:len() > 10 then t:add(f_body, buf(10)) end
+  return buf:len()
+end
+
+function p.dissector(buf, pinfo, tree)
+  dissect_tcp_pdus(buf, tree, 10, pdu_len, dissect_pdu)
+  return buf:len()
 end
 
 DissectorTable.get("tcp.port"):add(9530, p)`,
@@ -584,7 +604,8 @@ class CamCtl(Packet):
             p = p[:2] + struct.pack("<I", len(p) - 10) + p[6:]
         return p + pay
 
-bind_layers(TCP, CamCtl, dport=9530)`,
+bind_layers(TCP, CamCtl, dport=9530)
+bind_layers(TCP, CamCtl, sport=9530)`,
     },
   },
   {
@@ -605,7 +626,7 @@ bind_layers(TCP, CamCtl, dport=9530)`,
     tags: ['BPF', 'Ring buffers'],
     snippet: {
       lang: 'shell',
-      code: `tcpdump -i br-lab -nn -s0 -G 3600 -w 'cam-%Y%m%d-%H.pcap' \\
+      code: `tcpdump -i vmbr1 -nn -s0 -G 3600 -w 'cam-%Y%m%d-%H.pcap' \\
   'host 10.13.37.20 and not port 22'
 
 ssh lab 'tcpdump -U -i eth1 -w - not port 22' | wireshark -k -i -`,
@@ -741,7 +762,8 @@ Entry toc[hdr.entry_count] @ hdr.toc_offset;`,
     mono: 'YA',
     category: 'formats',
     level: 4,
-    years: 6,
+    // since the 2018 triage desk (About · career log)
+    years: 8,
     orbit: 2,
     usage:
       'Rules that pin a component across builds — byte patterns with wildcards around code that survives recompilation.',
@@ -816,7 +838,10 @@ DECIMAL       HEXADECIMAL     DESCRIPTION
     tags: ['Harnesses', 'Reimplementation'],
     snippet: {
       lang: 'c · libFuzzer harness',
-      code: `typedef int (*parse_fn)(const uint8_t *buf, size_t len, void *out);
+      code: `#include <windows.h>
+#include <stdint.h>
+
+typedef int (*parse_fn)(const uint8_t *buf, size_t len, void *out);
 static parse_fn parse;
 
 int LLVMFuzzerInitialize(int *argc, char ***argv) {
@@ -869,21 +894,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     tags: ['binrw', 'nom', 'cargo-fuzz'],
     snippet: {
       lang: 'rust · binrw',
-      code: `use binrw::binrw;
-use std::io::SeekFrom;
+      code: `use binrw::{io::SeekFrom, BinRead};
 
-#[binrw]
-#[brw(little, magic = b"PKG1")]
+#[derive(BinRead, Debug)]
+#[br(little, magic = b"PKG1")]
 struct Header {
     version: u32,
     entry_count: u32,
     toc_offset: u32,
-    #[br(seek_before = SeekFrom::Start(u64::from(toc_offset)), count = entry_count)]
+    #[br(seek_before = SeekFrom::Start(toc_offset.into()), count = entry_count)]
     toc: Vec<Entry>,
 }
 
-#[binrw]
-#[brw(little)]
+#[derive(BinRead, Debug)]
+#[br(little)]
 struct Entry {
     offset: u32,
     size: u32,
@@ -902,17 +926,17 @@ struct Entry {
     usage:
       'Read it like prose — SysV, Win64 and AAPCS64 calling conventions, SIMD idioms — and hand-patch when a fix has to fit in the bytes available.',
     specifics: [
-      'Compiler idioms at a glance: imul / shr division by constant, rep movsb copies, CFG and CET thunks.',
+      'Compiler idioms at a glance: imul / shr division by a constant, rep movsb copies, CFG dispatch thunks, endbr64 landing pads.',
       'In-place patches sized to the original instruction — an ARM64 NOP is 1F 20 03 D5.',
       'Thumb-2 and AArch64 encodings by hand when there is no assembler on the box.',
     ],
     tags: ['x86-64', 'AArch64', 'Thumb-2'],
     snippet: {
       lang: 'asm · AArch64',
-      code: `; authorised lab-unit patch: verify_signature() always succeeds
+      code: `// authorised lab-unit patch: verify_signature() always succeeds
 verify_signature:
-    mov   w0, #1          ; 20 00 80 52
-    ret                   ; C0 03 5F D6`,
+    mov   w0, #1          // 20 00 80 52
+    ret                   // C0 03 5F D6`,
     },
   },
   {
@@ -992,7 +1016,7 @@ tracerpt ntproc.etl -o ntproc.xml -of XML`,
       'APK and DEX with jadx and apktool, ART internals for hooking, and RegisterNatives to map Java methods onto stripped native code.',
     specifics: [
       'Hook RegisterNatives with Frida to resolve which native function backs each obfuscated Java method.',
-      'apktool d → smali patch → apksigner sign for debuggable assessment builds.',
+      'apktool d → smali patch → apktool b → zipalign → apksigner for debuggable assessment builds.',
       'jadx-gui with deobfuscation, then am start -D to wait for a debugger at launch.',
     ],
     tags: ['jadx', 'apktool', 'JNI'],
@@ -1059,6 +1083,11 @@ export interface SkillAxis {
 
 export const RADAR_SERIES = { now: 'Today', baseline: 'Year one' }
 
+/** counts shared with the hero stats, so the radar notes never disagree with them */
+const stat = (re: RegExp, fallback: number) => STATS.find((x) => re.test(x.label))?.value ?? fallback
+const PROTOCOLS_MAPPED = stat(/protocol/i, 37)
+const TOOLS_PUBLISHED = stat(/tool/i, 14)
+
 export const SKILL_AXES: SkillAxis[] = [
   {
     id: 'static',
@@ -1082,7 +1111,7 @@ export const SKILL_AXES: SkillAxis[] = [
     short: 'Protocols',
     value: 88,
     baseline: 48,
-    note: '37 proprietary wire formats mapped from framing to auth handshake, each with a working client.',
+    note: `${PROTOCOLS_MAPPED} proprietary wire formats mapped from framing to auth handshake, each with a working client.`,
   },
   {
     id: 'formats',
@@ -1122,7 +1151,7 @@ export const SKILL_AXES: SkillAxis[] = [
     short: 'Tooling',
     value: 90,
     baseline: 45,
-    note: '14 published tools: loaders, dissectors, emulation harnesses and CI-ready parsers.',
+    note: `${TOOLS_PUBLISHED} published tools: loaders, dissectors, emulation harnesses and CI-ready parsers.`,
   },
 ]
 
@@ -1164,7 +1193,7 @@ export const LAB_NODES: LabNode[] = [
     role: 'Hypervisor workstation',
     status: 'online',
     specs: [
-      'Debian 12 · KVM / QEMU + libvirt',
+      'Proxmox VE 8 on Debian 12 · KVM / QEMU',
       '16 cores · 128 GB ECC · ZFS mirror',
       'Nightly ZFS snapshots of every VM disk',
     ],
@@ -1175,7 +1204,7 @@ export const LAB_NODES: LabNode[] = [
     role: 'Host-only network',
     status: 'isolated',
     specs: [
-      '10.13.37.0/24 · no physical uplink',
+      '10.13.37.0/24 · no LAN or WAN uplink',
       'nftables: forward policy drop',
       'Mirrored into a tcpdump ring buffer',
     ],
@@ -1197,7 +1226,7 @@ export const LAB_NODES: LabNode[] = [
     role: 'Fake internet + Linux toolkit',
     status: 'online',
     specs: [
-      'INetSim: HTTP(S), DNS, SMTP and FTP responders',
+      'INetSim: HTTP(S), SMTP, FTP and NTP responders',
       'fakedns answers every query with 10.13.37.2',
       'Captures everything that tries to phone home',
     ],
@@ -1260,7 +1289,7 @@ export const LAB_NODES: LabNode[] = [
 
 /** Containment checklist shown next to the topology. */
 export const LAB_CHECKS: { label: string; detail: string }[] = [
-  { label: 'Host-only network', detail: 'vmbr1 has no physical port' },
+  { label: 'Host-only network', detail: 'vmbr1 has no uplink' },
   { label: 'DNS sinkholed', detail: 'all lookups resolve to REMnux' },
   { label: 'WAN egress blocked', detail: 'nftables forward policy drop' },
   { label: 'Clean snapshot < 24 h', detail: 'zfs snapshot @nightly' },
@@ -1274,6 +1303,8 @@ export interface WorkflowSession {
   label: string
   /** shown in the panel footer */
   context: string
+  /** working directory shown in the terminal title bar */
+  cwd?: string
   lines: TermLine[]
 }
 
@@ -1282,22 +1313,28 @@ export const WORKFLOW_SESSIONS: WorkflowSession[] = [
     id: 'triage',
     label: 'Firmware triage',
     context: 'authorised audit · IoT camera firmware 2.4.1',
+    cwd: '/re/fw',
     lines: [
       { text: '$ binwalk -Me fw_2.4.1.bin', tone: 'ok' },
       { text: '0         0x0        uImage header, OS: Linux, CPU: ARM' },
       { text: '2097216   0x200040   Squashfs filesystem, little endian, version 4.0, compression:xz' },
-      { text: '$ file squashfs-root/usr/bin/updaterd', tone: 'ok' },
-      { text: 'ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, stripped' },
+      { text: '$ cp _fw_2.4.1.bin.extracted/squashfs-root/usr/bin/updaterd . && file -b updaterd', tone: 'ok' },
       {
-        text: '$ analyzeHeadless /re/proj fw_audit -import /re/fw/updaterd -postScript ExportCallGraph.py -scriptPath /re/ghidra_scripts',
+        text: 'ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.3, stripped',
+      },
+      {
+        text: '$ analyzeHeadless /re/proj fw_audit -import updaterd -postScript ExportCallGraph.py -scriptPath /re/ghidra_scripts',
         tone: 'ok',
       },
       { text: 'INFO  IMPORTING: file:///re/fw/updaterd (HeadlessAnalyzer)' },
       { text: 'INFO  Using Language/Compiler: ARM:LE:32:v8:default (HeadlessAnalyzer)' },
-      { text: 'INFO  ANALYZING all memory and code: file:///re/fw/updaterd (HeadlessAnalyzer)' },
+      { text: 'INFO  ANALYZING all memory and code: /updaterd (HeadlessAnalyzer)' },
       { text: 'INFO  REPORT: Analysis succeeded for file: file:///re/fw/updaterd (HeadlessAnalyzer)' },
       { text: 'INFO  ExportCallGraph.py> 1284 functions, 6912 edges -> updaterd.cg.json (GhidraScript)', tone: 'ok' },
-      { text: 'WARN  3 indirect calls left unresolved (computed jump tables)', tone: 'warn' },
+      {
+        text: 'INFO  ExportCallGraph.py> warning: 3 indirect calls unresolved, targets loaded from .data (GhidraScript)',
+        tone: 'warn',
+      },
       { text: '$ jq \'[.nodes[] | select(.name | test("sig|crypt"))] | length\' updaterd.cg.json', tone: 'ok' },
       { text: '17' },
     ],
@@ -1305,7 +1342,8 @@ export const WORKFLOW_SESSIONS: WorkflowSession[] = [
   {
     id: 'frida',
     label: 'frida-trace',
-    context: 'lab unit on vmbr1 · frida-server over UART shell',
+    context: 'authorised test unit · frida-server started from the UART shell',
+    cwd: '/re/fw',
     lines: [
       { text: '$ frida-trace -H 10.13.37.20 -n updaterd -i "EVP_DecryptInit_ex" -i "RSA_verify"', tone: 'ok' },
       { text: 'Instrumenting...' },
@@ -1323,8 +1361,9 @@ export const WORKFLOW_SESSIONS: WorkflowSession[] = [
     id: 'pwndbg',
     label: 'pwndbg',
     context: 'qemu-user + gdb-multiarch · research VM',
+    cwd: '/re/fw/_fw_2.4.1.bin.extracted',
     lines: [
-      { text: '$ qemu-arm-static -g 1234 -L squashfs-root squashfs-root/usr/bin/updaterd --check fw.sig &', tone: 'ok' },
+      { text: '$ qemu-arm-static -g 1234 -L squashfs-root squashfs-root/usr/bin/updaterd --check fwupd.sig &', tone: 'ok' },
       { text: '$ gdb-multiarch -q squashfs-root/usr/bin/updaterd', tone: 'ok' },
       { text: 'pwndbg> target remote :1234', tone: 'ok' },
       { text: 'Remote debugging using :1234' },
@@ -1332,13 +1371,14 @@ export const WORKFLOW_SESSIONS: WorkflowSession[] = [
       { text: 'Breakpoint 1 at 0x1a2c4' },
       { text: 'pwndbg> continue', tone: 'ok' },
       { text: 'Breakpoint 1, 0x0001a2c4 in ?? ()' },
-      { text: 'pwndbg> x/8xb $r1', tone: 'ok' },
-      { text: '0xbefff6c8:  0x6b  0x9f  0x21  0x04  0xd3  0x77  0x10  0xe1' },
-      { text: 'pwndbg> telescope $sp 3', tone: 'ok' },
-      { text: '00:0000│ sp 0xbefff640 —▸ 0x2e0f8 ◂— \'fwupd.sig\'' },
-      { text: '01:0004│    0xbefff644 ◂— 0x200' },
-      { text: '02:0008│    0xbefff648 —▸ 0xb6fd3000 ◂— 0x464c457f' },
-      { text: '# key bytes come from .rodata at 0x2e100 — static across all units', tone: 'warn' },
+      { text: 'pwndbg> x/i $pc', tone: 'ok' },
+      { text: '=> 0x1a2c4:  bl  0x10b3c <EVP_DecryptInit_ex@plt>' },
+      { text: 'pwndbg> x/16xb $r3', tone: 'ok' },
+      { text: '0x2e100:  0x6b  0x9f  0x21  0x04  0xd3  0x77  0x5a  0x0c' },
+      { text: '0x2e108:  0x91  0x3e  0xc4  0x28  0xb7  0x02  0x10  0xe1' },
+      { text: 'pwndbg> x/4xw *(unsigned int *)$sp', tone: 'ok' },
+      { text: '0x2e110:  0x00000000  0x00000000  0x00000000  0x00000000' },
+      { text: '# key = r3, IV = [sp] (5th arg): both in .rodata, identical on every unit', tone: 'warn' },
     ],
   },
 ]

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { AnimatePresence, animate, motion, useInView } from 'framer-motion'
 import {
   CalendarDays,
   ChevronLeft,
@@ -17,11 +17,12 @@ import {
 } from 'lucide-react'
 import { HoloModal } from '@/components/ui/HoloModal'
 import { Chip } from '@/components/ui/Chip'
-import { useCountUp } from '@/hooks/useCountUp'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { CATEGORIES, type Metric, type Project } from '@/data/projects'
 import { cn } from '@/lib/utils'
 import { CATEGORY_ICON, FINDING_ICON } from './icons'
 import { CodeBlock } from './CodeBlock'
+import { useMediaQuery } from './hooks'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -50,6 +51,9 @@ export function CaseStudyModal({ project, index, total, prev, next, onClose, onP
   const pageRef = useRef(page)
   pageRef.current = page
 
+  // phones: the eyebrow must fit one truncating line beside the icon and close button
+  const narrow = useMediaQuery('(max-width: 639px)')
+
   const open = !!project
   useEffect(() => {
     if (!open) return
@@ -73,7 +77,11 @@ export function CaseStudyModal({ project, index, total, prev, next, onClose, onP
       open={open}
       onClose={onClose}
       title={shown.title}
-      eyebrow={`Case study ${pad(index + 1)} / ${pad(total)} · ${category?.label ?? ''}`}
+      eyebrow={
+        narrow
+          ? `${pad(index + 1)}/${pad(total)} · ${category?.label ?? ''}`
+          : `Case study ${pad(index + 1)} / ${pad(total)} · ${category?.label ?? ''}`
+      }
       icon={CATEGORY_ICON[shown.category]}
       badge={String(shown.year)}
       size="xl"
@@ -271,8 +279,36 @@ function Timeline({ project }: { project: Project }) {
   )
 }
 
+const formatMetric = (v: number) => Math.round(v).toLocaleString('en-US')
+
+/** Counts up once in view; the number is written straight to the DOM, no per-frame renders. */
 function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
-  const { ref, value } = useCountUp(metric.value, 1500)
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-40px' })
+  const reduced = useReducedMotion()
+
+  useLayoutEffect(() => {
+    if (ref.current) ref.current.textContent = formatMetric(0)
+  }, [])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !inView) return
+    if (reduced) {
+      el.textContent = formatMetric(metric.value)
+      return
+    }
+    const run = animate(0, metric.value, {
+      duration: 1.5,
+      delay,
+      ease: [0.33, 1, 0.68, 1],
+      onUpdate: (v) => {
+        el.textContent = formatMetric(v)
+      },
+    })
+    return () => run.stop()
+  }, [inView, reduced, metric.value, delay])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 18, rotateX: -12 }}
@@ -288,7 +324,8 @@ function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
         className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-accent/15 blur-2xl transition-colors duration-500 group-hover:bg-accent/30"
       />
       <div className="relative font-display text-[28px] font-black leading-none text-ink">
-        <span ref={ref}>{value.toLocaleString('en-US')}</span>
+        {/* filled by the count-up above */}
+        <span ref={ref} />
         {metric.suffix && <span className="neon">{metric.suffix}</span>}
       </div>
       <div className="relative mt-2 font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted">{metric.label}</div>

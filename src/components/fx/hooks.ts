@@ -56,6 +56,10 @@ export function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
   }
 }
 
-/** Same curve and length as the palette morph declared on :root in index.css. */
-export const THEME_MORPH_MS = 900
+/** Same curve and length as the palette morph declared on :root in index.css (--theme-ms). */
+export const THEME_MORPH_MS = 460
 export const themeMorphEase = cubicBezier(0.45, 0, 0.2, 1)
+
+/** Section switch: the outgoing section fades for SECTION_EXIT_MS (the palette morph runs alongside), then the next one enters. */
+export const SECTION_EXIT_MS = THEME_MORPH_MS
+export const SECTION_ENTER_MS = 560

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { Fragment, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
@@ -29,6 +29,20 @@ export interface HexField {
   note?: string
 }
 
+/** The payload once decoded (inflated, decrypted, …), shown under the hex grid. */
+export interface HexDecoded {
+  /** the operation, e.g. 'inflate(chunk[0])' */
+  label: string
+  /** size change or similar, e.g. '28 B → 20 B' */
+  meta?: string
+  /** the decoded value, printed in full */
+  value: string
+  /** one-line verdict under the value */
+  note?: string
+  /** byte region lit while the pointer is over the box */
+  kind?: FieldKind
+}
+
 interface Props {
   rows: HexRow[]
   legend?: boolean
@@ -38,6 +52,11 @@ interface Props {
   labels?: Partial<Record<FieldKind, string>>
   /** show the parsed structure next to the hex (requires `fields`) */
   structure?: boolean
+  /**
+   * Decoded payload under the hex grid. Beside a structure table it is shown
+   * from md up only (on phones the table already prints the value in full).
+   */
+  decoded?: HexDecoded
 }
 
 const KIND_TEXT: Record<FieldKind, string> = {
@@ -86,6 +105,26 @@ interface Cell {
 
 const hex = (n: number, w = 4) => n.toString(16).toUpperCase().padStart(w, '0')
 
+/**
+ * Line-break opportunities after commas, so a wrapped value splits between JSON
+ * members. Chrome breaks at <wbr> even under white-space: nowrap, so where the
+ * text must stay on one line pass a class that hides the <wbr> (display: none
+ * removes the opportunity).
+ */
+const breakable = (v: string, wbrClassName?: string): ReactNode =>
+  v.includes(',')
+    ? v.split(',').map((part, i, all) => (
+        <Fragment key={i}>
+          {part}
+          {i < all.length - 1 && (
+            <>
+              ,<wbr className={wbrClassName} />
+            </>
+          )}
+        </Fragment>
+      ))
+    : v
+
 const sameSel = (a: Sel, b: Sel) =>
   !!a && !!b && ('field' in a ? 'field' in b && a.field === b.field : 'kind' in b && a.kind === b.kind)
 
@@ -96,7 +135,7 @@ const sameField = (a: Cell, b: Cell) => a.fi === b.fi && (a.fi >= 0 || a.kind ==
  * tooltip, an optional parsed-structure table (010 Editor / ImHex style) and
  * a legend that lights every byte of a region.
  */
-export function HexDump({ rows, legend = true, fields, labels, structure = false }: Props) {
+export function HexDump({ rows, legend = true, fields, labels, structure = false, decoded }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const byteRefs = useRef(new Map<number, HTMLSpanElement>())
   const fieldRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -107,6 +146,8 @@ export function HexDump({ rows, legend = true, fields, labels, structure = false
   const [focus, setFocus] = useState<Sel>(null)
   const [pinned, setPinned] = useState<Sel>(null)
   const [cursor, setCursor] = useState(0)
+  // roving tabindex: the structure table is one Tab stop, arrow keys walk the fields
+  const [roving, setRoving] = useState(0)
   const sel = hover ?? focus ?? pinned
   const names = { ...DEFAULT_LABELS, ...labels }
   const showStruct = structure && !!fields?.length
@@ -201,107 +242,137 @@ export function HexDump({ rows, legend = true, fields, labels, structure = false
     <div ref={rootRef} className="relative flex flex-col gap-3">
       <div className={cn('flex flex-col gap-4', showStruct && 'md:flex-row md:items-start md:gap-6')}>
         <div
-          role="group"
-          aria-label={`Hex view, ${total} bytes`}
-          onPointerLeave={() => setHover(null)}
           className={cn(
-            'relative shrink-0 font-mono text-[10.5px] leading-5 min-[400px]:text-[11px]',
+            'flex shrink-0 flex-col gap-3',
             showStruct ? 'self-center md:self-start' : 'self-start',
           )}
         >
-          {!reduced && (
-            <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded">
-              <span className="absolute inset-x-0 top-0 h-6 animate-scanline bg-gradient-to-b from-transparent via-accent/10 to-transparent" />
-            </span>
-          )}
-          <div aria-hidden className="flex h-5 items-center gap-3 whitespace-nowrap text-muted/40">
-            <span className="w-[4ch]">off</span>
-            <span className="flex">
-              {Array.from({ length: cols }, (_, i) => (
-                <span key={i} className="px-[0.28em]">
-                  {hex(i, 2)}
-                </span>
-              ))}
-            </span>
-            <span>ascii</span>
-          </div>
-          {grid.map((row, r) => (
-            <motion.div
-              key={rows[r].offset}
-              initial={{ opacity: 0, x: -14 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: r * 0.06 }}
-              className="flex h-5 items-center gap-3 whitespace-nowrap"
-            >
-              <span className="w-[4ch] tabular-nums text-muted/60">{rows[r].offset}</span>
+          <div
+            role="group"
+            aria-label={`Hex view, ${total} bytes`}
+            onPointerLeave={() => setHover(null)}
+            className="relative font-mono text-[10.5px] leading-5 min-[400px]:text-[11px]"
+          >
+            {!reduced && (
+              <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded">
+                <span className="absolute inset-x-0 top-0 h-6 animate-scanline bg-gradient-to-b from-transparent via-accent/10 to-transparent" />
+              </span>
+            )}
+            <div aria-hidden className="flex h-5 items-center gap-3 whitespace-nowrap text-muted/40">
+              <span className="w-[4ch]">off</span>
               <span className="flex">
-                {row.map((c, i) => {
-                  const lit = litOf(c)
-                  const joinL = i > 0 && sameField(row[i - 1], c)
-                  const joinR = i < row.length - 1 && sameField(row[i + 1], c)
-                  return (
-                    <span
-                      key={c.off}
-                      ref={(el) => {
-                        if (el) byteRefs.current.set(c.off, el)
-                        else byteRefs.current.delete(c.off)
-                      }}
-                      onPointerEnter={(e) => isMouse(e) && setHover(selFor(c))}
-                      onClick={() => toggle(selFor(c))}
-                      className={cn(
-                        'cursor-default px-[0.28em] transition-[background-color,color,opacity,box-shadow] duration-200',
-                        !joinL && 'rounded-l-[3px]',
-                        !joinR && 'rounded-r-[3px]',
-                        lit === null
-                          ? KIND_TEXT[c.kind]
-                          : lit
-                            ? cn(KIND_BAND[c.kind], 'text-ink')
-                            : cn(KIND_TEXT[c.kind], 'opacity-30'),
-                        c.fi >= 0 && c.fi === parsing && 'shadow-[inset_0_-1px_0_rgb(var(--accent)/0.85)]',
-                      )}
-                    >
-                      {c.b}
-                    </span>
-                  )
-                })}
-                {Array.from({ length: cols - row.length }, (_, i) => (
-                  <span key={`pad${i}`} aria-hidden className="px-[0.28em] opacity-0">
-                    00
+                {Array.from({ length: cols }, (_, i) => (
+                  <span key={i} className="px-[0.28em]">
+                    {hex(i, 2)}
                   </span>
                 ))}
               </span>
-              <span className="flex" aria-label={`ascii ${rows[r].ascii}`}>
-                {row.map((c, i) => {
-                  const lit = litOf(c)
-                  const joinL = i > 0 && sameField(row[i - 1], c)
-                  const joinR = i < row.length - 1 && sameField(row[i + 1], c)
-                  return (
-                    <span
-                      key={c.off}
-                      aria-hidden
-                      onPointerEnter={(e) => isMouse(e) && setHover(selFor(c))}
-                      onClick={() => toggle(selFor(c))}
-                      className={cn(
-                        'cursor-default whitespace-pre transition-[background-color,color,opacity] duration-200',
-                        !joinL && 'rounded-l-[2px]',
-                        !joinR && 'rounded-r-[2px]',
-                        lit === null ? 'text-muted/80' : lit ? cn(KIND_BAND[c.kind], 'text-ink') : 'text-muted/30',
-                      )}
-                    >
-                      {c.ch}
+              <span>ascii</span>
+            </div>
+            {grid.map((row, r) => (
+              <motion.div
+                key={rows[r].offset}
+                initial={{ opacity: 0, x: -14 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: r * 0.06 }}
+                className="flex h-5 items-center gap-3 whitespace-nowrap"
+              >
+                <span className="w-[4ch] tabular-nums text-muted/60">{rows[r].offset}</span>
+                <span className="flex">
+                  {row.map((c, i) => {
+                    const lit = litOf(c)
+                    const joinL = i > 0 && sameField(row[i - 1], c)
+                    const joinR = i < row.length - 1 && sameField(row[i + 1], c)
+                    return (
+                      <span
+                        key={c.off}
+                        ref={(el) => {
+                          if (el) byteRefs.current.set(c.off, el)
+                          else byteRefs.current.delete(c.off)
+                        }}
+                        onPointerEnter={(e) => isMouse(e) && setHover(selFor(c))}
+                        onClick={() => toggle(selFor(c))}
+                        className={cn(
+                          'cursor-default px-[0.28em] transition-[background-color,color,opacity,box-shadow] duration-200',
+                          !joinL && 'rounded-l-[3px]',
+                          !joinR && 'rounded-r-[3px]',
+                          lit === null
+                            ? KIND_TEXT[c.kind]
+                            : lit
+                              ? cn(KIND_BAND[c.kind], 'text-ink')
+                              : cn(KIND_TEXT[c.kind], 'opacity-30'),
+                          c.fi >= 0 && c.fi === parsing && 'shadow-[inset_0_-1px_0_rgb(var(--accent)/0.85)]',
+                        )}
+                      >
+                        {c.b}
+                      </span>
+                    )
+                  })}
+                  {Array.from({ length: cols - row.length }, (_, i) => (
+                    <span key={`pad${i}`} aria-hidden className="px-[0.28em] opacity-0">
+                      00
                     </span>
-                  )
-                })}
-              </span>
-            </motion.div>
-          ))}
+                  ))}
+                </span>
+                <span className="flex" aria-label={`ascii ${rows[r].ascii}`}>
+                  {row.map((c, i) => {
+                    const lit = litOf(c)
+                    const joinL = i > 0 && sameField(row[i - 1], c)
+                    const joinR = i < row.length - 1 && sameField(row[i + 1], c)
+                    return (
+                      <span
+                        key={c.off}
+                        aria-hidden
+                        onPointerEnter={(e) => isMouse(e) && setHover(selFor(c))}
+                        onClick={() => toggle(selFor(c))}
+                        className={cn(
+                          'cursor-default whitespace-pre transition-[background-color,color,opacity] duration-200',
+                          !joinL && 'rounded-l-[2px]',
+                          !joinR && 'rounded-r-[2px]',
+                          lit === null ? 'text-muted/80' : lit ? cn(KIND_BAND[c.kind], 'text-ink') : 'text-muted/30',
+                        )}
+                      >
+                        {c.ch}
+                      </span>
+                    )
+                  })}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+
+          {decoded && (
+            <div
+              onPointerEnter={(e) => decoded.kind && isMouse(e) && setHover({ kind: decoded.kind })}
+              onPointerLeave={() => decoded.kind && setHover(null)}
+              className={cn(
+                // w-0 + min-w-full: fills the hex column without ever widening it
+                'w-0 min-w-full rounded-md border border-accent/15 bg-deep/40 px-2.5 py-2 font-mono transition-colors duration-200 hover:border-accent/40',
+                showStruct && 'hidden md:block',
+              )}
+            >
+              <div className="flex items-center gap-2 text-[9.5px] text-muted">
+                <span aria-hidden className="text-accent">
+                  ▸
+                </span>
+                <span className="truncate">{decoded.label}</span>
+                {decoded.meta && (
+                  <span className="ml-auto shrink-0 tabular-nums text-muted/70">{decoded.meta}</span>
+                )}
+              </div>
+              <div className={cn('mt-1 break-words text-[11px] leading-5', KIND_TEXT[decoded.kind ?? 'data'])}>
+                {breakable(decoded.value)}
+              </div>
+              {decoded.note && <div className="truncate text-[9.5px] text-muted/80">{decoded.note}</div>}
+            </div>
+          )}
         </div>
 
         {showStruct && fields && (
           <div
             role="group"
-            aria-label="Parsed structure"
+            aria-label="Parsed structure. Arrow keys move between fields, Enter pins one."
             className="min-w-0 flex-1 md:border-l md:border-accent/15 md:pl-6"
           >
             <div
@@ -325,13 +396,15 @@ export function HexDump({ rows, legend = true, fields, labels, structure = false
                       fieldRefs.current[i] = el
                     }}
                     type="button"
+                    tabIndex={i === roving ? 0 : -1}
                     aria-pressed={!!pinned && 'field' in pinned && pinned.field === i}
                     aria-describedby={sel && 'field' in sel && sel.field === i ? tipId : undefined}
                     onPointerEnter={(e) => isMouse(e) && setHover({ field: i, anchor: f.offset })}
                     onPointerLeave={() => setHover(null)}
-                    onFocus={(e) =>
-                      isFocusVisible(e.currentTarget) && setFocus({ field: i, anchor: f.offset })
-                    }
+                    onFocus={(e) => {
+                      setRoving(i)
+                      if (isFocusVisible(e.currentTarget)) setFocus({ field: i, anchor: f.offset })
+                    }}
                     onBlur={() => setFocus(null)}
                     onClick={() => toggle({ field: i, anchor: f.offset })}
                     onKeyDown={(e) => moveFocus(e, i)}
@@ -356,11 +429,13 @@ export function HexDump({ rows, legend = true, fields, labels, structure = false
                     </span>
                     <span
                       className={cn(
-                        'min-w-0 truncate text-[10.5px] md:w-[12ch] md:shrink-0 md:text-right',
+                        // phones wrap long values (the inflated payload); the md+ table truncates and
+                        // the decoded box under the hex prints it in full
+                        'min-w-0 break-words text-[10.5px] md:w-[12ch] md:shrink-0 md:truncate md:text-right',
                         KIND_TEXT[f.kind],
                       )}
                     >
-                      {f.value}
+                      {breakable(f.value, 'md:hidden')}
                     </span>
                   </button>
                 )

@@ -102,22 +102,29 @@ export function ProjectCard({ project, focused, hover, live, width }: Props) {
       </span>
 
       <div className="relative flex shrink-0 flex-col px-4 pb-3.5">
+        {/* balanced titles break like the reference ("Binary Analysis / Case Study"), and the
+            blurb never strands a lone word ("…private web / API.") */}
         <h3
-          className="line-clamp-2 font-sans font-bold leading-[1.08] tracking-[0.01em] text-ink"
+          className="line-clamp-2 text-balance font-sans font-bold leading-[1.08] tracking-[0.01em] text-ink"
           style={{ fontSize: title, minHeight: title * 1.08 * 2 }}
         >
           {project.title}
         </h3>
-        <p className="mt-1.5 line-clamp-2 leading-snug text-muted" style={{ fontSize: body }}>
+        <p className="mt-1.5 line-clamp-2 text-pretty leading-snug text-muted" style={{ fontSize: body }}>
           {project.short}
         </p>
-        <div className="mt-2.5 flex flex-nowrap gap-1.5 overflow-hidden">
+        {/* one row of whole chips: a chip that does not fit wraps onto the hidden second line
+            instead of being cut mid-word */}
+        <div className={cn('mt-2.5 flex flex-wrap overflow-hidden', roomy ? 'h-6 gap-1.5' : 'h-5 gap-1')}>
           {project.tags.map((t) => (
             <Chip
               key={t}
               size="xs"
               active={focused}
-              className={cn('shrink-0 normal-case', roomy ? 'px-2.5 py-1 text-[10.5px] tracking-[0.04em]' : 'tracking-[0.02em]')}
+              className={cn(
+                'shrink-0 normal-case leading-[14px]',
+                roomy ? 'px-2.5 py-[4px] text-[10.5px] tracking-[0.04em]' : 'px-1.5 py-[2px] tracking-normal',
+              )}
             >
               {t}
             </Chip>

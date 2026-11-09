@@ -17,6 +17,7 @@ import { Section } from '@/components/layout/Section'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { HoloPanel } from '@/components/ui/HoloPanel'
 import { Chip } from '@/components/ui/Chip'
+import { LazyMount } from '@/components/ui/LazyMount'
 import { Disassembly } from '@/components/widgets/Disassembly'
 import { CfgGraph } from '@/components/widgets/CfgGraph'
 import { HexDump } from '@/components/widgets/HexDump'
@@ -34,6 +35,7 @@ import {
   EXCHANGES,
   FUNCTION_INFO,
   HEX,
+  HEX_DECODED,
   HEX_FIELDS,
   HEX_LABELS,
   PANELS,
@@ -50,11 +52,26 @@ import {
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
+/** HoloPanel header height (h-8 icon + py-3 + 1px rule): lets a panel body fill a stretched grid row. */
+const PANEL_BODY_FILL = 'lg:flex lg:min-h-[calc(100%-57px)] lg:flex-col'
+
 export function Expertise() {
   const roomy = useMinWidth(420)
+  const sm = useMinWidth(640)
+  const lg = useMinWidth(1024)
+  const xl = useMinWidth(1280)
+  // placeholder heights a little under the measured ones; LazyMount drops them once the
+  // content mounts, so a short estimate never leaves dead space behind
+  const capsMinH = xl ? 920 : lg ? 1000 : sm ? 1250 : 2200
 
   return (
     <Section id="expertise">
+      {/* soft vignette: the background hologram stays visible but never runs through the copy */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-20 mx-auto h-[27rem] max-w-4xl bg-[radial-gradient(closest-side,rgb(var(--deep)/0.72),rgb(var(--deep)/0.35)_55%,transparent)] sm:top-28"
+      />
+
       <SectionHeading
         eyebrow={SECTION_COPY.eyebrow}
         title={SECTION_COPY.title}
@@ -101,53 +118,63 @@ export function Expertise() {
           </div>
         </HoloPanel>
 
-        <HoloPanel
-          title={PANELS.debugger.title}
-          icon={Bug}
-          badge={roomy ? PANELS.debugger.badge : undefined}
-          from="left"
-          delay={0.06}
-          tilt={5}
-          className="min-w-0 lg:col-span-6 xl:col-span-5"
-        >
-          <DebuggerView regs={REGS} trace={TRACE} />
-        </HoloPanel>
+        {/* row 2 is below the fold at every size: it mounts in its own render after the first view */}
+        <LazyMount minHeight={420} className="min-w-0 lg:col-span-6 xl:col-span-5">
+          <HoloPanel
+            title={PANELS.debugger.title}
+            icon={Bug}
+            badge={roomy ? PANELS.debugger.badge : undefined}
+            from="left"
+            delay={0.06}
+            tilt={5}
+            className="h-full"
+            bodyClassName={PANEL_BODY_FILL}
+          >
+            <DebuggerView regs={REGS} trace={TRACE} fill />
+          </HoloPanel>
+        </LazyMount>
 
-        <HoloPanel
-          title={PANELS.format.title}
-          icon={FileCode2}
-          badge={roomy ? PANELS.format.badge : undefined}
-          from="right"
-          delay={0.12}
-          tilt={4}
-          className="min-w-0 lg:col-span-12 xl:col-span-7"
-        >
-          <HexDump rows={HEX} fields={HEX_FIELDS} labels={HEX_LABELS} structure />
-        </HoloPanel>
+        <LazyMount minHeight={450} className="min-w-0 lg:col-span-12 xl:col-span-7">
+          <HoloPanel
+            title={PANELS.format.title}
+            icon={FileCode2}
+            badge={roomy ? PANELS.format.badge : undefined}
+            from="right"
+            delay={0.12}
+            tilt={4}
+            className="h-full"
+          >
+            <HexDump rows={HEX} fields={HEX_FIELDS} labels={HEX_LABELS} decoded={HEX_DECODED} structure />
+          </HoloPanel>
+        </LazyMount>
       </div>
 
-      <SubHeading title={SECTION_COPY.capabilities.title} meta={SECTION_COPY.capabilities.meta} />
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {CAPABILITIES.map((c, i) => (
-          <CapabilityCard key={c.title} cap={c} index={i} total={CAPABILITIES.length} />
-        ))}
-      </div>
+      {/* far below the fold: mounts at idle once the switch has settled, or as you scroll near it */}
+      <LazyMount minHeight={capsMinH} margin="300px 0px" className="mt-16 sm:mt-20">
+        <SubHeading title={SECTION_COPY.capabilities.title} meta={SECTION_COPY.capabilities.meta} />
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {CAPABILITIES.map((c, i) => (
+            <CapabilityCard key={c.title} cap={c} index={i} total={CAPABILITIES.length} />
+          ))}
+        </div>
 
-      <PlatformStrip />
+        <PlatformStrip />
+      </LazyMount>
     </Section>
   )
 }
 
-/** Panel badges are dropped on the narrowest phones so the titles never truncate. */
+/** Viewport-width check that is right on the first render (panel badges, lazy placeholders). */
 function useMinWidth(px: number) {
-  const [ok, setOk] = useState(true)
+  const query = `(min-width: ${px}px)`
+  const [ok, setOk] = useState(() => typeof window === 'undefined' || window.matchMedia(query).matches)
   useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${px}px)`)
+    const mq = window.matchMedia(query)
     const update = () => setOk(mq.matches)
     update()
     mq.addEventListener('change', update)
     return () => mq.removeEventListener('change', update)
-  }, [px])
+  }, [query])
   return ok
 }
 
@@ -158,7 +185,7 @@ function CaseBrief() {
       whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.8, delay: 0.24, ease: EASE }}
-      className="glass relative mx-auto mt-9 flex max-w-4xl flex-col gap-2.5 overflow-hidden rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5"
+      className="glass relative mx-auto mt-9 flex max-w-5xl flex-col gap-2.5 overflow-hidden rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5"
     >
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
       <span
@@ -173,7 +200,7 @@ function CaseBrief() {
         </span>
         {CASE_FILE.id}
       </span>
-      <p className="relative text-[14px] leading-snug text-muted">
+      <p className="relative text-pretty text-[14px] leading-snug text-muted">
         <span className="font-semibold text-ink">{CASE_FILE.title}</span> {CASE_FILE.summary}
       </p>
     </motion.div>
@@ -253,7 +280,8 @@ function PaneLabel({
       <span
         className={cn(
           'ml-auto hidden shrink-0 normal-case tracking-normal text-muted/55 sm:inline',
-          narrow && 'xl:hidden min-[1400px]:inline',
+          // the graph pane sits beside the listing (and is squeezed) at md and again at xl
+          narrow && 'md:hidden lg:inline xl:hidden min-[1400px]:inline',
         )}
       >
         {hint}
@@ -329,7 +357,7 @@ function SubHeading({ title, meta }: { title: string; meta: string }) {
       whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.7, ease: EASE }}
-      className="mt-16 flex items-center gap-3 sm:mt-20"
+      className="flex items-center gap-3"
     >
       <span aria-hidden className="h-2 w-2 shrink-0 rotate-45 border border-accent bg-accent/30 shadow-glow-sm" />
       <h3 className="shrink-0 font-display text-[13px] font-bold uppercase tracking-[0.28em] text-ink">
@@ -345,6 +373,7 @@ function SubHeading({ title, meta }: { title: string; meta: string }) {
 
 function CapabilityCard({ cap, index, total }: { cap: Capability; index: number; total: number }) {
   const reduced = useReducedMotion()
+  const titleId = useId()
   const cardRef = useRef<HTMLDivElement>(null)
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
@@ -395,9 +424,12 @@ function CapabilityCard({ cap, index, total }: { cap: Capability; index: number;
         aria-hidden
         className="pointer-events-none absolute inset-3 rounded-xl bg-accent/25 opacity-0 blur-2xl transition-opacity duration-500 group-hover/cap:opacity-100"
       />
+      {/* focusable so keyboard users get the same deliverables reveal as a hover */}
       <motion.div
         ref={cardRef}
         tabIndex={0}
+        role="group"
+        aria-labelledby={titleId}
         onPointerMove={onMove}
         onPointerLeave={onLeave}
         whileHover={reduced ? undefined : { y: -6 }}
@@ -431,7 +463,7 @@ function CapabilityCard({ cap, index, total }: { cap: Capability; index: number;
           </span>
         </div>
 
-        <h4 className="relative mt-4 font-display text-[15px] font-bold tracking-wide text-ink">
+        <h4 id={titleId} className="relative mt-4 font-display text-[15px] font-bold tracking-wide text-ink">
           {cap.title}
         </h4>
         <p className="relative mt-2 text-[14px] leading-relaxed text-muted">{cap.body}</p>

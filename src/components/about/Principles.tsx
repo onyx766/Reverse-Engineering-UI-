@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
 import type { Principle } from '@/data/about'
-import { EASE } from './fx'
+import { EASE, entrance } from './fx'
 
 const cellBorder = (i: number) =>
   cn(
@@ -17,17 +18,21 @@ export function Principles({
   items,
   eyebrow,
   title,
+  since = 2018,
   className,
 }: {
   items: Principle[]
   eyebrow: string
   title: string
+  /** year shown in "n rules · enforced since …" (the first career chapter) */
+  since?: number
   className?: string
 }) {
+  const reduced = useReducedMotion()
   return (
     <motion.section
       aria-labelledby="about-principles"
-      initial={{ opacity: 0, y: 40, rotateX: -10, filter: 'blur(10px)' }}
+      initial={entrance(reduced, { opacity: 0, y: 40, rotateX: -10, filter: 'blur(10px)' })}
       whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.85, ease: EASE }}
@@ -48,7 +53,7 @@ export function Principles({
           </h2>
         </div>
         <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-          {items.length} rules · enforced since 2018
+          {items.length} rules · enforced since {since}
         </p>
       </div>
 
@@ -58,11 +63,11 @@ export function Principles({
           return (
             <motion.li
               key={p.title}
-              initial={{ opacity: 0, y: 20 }}
+              initial={entrance(reduced, { opacity: 0, y: 20 })}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.6, delay: 0.15 + i * 0.08, ease: EASE }}
-              className={cn('group relative overflow-hidden p-5 sm:p-6', cellBorder(i))}
+              className={cn('group relative flex flex-col overflow-hidden p-5 sm:p-6', cellBorder(i))}
             >
               <span
                 aria-hidden
@@ -96,8 +101,9 @@ export function Principles({
               <h3 className="relative mt-4 font-display text-[15.5px] font-bold tracking-wide text-ink">
                 {p.title}
               </h3>
-              <p className="relative mt-2 text-[14.5px] leading-relaxed text-muted">{p.body}</p>
-              <code className="relative mt-4 block overflow-hidden text-ellipsis whitespace-nowrap rounded-md border border-accent/20 bg-deep/60 px-2.5 py-1.5 font-mono text-[11px] text-accent/90 transition-colors duration-500 group-hover:border-accent/50 group-hover:text-accent3">
+              <p className="relative mb-4 mt-2 text-[14.5px] leading-relaxed text-muted">{p.body}</p>
+              {/* bottom-aligned across the row; wraps rather than truncating in narrow cells */}
+              <code className="relative mt-auto block whitespace-pre-wrap rounded-md border border-accent/20 bg-deep/60 px-2.5 py-1.5 font-mono text-[11px] leading-relaxed text-accent/90 transition-colors duration-500 [overflow-wrap:anywhere] group-hover:border-accent/50 group-hover:text-accent3">
                 {p.code}
               </code>
             </motion.li>

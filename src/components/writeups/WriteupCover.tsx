@@ -9,6 +9,8 @@ interface Props {
   seed?: number
   /** idle animation (featured hero only); hover animation always applies */
   animated?: boolean
+  /** richer, large-canvas composition for the featured hero */
+  dense?: boolean
   className?: string
 }
 
@@ -19,7 +21,7 @@ interface Props {
  * motion. The art always fills its box (slice) and carries the lab-glass
  * overlay — grid, scanline, corner readout — so it matches the reference.
  */
-export function WriteupCover({ motif, seed = 1, animated = false, className }: Props) {
+export function WriteupCover({ motif, seed = 1, animated = false, dense = false, className }: Props) {
   const reduced = useReducedMotion()
   const idle = animated && !reduced
 
@@ -50,14 +52,14 @@ export function WriteupCover({ motif, seed = 1, animated = false, className }: P
         preserveAspectRatio="xMidYMid slice"
         className="absolute inset-0 h-full w-full"
       >
-        <Motif motif={motif} seed={seed} idle={idle} />
+        <Motif motif={motif} seed={seed} idle={idle} dense={dense} />
       </svg>
 
       {/* scanline sweep on hover */}
       <span className="pointer-events-none absolute inset-x-0 -top-1/3 h-1/3 bg-gradient-to-b from-transparent via-accent/20 to-transparent opacity-0 transition-all duration-700 group-hover:top-full group-hover:opacity-100" />
 
       {/* corner readout */}
-      <span className="pointer-events-none absolute left-3 top-2.5 font-mono text-[9px] uppercase tracking-[0.2em] text-accent/70">
+      <span className="pointer-events-none absolute left-3 top-2.5 max-w-[calc(100%-1.5rem)] truncate whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.2em] text-accent/70">
         {LABEL[motif]}
       </span>
       <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[9px] tracking-[0.14em] text-muted/60">
@@ -80,12 +82,22 @@ const LABEL: Record<CoverMotif, string> = {
   pulse: 'anti-dbg',
 }
 
-function Motif({ motif, seed, idle }: { motif: CoverMotif; seed: number; idle: boolean }) {
+function Motif({
+  motif,
+  seed,
+  idle,
+  dense,
+}: {
+  motif: CoverMotif
+  seed: number
+  idle: boolean
+  dense: boolean
+}) {
   switch (motif) {
     case 'hexgrid':
       return <HexGrid seed={seed} idle={idle} />
     case 'shield':
-      return <Shield idle={idle} />
+      return <Shield idle={idle} dense={dense} />
     case 'stack':
       return <Stack idle={idle} />
     case 'packet':
@@ -148,48 +160,127 @@ function HexGrid({ seed, idle }: { seed: number; idle: boolean }) {
   )
 }
 
-/* ── shield — cert pinning / lock ──────────────────────────────────────────── */
-function Shield({ idle }: { idle: boolean }) {
+/* ── shield — cert pinning / TLS interception ──────────────────────────────── */
+function Shield({ idle, dense = false }: { idle: boolean; dense?: boolean }) {
+  // decorative SHA-256-style fingerprint rows for the hero readout
+  const fp = useMemo(() => {
+    const rnd = seeded(97)
+    return Array.from({ length: 5 }, () =>
+      Array.from({ length: 3 }, () => (((rnd() * 256) | 0) & 0xff).toString(16).padStart(2, '0')).join(
+        ' ',
+      ),
+    )
+  }, [])
+
   return (
-    <g transform="translate(160 92)">
-      {[34, 50, 66].map((r, i) => (
-        <circle
-          key={r}
-          r={r}
-          fill="none"
-          stroke="rgb(var(--accent) / 0.16)"
-          strokeWidth="1"
-          strokeDasharray="3 6"
-        >
+    <g>
+      {dense && (
+        <g aria-hidden>
+          {/* pinned channel: client ── intercept ── server */}
+          <line
+            x1="22"
+            y1="92"
+            x2="298"
+            y2="92"
+            stroke="rgb(var(--accent) / 0.22)"
+            strokeWidth="1"
+            strokeDasharray="2 6"
+          />
+          {/* client (phone) */}
+          <g transform="translate(22 92)">
+            <rect x="-9" y="-15" width="18" height="30" rx="3" fill="rgb(var(--accent) / 0.1)" stroke="rgb(var(--accent) / 0.55)" strokeWidth="1.1" />
+            <line x1="-4" y1="10" x2="4" y2="10" stroke="rgb(var(--accent) / 0.7)" strokeWidth="1.2" />
+            <rect x="-6" y="-11" width="12" height="16" rx="1.5" fill="rgb(var(--accent) / 0.12)" />
+          </g>
+          {/* server (stacked) */}
+          <g transform="translate(298 92)">
+            <rect x="-12" y="-15" width="20" height="13" rx="2" fill="rgb(var(--accent) / 0.1)" stroke="rgb(var(--accent) / 0.55)" strokeWidth="1.1" />
+            <rect x="-12" y="2" width="20" height="13" rx="2" fill="rgb(var(--accent) / 0.1)" stroke="rgb(var(--accent) / 0.55)" strokeWidth="1.1" />
+            <circle cx="-7" cy="-8.5" r="1.4" fill="rgb(var(--accent-3))" />
+            <circle cx="-7" cy="8.5" r="1.4" fill="rgb(var(--accent-3))" />
+          </g>
+          {/* request packets caught at the pin */}
           {idle && (
-            <animateTransform
-              attributeName="transform"
-              type="rotate"
-              from={i % 2 ? '360 0 0' : '0 0 0'}
-              to={i % 2 ? '0 0 0' : '360 0 0'}
-              dur={`${16 + i * 6}s`}
-              repeatCount="indefinite"
-            />
+            <>
+              <rect x="30" y="88.5" width="11" height="7" rx="1.6" fill="rgb(var(--accent-3) / 0.9)">
+                <animate attributeName="x" values="30;118;118" keyTimes="0;0.62;1" dur="2.6s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;1;0" keyTimes="0;0.62;1" dur="2.6s" repeatCount="indefinite" />
+              </rect>
+              <rect x="256" y="88.5" width="11" height="7" rx="1.6" fill="rgb(var(--accent) / 0.85)">
+                <animate attributeName="x" values="256;202;202" keyTimes="0;0.62;1" dur="2.6s" begin="1.3s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;1;0" keyTimes="0;0.62;1" dur="2.6s" begin="1.3s" repeatCount="indefinite" />
+              </rect>
+            </>
           )}
-        </circle>
-      ))}
-      <path
-        d="M0 -46 L34 -32 V2 C34 26 18 40 0 48 C-18 40 -34 26 -34 2 V-32 Z"
-        fill="rgb(var(--accent) / 0.1)"
-        stroke="rgb(var(--accent) / 0.65)"
-        strokeWidth="1.6"
-        className="transition-transform duration-500 group-hover:scale-105"
-        style={{ transformOrigin: 'center' }}
-      />
-      <rect x="-11" y="-6" width="22" height="18" rx="3" fill="rgb(var(--accent) / 0.28)" stroke="rgb(var(--accent))" strokeWidth="1.2" />
-      <path d="M-6 -6 V-13 a6 6 0 0 1 12 0 V-6" fill="none" stroke="rgb(var(--accent))" strokeWidth="1.6" />
-      <circle cx="0" cy="2" r="2.4" fill="rgb(var(--accent-3))" />
-      {idle && (
-        <circle cx="0" cy="2" r="2.4" fill="none" stroke="rgb(var(--accent-3))" strokeWidth="1">
-          <animate attributeName="r" values="2.4;9" dur="2.2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.9;0" dur="2.2s" repeatCount="indefinite" />
-        </circle>
+          {/* fingerprint / pin readout */}
+          <g transform="translate(236 50)">
+            <text x="0" y="-5" className="fill-accent font-mono" style={{ fontSize: 6, letterSpacing: '1px', opacity: 0.75 }}>
+              sha256/pin
+            </text>
+            {fp.map((row, i) => (
+              <text
+                key={i}
+                x="0"
+                y={i * 11}
+                className="fill-ink font-mono"
+                style={{ fontSize: 7, opacity: i === 2 ? 0.92 : 0.38 }}
+              >
+                {row}
+              </text>
+            ))}
+            {idle && (
+              <rect x="-4" y="14" width="62" height="10" fill="rgb(var(--accent) / 0.16)">
+                <animate attributeName="y" values="-10;46;-10" dur="5.2s" repeatCount="indefinite" />
+              </rect>
+            )}
+          </g>
+        </g>
       )}
+
+      <g transform="translate(160 92)">
+        {/* concentric rings */}
+        {(dense ? [34, 50, 66, 82] : [34, 50, 66]).map((r, i) => (
+          <circle key={r} r={r} fill="none" stroke="rgb(var(--accent) / 0.15)" strokeWidth="1" strokeDasharray="3 6">
+            {idle && (
+              <animateTransform
+                attributeName="transform"
+                type="rotate"
+                from={i % 2 ? '360 0 0' : '0 0 0'}
+                to={i % 2 ? '0 0 0' : '360 0 0'}
+                dur={`${16 + i * 6}s`}
+                repeatCount="indefinite"
+              />
+            )}
+          </circle>
+        ))}
+        {/* soft core glow behind the shield */}
+        <circle r="30" fill="rgb(var(--accent) / 0.08)" />
+        {/* shield body + inner hairline */}
+        <path
+          d="M0 -46 L34 -32 V2 C34 26 18 40 0 48 C-18 40 -34 26 -34 2 V-32 Z"
+          fill="rgb(var(--accent) / 0.1)"
+          stroke="rgb(var(--accent) / 0.65)"
+          strokeWidth="1.6"
+          className="transition-transform duration-500 group-hover:scale-105"
+          style={{ transformOrigin: 'center' }}
+        />
+        <path
+          d="M0 -38 L27 -26 V1 C27 21 14 33 0 39 C-14 33 -27 21 -27 1 V-26 Z"
+          fill="none"
+          stroke="rgb(var(--accent) / 0.22)"
+          strokeWidth="0.8"
+        />
+        {/* padlock */}
+        <rect x="-11" y="-6" width="22" height="18" rx="3" fill="rgb(var(--accent) / 0.28)" stroke="rgb(var(--accent))" strokeWidth="1.2" />
+        <path d="M-6 -6 V-13 a6 6 0 0 1 12 0 V-6" fill="none" stroke="rgb(var(--accent))" strokeWidth="1.6" />
+        <circle cx="0" cy="2" r="2.4" fill="rgb(var(--accent-3))" />
+        {idle && (
+          <circle cx="0" cy="2" r="2.4" fill="none" stroke="rgb(var(--accent-3))" strokeWidth="1">
+            <animate attributeName="r" values="2.4;9" dur="2.2s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.9;0" dur="2.2s" repeatCount="indefinite" />
+          </circle>
+        )}
+      </g>
     </g>
   )
 }

@@ -65,14 +65,22 @@ export function WorkflowTerminal() {
         })}
       </div>
 
-      <div role="tabpanel" id="wf-panel" aria-labelledby={`wf-tab-${session.id}`} className="mt-3">
+      {/* no ligatures: "->" and "=>" must print as typed, not as arrow glyphs */}
+      <div
+        role="tabpanel"
+        id="wf-panel"
+        aria-labelledby={`wf-tab-${session.id}`}
+        className="mt-3 [font-variant-ligatures:none]"
+      >
         <div className="flex items-center gap-2 rounded-t-lg border border-b-0 border-accent/20 bg-accent/[0.06] px-3 py-1.5">
           <span aria-hidden className="flex gap-1">
             <span className="h-2 w-2 rounded-full bg-rose-400/70" />
             <span className="h-2 w-2 rounded-full bg-amber-300/70" />
             <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
           </span>
-          <span className="ml-1 truncate font-mono text-[10px] tracking-[0.08em] text-muted">nox@research-vm: ~/re</span>
+          <span className="ml-1 truncate font-mono text-[10px] tracking-[0.08em] text-muted">
+            nox@research-vm: {session.cwd ?? '~'}
+          </span>
           <button
             type="button"
             onClick={() => setRun((r) => r + 1)}
@@ -97,7 +105,7 @@ export function WorkflowTerminal() {
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-accent" />
           <span className="truncate">{session.context}</span>
         </span>
-        <span className="text-muted/70">← → switch session</span>
+        <span className="text-muted/70 [@media(hover:none)]:hidden">← → switch session</span>
       </div>
     </HoloPanel>
   )

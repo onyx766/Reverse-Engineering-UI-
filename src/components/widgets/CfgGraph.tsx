@@ -103,6 +103,8 @@ export function CfgGraph({
   const [hover, setHover] = useState<string | null>(null)
   const [focus, setFocus] = useState<string | null>(null)
   const [pinned, setPinned] = useState<string | null>(null)
+  // roving tabindex: the graph is one Tab stop, arrow keys move between blocks
+  const [roving, setRoving] = useState(0)
   const [wrapW, setWrapW] = useState(0)
   const local = hover ?? focus ?? pinned
   const current = local ?? active
@@ -155,6 +157,9 @@ export function CfgGraph({
     } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
       e.preventDefault()
       nodeRefs.current[(i - 1 + n) % n]?.focus()
+    } else if (e.key === 'Home' || e.key === 'End') {
+      e.preventDefault()
+      nodeRefs.current[e.key === 'Home' ? 0 : n - 1]?.focus()
     }
   }
 
@@ -180,7 +185,7 @@ export function CfgGraph({
         viewBox={`0 0 ${vbW} ${vbH}`}
         className="block h-auto w-full overflow-visible"
         role="group"
-        aria-label="Control-flow graph"
+        aria-label="Control-flow graph. Arrow keys move between blocks, Enter pins one."
       >
         <defs>
           {(['flow', 'good', 'bad'] as const).map((t) => (
@@ -253,13 +258,16 @@ export function CfgGraph({
                   nodeRefs.current[i] = el
                 }}
                 role="button"
-                tabIndex={0}
+                tabIndex={i === roving ? 0 : -1}
                 aria-label={`Block ${b.addr ?? b.id}: ${b.label}${count ? `, ${count} instructions` : ''}`}
                 aria-pressed={pinned === b.id}
                 aria-describedby={local === b.id ? tipId : undefined}
                 onPointerEnter={(e) => isMouse(e) && setHover(b.id)}
                 onPointerLeave={() => setHover(null)}
-                onFocus={(e) => isFocusVisible(e.currentTarget) && setFocus(b.id)}
+                onFocus={(e) => {
+                  setRoving(i)
+                  if (isFocusVisible(e.currentTarget)) setFocus(b.id)
+                }}
                 onBlur={() => setFocus(null)}
                 onClick={() => setPinned((p) => (p === b.id ? null : b.id))}
                 onKeyDown={(e) => onNodeKey(e, i, b.id)}

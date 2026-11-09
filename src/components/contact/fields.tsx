@@ -321,7 +321,8 @@ export function ChipGroup<T extends string>({
         {options.map((o) => {
           const on = value.includes(o.id)
           return (
-            <label key={o.id} className="group/chip relative cursor-pointer select-none">
+            // chips grow to fill their row, so wrapped rows end flush instead of ragged
+            <label key={o.id} className="group/chip relative grow cursor-pointer select-none">
               <input
                 type="checkbox"
                 name={id}
@@ -340,7 +341,7 @@ export function ChipGroup<T extends string>({
               />
               <span
                 className={cn(
-                  'relative flex min-h-10 items-center gap-2 overflow-hidden rounded-lg border px-3 py-2 font-mono text-[10.5px] uppercase tracking-[0.12em] transition-all duration-300',
+                  'relative flex min-h-10 w-full items-center gap-2 overflow-hidden rounded-lg border px-3 py-2 font-mono text-[10.5px] uppercase tracking-[0.12em] transition-all duration-300',
                   PEER_FOCUS,
                   on
                     ? 'border-accent/75 bg-accent/20 text-ink shadow-glow-sm'
@@ -364,7 +365,7 @@ export function ChipGroup<T extends string>({
                 <span
                   aria-hidden
                   className={cn(
-                    'relative grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[4px] border transition-all duration-300',
+                    'relative ml-auto grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[4px] border transition-all duration-300',
                     on ? 'border-accent bg-accent text-deep' : 'border-accent/35',
                   )}
                 >

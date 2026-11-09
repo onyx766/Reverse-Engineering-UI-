@@ -94,17 +94,23 @@ function Tile({ channel: c, index }: { channel: Channel; index: number }) {
       <span className="mt-4 block font-mono text-[10px] uppercase tracking-[0.22em] text-muted">
         {c.label}
       </span>
-      <span className="mt-1 block truncate font-mono text-[13px] font-semibold tracking-wide text-ink sm:text-[14px]">
+      <span
+        className={cn(
+          'mt-1 block font-mono text-[13px] font-semibold tracking-wide text-ink sm:text-[14px]',
+          // the 64-bit key ID balances onto two lines on narrow tiles instead of losing digits
+          c.id === 'pgp' ? 'text-balance' : 'truncate',
+        )}
+      >
         {c.handle}
       </span>
-      <span className="mt-2 flex min-h-[16px] items-center gap-1.5 font-mono text-[10px] text-muted/90">
+      <span className="mt-2 flex min-h-[16px] items-start gap-1.5 font-mono text-[10px] leading-[1.45] text-muted/90">
         {copied ? (
           <>
-            <Check aria-hidden className="h-3 w-3 text-emerald-300" strokeWidth={3} />
+            <Check aria-hidden className="mt-px h-3 w-3 shrink-0 text-emerald-300" strokeWidth={3} />
             <span className="text-emerald-300">Copied to clipboard</span>
           </>
         ) : (
-          <span className="truncate">{c.note}</span>
+          <span className="line-clamp-2">{c.note}</span>
         )}
       </span>
     </>

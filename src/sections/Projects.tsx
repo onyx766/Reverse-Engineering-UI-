@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Section } from '@/components/layout/Section'
+import { LazyMount } from '@/components/ui/LazyMount'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { clamp, cn } from '@/lib/utils'
+import { clearIntent, peekIntent } from '@/lib/intent'
 import {
   INITIAL_PROJECT_ID,
   PROJECTS,
@@ -24,6 +26,15 @@ import { useElementSize, useMediaQuery } from '@/components/projects/hooks'
 const INDEX_ID = 'case-index'
 const EASE = [0.22, 1, 0.36, 1] as const
 
+/** Reserved height of the case index before it mounts (measured per breakpoint, px). */
+function useIndexMinHeight() {
+  const xl = useMediaQuery('(min-width: 1280px)')
+  const lg = useMediaQuery('(min-width: 1024px)')
+  const md = useMediaQuery('(min-width: 768px)')
+  const sm = useMediaQuery('(min-width: 640px)')
+  return xl ? 1500 : lg ? 1810 : md ? 2000 : sm ? 3300 : 3550
+}
+
 const COUNTS = PROJECTS.reduce(
   (acc, p) => {
     acc[p.category] += 1
@@ -35,10 +46,18 @@ const COUNTS = PROJECTS.reduce(
 export function Projects() {
   const reduced = useReducedMotion()
   const desktop = useMediaQuery('(min-width: 1024px)')
+  const indexMinHeight = useIndexMinHeight()
+
+  // arriving from a Home card: centre that study and open it
+  const [entry] = useState(() => {
+    const id = peekIntent('projects')
+    return id && PROJECTS.some((p) => p.id === id) ? id : null
+  })
+  useEffect(() => clearIntent('projects'), [])
 
   const [filter, setFilter] = useState<FilterId>('all')
-  const [nav, setNav] = useState<{ id: string; shift: number | null }>({ id: INITIAL_PROJECT_ID, shift: null })
-  const [openId, setOpenId] = useState<string | null>(null)
+  const [nav, setNav] = useState<{ id: string; shift: number | null }>({ id: entry ?? INITIAL_PROJECT_ID, shift: null })
+  const [openId, setOpenId] = useState<string | null>(entry)
 
   const visible = useMemo(
     () => (filter === 'all' ? PROJECTS : PROJECTS.filter((p) => p.category === filter)),
@@ -122,7 +141,7 @@ export function Projects() {
   }
 
   return (
-    <Section id="projects" className="max-w-[1760px] pb-24 pt-24 sm:pb-32 sm:pt-28 lg:pt-[100px]">
+    <Section id="projects" className="max-w-[1760px] pb-24 pt-32 sm:pb-32 lg:pt-[100px]">
       <ProjectsKeyframes />
 
       <div
@@ -138,7 +157,16 @@ export function Projects() {
         {desktop ? <DesktopLayout {...stageProps} /> : <MobileLayout {...stageProps} />}
       </div>
 
-      <CaseIndex id={INDEX_ID} projects={PROJECTS} onOpen={setOpenId} />
+      {/* below the fold: mounts once the switch settles or as it nears the viewport;
+          the wrapper carries the id so "Explore My Portfolio" can scroll to it before then */}
+      <LazyMount
+        id={INDEX_ID}
+        minHeight={indexMinHeight}
+        margin="0px 0px 60px 0px"
+        className="mt-24 sm:mt-28"
+      >
+        <CaseIndex id={`${INDEX_ID}-list`} projects={PROJECTS} onOpen={setOpenId} className="mx-auto max-w-[1400px]" />
+      </LazyMount>
 
       <CaseStudyModal
         project={openIdx >= 0 ? PROJECTS[openIdx] : null}
@@ -179,6 +207,10 @@ function DesktopLayout(p: LayoutProps) {
   const lp = Math.round(clamp(rowW * 0.2, 240, 292))
   const rp = Math.round(clamp(rowW * 0.215, 258, 306))
   const middle = rowW - lp - rp - 24
+  // Reserved row height. Full: exactly the stage design (880×440). Compact: deliberately a little
+  // shorter than the compact stage (540×392 design), so the hologram's lower orbit rings spill
+  // 30–45px into the carousel's top margin (behind the cards) and 1024×768 stays on one screen;
+  // the compact shards always end inside the row.
   const designW = full ? 880 : 660
   const designH = full ? 440 : 430
   const k = clamp(middle / designW, 0.62, 1.2)

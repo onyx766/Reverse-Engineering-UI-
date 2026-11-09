@@ -23,7 +23,8 @@ export function FeaturedCard({
         motif={writeup.motif}
         seed={1}
         animated
-        className="h-52 w-full rounded-t-2xl lg:h-full lg:rounded-l-2xl lg:rounded-tr-none"
+        dense
+        className="h-52 w-full rounded-t-2xl sm:h-64 lg:h-full lg:rounded-l-2xl lg:rounded-tr-none"
       />
 
       {/* content */}

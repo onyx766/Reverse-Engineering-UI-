@@ -71,7 +71,7 @@ export function SkillRadar() {
 
   return (
     <HoloPanel title="Skill Radar" icon={Radar} badge="self-assessed" from="left" delay={0.05} tilt={5}>
-      <div className="grid items-center gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,15rem)]">
+      <div className="grid grid-cols-1 items-center gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,16rem)]">
         <div>
           <div
             ref={chartRef}
@@ -210,7 +210,6 @@ export function SkillRadar() {
                     onMouseEnter={() => setUser(i)}
                     onMouseLeave={() => setUser(null)}
                     className="absolute h-10 w-10 rounded-full transition-colors duration-300 hover:bg-accent/10"
-                    // offset with calc, not a transform: transformed children of HoloPanel's preserve-3d body lose hit-testing
                     style={{
                       left: `calc(${((p.x + VIEW) / (VIEW * 2)) * 100}% - 20px)`,
                       top: `calc(${((p.y + VIEW) / (VIEW * 2)) * 100}% - 20px)`,
@@ -234,7 +233,10 @@ export function SkillRadar() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3">
-          <div className="relative min-h-[9.5rem] overflow-hidden rounded-xl border border-accent/25 bg-accent/[0.05] p-3.5" aria-live="polite">
+          <div
+            className="relative min-h-[9.5rem] overflow-hidden rounded-xl border border-accent/25 bg-accent/[0.05] p-3.5"
+            aria-live={user === null ? 'off' : 'polite'}
+          >
             <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
             <motion.div
               key={axis.id}
@@ -259,7 +261,7 @@ export function SkillRadar() {
             </motion.div>
           </div>
 
-          <ul className="flex flex-col gap-1" aria-label={`Average ${MEAN} out of 100`}>
+          <ul className="flex flex-col gap-1" aria-label={`Skill levels, average ${MEAN} of 100`}>
             {SKILL_AXES.map((a, i) => (
               <li
                 key={a.id}
@@ -270,7 +272,7 @@ export function SkillRadar() {
                   i === active ? 'bg-accent/[0.12]' : 'hover:bg-accent/[0.07]',
                 )}
               >
-                <span className={cn('w-[6.7rem] shrink-0 truncate text-[13px] font-semibold', i === active ? 'text-ink' : 'text-muted')}>
+                <span className={cn('w-[7.75rem] shrink-0 truncate text-[13px] font-semibold', i === active ? 'text-ink' : 'text-muted')}>
                   {a.label}
                 </span>
                 <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-accent/10">

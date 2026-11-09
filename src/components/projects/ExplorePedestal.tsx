@@ -38,11 +38,12 @@ export function ExplorePedestal({ onClick, className }: { onClick: () => void; c
               clipPath: 'polygon(28% 100%, 72% 100%, 100% 0, 0 0)',
             }}
           />
-          <span className="absolute bottom-0 left-1/2 h-full w-[3px] -translate-x-1/2 bg-gradient-to-t from-ink via-accent3/80 to-transparent shadow-[0_0_12px_rgb(var(--accent-3))]" />
+          {/* the bright core starts above the label so it never reads as a stray glyph between the words */}
+          <span className="absolute bottom-[22px] left-1/2 h-[calc(100%-22px)] w-[3px] -translate-x-1/2 bg-gradient-to-t from-ink via-accent3/80 to-transparent shadow-[0_0_12px_rgb(var(--accent-3))]" />
           {[0, 1, 2, 3].map((i) => (
             <span
               key={i}
-              className="absolute bottom-2 h-1 w-1 rounded-full bg-accent3 shadow-glow-sm"
+              className="absolute bottom-6 h-1 w-1 rounded-full bg-accent3 shadow-glow-sm"
               style={{ left: `${38 + i * 8}%`, animation: `pj-rise ${2.4 + i * 0.5}s ease-out ${i * 0.7}s infinite` }}
             />
           ))}

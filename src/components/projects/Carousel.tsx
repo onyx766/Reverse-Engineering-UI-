@@ -40,6 +40,9 @@ interface Layout {
 
 const SPRING = { type: 'spring', stiffness: 165, damping: 25, mass: 1 } as const
 const ARROW = 56
+/** clear space between the arrows and the outermost card */
+const ARROW_GAP = 18
+const ARC_PERSPECTIVE = 1500
 
 function computeLayout(width: number, vh: number, mode: CarouselMode): Layout {
   if (mode === 'slider') {
@@ -57,18 +60,20 @@ function computeLayout(width: number, vh: number, mode: CarouselMode): Layout {
       sideOpacity: 0.5,
     }
   }
-  const cardW = Math.round(clamp(Math.min(width * 0.166, vh * 0.258), 192, 282))
-  const span = width - 2 * (ARROW + 18)
-  // squeeze the arc a little when five cards barely fit; below that show three
-  const fit = (span - cardW) / (4.1 * cardW)
-  const five = fit >= 0.86
+  const fiveW = Math.round(clamp(Math.min(width * 0.166, vh * 0.258), 192, 282))
+  const span = width - 2 * (ARROW + ARROW_GAP)
+  // five cards with clean gaps between them (as in the reference), squeezed only slightly;
+  // when they would start to overlap, three roomier cards instead
+  const fit = (span - fiveW) / (4.3 * fiveW)
+  const five = fit >= 0.95
+  const cardW = five ? fiveW : Math.round(clamp(Math.min(width * 0.2, vh * 0.258), 192, 240))
   const squeeze = five ? Math.min(1, fit) : 1
   return {
     mode,
     cardW,
     cardH: Math.round(cardW * 1.2),
     gap1: cardW * 1.07 * squeeze,
-    gap2: cardW * 1.0 * squeeze,
+    gap2: cardW * 1.1 * squeeze,
     rot: five ? 11 : 16,
     depth: 58,
     drop: 7,
@@ -89,6 +94,16 @@ function geom(e: number, L: Layout) {
   if (a > L.range) opacity = clamp(1 - (a - L.range) * 1.25, 0, 1)
   if (L.mode === 'slider' && a > 0) opacity = Math.min(opacity, 1 - Math.min(a, 1) * (1 - L.sideOpacity))
   return { x, y, z, rot, scale, opacity }
+}
+
+/** Projected distance from the track centre to the outer edge of the outermost visible card. */
+function arcExtent(L: Layout) {
+  const g = geom(L.range, L)
+  const half = (L.cardW / 2) * g.scale
+  const turn = (Math.abs(g.rot) * Math.PI) / 180
+  const x = g.x + half * Math.cos(turn)
+  const z = g.z + half * Math.sin(turn) // the outer edge swings toward the viewer
+  return (x * ARC_PERSPECTIVE) / (ARC_PERSPECTIVE - z)
 }
 
 /** Signed slot offset of card i when card f is focused. */
@@ -178,6 +193,8 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
   }
 
   const trackH = L.cardH + (mode === 'arc' ? 64 : 36)
+  // arc arrows sit just outside the outermost cards, as in the reference
+  const arrowInset = mode === 'arc' ? Math.max(0, Math.round((width || 1200) / 2 - arcExtent(L) - ARROW_GAP - ARROW)) : 0
 
   return (
     <div
@@ -189,7 +206,7 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
     >
       <motion.div
         className={cn('relative select-none', mode === 'slider' && '-mx-5 overflow-hidden sm:-mx-8')}
-        style={{ height: trackH, perspective: mode === 'arc' ? 1500 : 1100, perspectiveOrigin: '50% 30%', touchAction: 'pan-y' }}
+        style={{ height: trackH, perspective: mode === 'arc' ? ARC_PERSPECTIVE : 1100, perspectiveOrigin: '50% 30%', touchAction: 'pan-y' }}
         onPointerDownCapture={() => {
           didPan.current = false
         }}
@@ -231,6 +248,7 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
               }}
               onSelect={(d) => onStep(d)}
               onOpen={() => onOpen(p.id)}
+              onStrayFocus={() => focused && buttons.current.get(focused.id)?.focus({ preventScroll: true })}
             />
           ))}
         </AnimatePresence>
@@ -242,14 +260,14 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
           <ArrowButton
             dir="prev"
             onClick={() => onStep(-1)}
-            className="absolute left-0"
-            style={{ top: L.cardH / 2 - ARROW / 2 + 6 }}
+            className="absolute"
+            style={{ top: L.cardH / 2 - ARROW / 2 + 6, left: arrowInset }}
           />
           <ArrowButton
             dir="next"
             onClick={() => onStep(1)}
-            className="absolute right-0"
-            style={{ top: L.cardH / 2 - ARROW / 2 + 6 }}
+            className="absolute"
+            style={{ top: L.cardH / 2 - ARROW / 2 + 6, right: arrowInset }}
           />
         </>
       )}
@@ -308,6 +326,8 @@ interface SlotProps {
   registerButton: (el: HTMLButtonElement | null) => void
   onSelect: (delta: number) => void
   onOpen: () => void
+  /** a side card got focus (e.g. a closing dialog restored it there): hand it to the centre card */
+  onStrayFocus: () => void
 }
 
 function Slot({
@@ -326,6 +346,7 @@ function Slot({
   registerButton,
   onSelect,
   onOpen,
+  onStrayFocus,
 }: SlotProps) {
   const pos = useMotionValue(d)
   const prevD = useRef(d)
@@ -446,7 +467,11 @@ function Slot({
             onClick={handleClick}
             onPointerEnter={(e) => e.pointerType === 'mouse' && setHover(true)}
             onPointerLeave={() => setHover(false)}
-            onFocus={(e) => setKbd(e.currentTarget.matches(':focus-visible'))}
+            onFocus={(e) => {
+              // only the centre card is a tab stop; anything else landing here is passed on
+              if (!focused) return onStrayFocus()
+              setKbd(e.currentTarget.matches(':focus-visible'))
+            }}
             onBlur={() => setKbd(false)}
             className="absolute inset-0 cursor-pointer rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep"
           />

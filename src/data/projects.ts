@@ -97,7 +97,7 @@ export const CATEGORIES: Category[] = [
 export const STAGES: { id: StageId; label: string }[] = [
   { id: 'static', label: 'Static Analysis' },
   { id: 'dynamic', label: 'Dynamic Analysis' },
-  { id: 'behavior', label: 'Behavior Tracing' },
+  { id: 'behavior', label: 'Behaviour Tracing' },
   { id: 'protocol', label: 'Protocol Mapping' },
   { id: 'reimpl', label: 'Reimplementation' },
 ]
@@ -124,11 +124,13 @@ export const SHARDS_FOR_KIND: Record<ProjectKind, ShardId[]> = {
 /** Trim the leading newline / trailing whitespace of a code sample. */
 const src = (s: string) => s.replace(/^\n/, '').replace(/\s+$/, '')
 
+// OWNER: these six studies are representative, anonymised write-ups. Confirm or replace each year,
+// duration, role, metric and outcome with your real engagements (keep clients and vendors unnamed).
 export const PROJECTS: Project[] = [
   {
     id: 'undocumented-api',
     title: 'Undocumented API Analysis',
-    short: 'Analyze and reconstruct a private web API.',
+    short: 'Analyse and reconstruct a private web API.',
     category: 'api',
     kind: 'api',
     tags: ['API', 'HTTP', 'Python'],
@@ -140,7 +142,7 @@ export const PROJECTS: Project[] = [
     summary:
       'A client needed their back-office tooling to talk to a mobile app whose vendor publishes no API documentation. Under a written interoperability agreement, I mapped the private REST API end to end, recovered its request-signing scheme and delivered an OpenAPI 3.1 specification together with a typed Python SDK.',
     challenge:
-      'Every request carried an X-Signature header and the app pinned its TLS certificate, so traffic could not simply be proxied. Requests replayed more than a few seconds late were rejected with 401, and roughly a third of the endpoints were only reachable from screens hidden behind remote feature flags.',
+      'Every request carried an X-Signature header and the app pinned its TLS certificate, so traffic could not simply be proxied. Replayed requests failed with 401 even when resent within seconds, and roughly a third of the endpoints were only reachable from screens hidden behind remote feature flags.',
     approach: [
       {
         title: 'Static triage of the APK',
@@ -176,7 +178,7 @@ export const PROJECTS: Project[] = [
     findings: [
       {
         icon: 'key',
-        text: 'X-Signature = HMAC-SHA256(key, METHOD \\n PATH \\n TS \\n NONCE \\n hex(SHA-256(body))); the key is issued per install by POST /v1/device/register.',
+        text: 'X-Signature = HMAC-SHA256(key, METHOD \\n PATH \\n TS \\n NONCE \\n hex(SHA-256(body))); the key is issued per install by POST /api/v1/device/register.',
       },
       {
         icon: 'clock',
@@ -206,6 +208,8 @@ import httpx
 class SignedAuth(httpx.Auth):
     """Reproduces the X-Signature scheme recovered from libsigner.so."""
 
+    requires_request_body = True  # the body hash needs streamed bodies read first
+
     def __init__(self, key: bytes, skew: float = 0.0) -> None:
         self.key = key
         self.skew = skew  # server clock offset in seconds
@@ -214,7 +218,7 @@ class SignedAuth(httpx.Auth):
         ts = str(int(time.time() + self.skew))
         nonce = secrets.token_hex(16)
         body_hash = hashlib.sha256(request.content).hexdigest()
-        path = request.url.raw_path.decode()
+        path = request.url.raw_path.decode()  # path + query, as sent on the wire
         canonical = "\n".join([request.method, path, ts, nonce, body_hash])
         sig = hmac.new(self.key, canonical.encode(), hashlib.sha256).hexdigest()
         request.headers.update(
@@ -237,11 +241,11 @@ class SignedAuth(httpx.Auth):
   {
     id: 'binary-case-study',
     title: 'Binary Analysis Case Study',
-    short: 'Analyze a compiled binary and recover its logic.',
+    short: 'Analyse a compiled binary and recover its logic.',
     category: 'binary',
     kind: 'binary',
     tags: ['Ghidra', 'x64dbg', 'C++'],
-    year: 2023,
+    year: 2020,
     duration: '4 weeks',
     role: 'Reverse engineer (solo)',
     target: 'Stripped x64 C++ licence-validation module',
@@ -254,7 +258,7 @@ class SignedAuth(httpx.Auth):
       {
         title: 'Recover types from RTTI',
         detail:
-          'Ran Ghidra’s RTTI analysis over the MSVC TypeDescriptor and CompleteObjectLocator records to name 142 classes, then rebuilt the hierarchy from vtable layouts and constructor call chains.',
+          'Ran Ghidra’s RTTI analyser over the MSVC TypeDescriptor, CompleteObjectLocator and ClassHierarchyDescriptor records to name 142 classes and their bases, then placed the non-polymorphic helpers from constructor call chains.',
         tools: ['Ghidra', 'MSVC RTTI', 'PE-bear'],
       },
       {
@@ -266,7 +270,7 @@ class SignedAuth(httpx.Auth):
       {
         title: 'Neutralise anti-debug',
         detail:
-          'Documented IsDebuggerPresent, a PEB NtGlobalFlag & 0x70 test and an rdtsc timing check, then hid the debugger with ScyllaHide rather than patching, so behaviour stayed faithful.',
+          'Documented IsDebuggerPresent, a PEB NtGlobalFlag & 0x70 test and an rdtsc timing check, then hid the debugger with ScyllaHide and kept breakpoints out of the timed window instead of patching, so behaviour stayed faithful.',
         tools: ['x64dbg', 'ScyllaHide'],
       },
       {
@@ -361,7 +365,7 @@ bool ValidateKey(const LicenseKey& key, uint16_t today) {
     category: 'api',
     kind: 'protocol',
     tags: ['Wireshark', 'Python', 'TCP'],
-    year: 2024,
+    year: 2022,
     duration: '8 weeks',
     role: 'Protocol analyst & developer',
     target: 'Building-automation controllers · binary TCP/7400',
@@ -380,7 +384,7 @@ bool ValidateKey(const LicenseKey& key, uint16_t today) {
       {
         title: 'Decode the handshake',
         detail:
-          'Decompiled the discontinued .NET client with ILSpy to confirm what 50 diffed handshakes suggested: the session mask is client_nonce ⊕ server_nonce, applied as a repeating 16-byte XOR after opcode 0x02.',
+          'Decompiled the discontinued .NET client with ILSpy to confirm what 50 diffed handshakes suggested: the session mask is client_nonce ⊕ server_nonce, applied as a repeating 16-byte XOR to every payload after CHALLENGE (0x02).',
         tools: ['ILSpy', 'Python'],
       },
       {
@@ -392,7 +396,7 @@ bool ValidateKey(const LicenseKey& key, uint16_t today) {
       {
         title: 'Implement the client',
         detail:
-          'Wrote an asyncio client around an explicit state machine (CONNECTED → HELLO_SENT → AUTHENTICATED → STREAMING) with sequence tracking, retransmit on timeout and zlib handling.',
+          'Wrote an asyncio client around an explicit state machine (HELLO_SENT → AUTH_SENT → AUTHENTICATED → STREAMING) with sequence tracking, retransmit on timeout and zlib handling.',
         tools: ['Python', 'asyncio'],
       },
       {
@@ -409,7 +413,7 @@ bool ValidateKey(const LicenseKey& key, uint16_t today) {
       },
       {
         icon: 'network',
-        text: '31 opcodes: 0x10–0x1F read telemetry points, 0x20–0x2F write setpoints, 0x7F is a keep-alive every 15 s.',
+        text: '31 opcodes: handshake 0x01–0x03, telemetry reads 0x10–0x1B, setpoint writes 0x20–0x2E and a 0x7F keep-alive every 15 s.',
       },
       {
         icon: 'lock',
@@ -470,7 +474,7 @@ DissectorTable.get("tcp.port"):add(7400, ctl)
       metrics: [
         { label: 'Opcodes decoded', value: 31 },
         { label: 'Controllers integrated', value: 48 },
-        { label: 'Parser crashes reported', value: 3 },
+        { label: 'Parser bugs reported', value: 3 },
       ],
     },
     stack: ['Wireshark', 'Lua', 'Python', 'asyncio', 'ILSpy', 'boofuzz', 'tcpdump'],
@@ -478,7 +482,7 @@ DissectorTable.get("tcp.port"):add(7400, ctl)
   {
     id: 'file-format',
     title: 'File Format Reverse Engineering',
-    short: 'Analyze an undocumented file format and build a parser.',
+    short: 'Analyse an undocumented file format and build a parser.',
     category: 'format',
     kind: 'format',
     tags: ['Hex', 'Python', 'Parser'],
@@ -519,14 +523,14 @@ DissectorTable.get("tcp.port"):add(7400, ctl)
       {
         title: 'Validate at scale',
         detail:
-          'Exported all 18,400 archive files and cross-checked 200 random exports against the original suite’s CSV output inside the VM: zero numeric mismatches.',
+          'Ran the exporter over all 18,400 archive files and cross-checked 200 random exports against the original suite’s CSV output inside the VM: zero numeric mismatches.',
         tools: ['pytest', 'Hypothesis'],
       },
     ],
     findings: [
       {
         icon: 'file',
-        text: 'Layout: 32-byte header, toc_count × 24-byte descriptors (tag, offset, sizes, CRC, codec), chunk bodies, 12-byte footer ending in "EOF!".',
+        text: 'Layout: 32-byte header, num_chunks × 24-byte descriptors (tag, offset, sizes, CRC, codec), chunk bodies, 12-byte footer ending in "EOF!".',
       },
       {
         icon: 'shield',
@@ -538,7 +542,7 @@ DissectorTable.get("tcp.port"):add(7400, ctl)
       },
       {
         icon: 'zap',
-        text: '41 files had been truncated by an old backup tool; footer CRCs caught every one and 37 were recovered chunk by chunk.',
+        text: '41 files truncated by an old backup tool were caught by their missing "EOF!" footer; per-chunk CRCs let 37 of them be recovered chunk by chunk.',
       },
     ],
     artifact: {
@@ -634,11 +638,11 @@ enums:
   {
     id: 'reimplementation',
     title: 'Reimplementation & Patching',
-    short: 'Recreate key behavior and build a compatible implementation.',
+    short: 'Recreate key behaviour and build a compatible implementation.',
     category: 'reimpl',
     kind: 'reimpl',
     tags: ['C++', 'Linux', 'Debugging'],
-    year: 2023,
+    year: 2025,
     duration: '10 weeks',
     role: 'Reverse engineer & systems developer',
     target: 'Legacy closed-source Windows job-dispatch service',
@@ -663,7 +667,7 @@ enums:
       {
         title: 'Catch the crash',
         detail:
-          'Reproduced the load crash with full page heap (gflags /p /enable), which trapped an off-by-one in CopyJobName: a 64-byte name wrote its NUL one byte past a 64-byte heap block.',
+          'Reproduced the load crash under full page heap (gflags /p /enable jobsvc.exe /full), which trapped an off-by-one in CopyJobName: a 64-byte name wrote its NUL one byte past a 64-byte heap block.',
         tools: ['WinDbg', 'gflags', 'Page Heap'],
       },
       {
@@ -701,7 +705,7 @@ enums:
       lang: 'asm-diff',
       label: 'CopyJobName.patch',
       code: src(String.raw`
-; sub_140021A80  CopyJobName(dst=rdi, src=rsi, len=[rsp+30h])
+; sub_1400220B0  CopyJobName(dst=rdi, src=rsi, len=[rsp+30h])
   0x1400220E6  8B 5C 24 30     mov   ebx, dword ptr [rsp+30h]
   0x1400220EA  83 FB 40        cmp   ebx, 40h
 - 0x1400220ED  77 2A           ja    short loc_140022119   ; allows len == 64
@@ -718,7 +722,7 @@ enums:
       text: 'The plant cut over to the Linux service without touching a single terminal, and the hotfixed original ran crash-free until it was decommissioned.',
       metrics: [
         { label: 'Commands reimplemented', value: 23 },
-        { label: 'Sessions replayed', value: 1200, suffix: 'k' },
+        { label: 'Sessions replayed', value: 1200000 },
         { label: 'Crash-free days after patch', value: 214 },
       ],
     },
@@ -732,7 +736,8 @@ enums:
     kind: 'tooling',
     tags: ['Rust', 'DynamoRIO', 'Ghidra'],
     year: 2025,
-    duration: '3 months · ongoing',
+    // timeless on purpose: "3 months · ongoing" goes stale the month after it is written
+    duration: '3 months to v1 · maintained',
     role: 'Author & maintainer',
     target: 'Any x86-64 binary · Windows & Linux',
     stages: { static: true, dynamic: true, behavior: true, protocol: false, reimpl: false },
@@ -926,10 +931,11 @@ export const SHARD_HTTP: ShardHttpLine[] = [
   { dir: '<', text: 'Content-Length: 342', tone: 'header' },
 ]
 
-export const SHARD_LABELS: Record<ShardId, { title: string; meta: string }> = {
-  disasm: { title: 'disasm', meta: 'ELF64 · .text' },
-  hex: { title: 'hex view', meta: 'PE32+ @ 0xA2F0' },
+/** `metaShort` replaces `meta` on narrow panes (phones, compact stage). */
+export const SHARD_LABELS: Record<ShardId, { title: string; meta: string; metaShort?: string }> = {
+  disasm: { title: 'disasm', meta: 'ELF64 · .text', metaShort: '.text' },
+  hex: { title: 'hex view', meta: 'PE32+ @ 0xA2F0', metaShort: '@ 0xA2F0' },
   cfg: { title: 'cfg', meta: 'sub_401230' },
-  http: { title: 'http', meta: 'tls 1.3 · mitm' },
+  http: { title: 'http', meta: 'tls 1.3 · mitm', metaShort: 'mitm' },
   wave: { title: 'capture', meta: 'tcp/7400' },
 }

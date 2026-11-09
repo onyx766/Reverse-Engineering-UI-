@@ -16,13 +16,16 @@ export function CaseIndex({
   projects,
   onOpen,
   id,
+  className = 'mx-auto mt-24 max-w-[1400px] sm:mt-28',
 }: {
   projects: Project[]
   onOpen: (id: string) => void
   id: string
+  /** outer spacing; pass your own when a wrapper (e.g. LazyMount) owns the margin and scroll target */
+  className?: string
 }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="relative mx-auto mt-24 max-w-[1400px] scroll-mt-28 sm:mt-28">
+    <section id={id} aria-labelledby={`${id}-title`} className={cn('relative', className)}>
       <SectionHeading
         eyebrow={PROJECTS_COPY.indexEyebrow}
         title={PROJECTS_COPY.indexTitle}
@@ -72,6 +75,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
         transition={{ type: 'spring', stiffness: 300, damping: 26 }}
         className={cn(
           'glass group relative grid gap-5 overflow-hidden rounded-2xl p-4 sm:p-5',
+          'md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-x-7 md:gap-y-4',
           'lg:grid-cols-[150px_minmax(0,1.15fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-7',
           hover && 'border-accent/60',
         )}
@@ -97,7 +101,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
           )}
         />
 
-        <div className="relative flex items-center gap-4 lg:flex-col lg:items-start lg:gap-1">
+        <div className="relative flex items-center gap-4 md:col-start-1 md:row-start-1 lg:col-start-auto lg:row-start-auto lg:flex-col lg:items-start lg:gap-1">
           <span className="font-display text-[34px] font-black leading-none text-gradient lg:text-[40px]">
             {String(index + 1).padStart(2, '0')}
           </span>
@@ -108,7 +112,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
           />
         </div>
 
-        <div className="relative min-w-0">
+        <div className="relative min-w-0 md:col-start-1 md:row-span-2 md:row-start-2 lg:col-start-auto lg:row-span-1 lg:row-start-auto">
           <div className="flex flex-wrap items-center gap-2">
             <Chip size="xs" icon={CatIcon} active={hover}>
               {category?.label}
@@ -121,7 +125,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
           <p className="mt-1.5 line-clamp-3 text-[14.5px] leading-relaxed text-muted">{p.summary}</p>
         </div>
 
-        <div className="relative min-w-0">
+        <div className="relative min-w-0 md:col-start-2 md:row-span-2 md:row-start-1 lg:col-start-auto lg:row-span-1 lg:row-start-auto">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
             {facts.map((f) => (
               <div key={f.label} className={cn('min-w-0', (f.label === 'Target' || f.label === 'Outcome') && 'col-span-2')}>
@@ -145,7 +149,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
         </div>
 
         {/* action: its ::after stretches over the whole row */}
-        <div className="flex lg:justify-end">
+        <div className="flex md:col-start-2 md:row-start-3 md:items-end lg:col-start-auto lg:row-start-auto lg:items-center lg:justify-end">
           <button
             type="button"
             onClick={onOpen}

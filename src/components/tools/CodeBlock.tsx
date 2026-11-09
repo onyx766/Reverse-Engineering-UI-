@@ -20,6 +20,8 @@ const PROMPT = /^(\$ |0:000> |pwndbg> )/
 function commentMarker(lang: string): string | null {
   const l = lang.toLowerCase()
   if (l.includes('lua')) return '--'
+  // GNU as on AArch64 reads ';' as a statement separator, so comments there are '//'
+  if (l.includes('aarch64')) return '//'
   if (l.includes('asm')) return ';'
   if (l.includes('cmd')) return 'rem'
   if (l.includes('windbg')) return null
@@ -123,7 +125,8 @@ export function CodeBlock({ code, lang, className }: { code: string; lang: strin
           <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
         </button>
       </div>
-      <pre className="holo-scroll overflow-x-auto px-3.5 py-3 font-mono text-[11.5px] leading-[1.65] text-ink/90">
+      {/* no ligatures: code must read exactly as typed ("!=" rather than a "≠" glyph) */}
+      <pre className="holo-scroll overflow-x-auto px-3.5 py-3 font-mono text-[11.5px] leading-[1.65] text-ink/90 [font-variant-ligatures:none]">
         <code>
           {lines.map((line, n) => (
             <span key={n} className="block min-h-[1.65em] whitespace-pre">

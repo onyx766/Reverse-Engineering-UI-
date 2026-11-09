@@ -229,7 +229,7 @@ export function briefBody(b: Brief) {
     ...(b.company ? [`Organisation:  ${b.company}`] : []),
     `Engagement:    ${b.engagement.join(', ')}`,
     `Timeline:      ${b.timeline}`,
-    `Authorisation: confirmed (${FORM_COPY.consent.toLowerCase()})`,
+    `Authorisation: ${FORM_COPY.consentRecord}`,
     '',
     rule,
     b.message,
@@ -250,6 +250,16 @@ export function endpointHost() {
     return new URL(CONTACT.endpoint, window.location.href).host
   } catch {
     return 'server'
+  }
+}
+
+/** "https://api.example.com/brief" for the transmission log (query string dropped). */
+export function endpointLabel() {
+  try {
+    const u = new URL(CONTACT.endpoint, window.location.href)
+    return `${u.origin}${u.pathname === '/' ? '' : u.pathname}`
+  } catch {
+    return CONTACT.endpoint
   }
 }
 

@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { usePageVisible } from '@/components/fx/hooks'
+import { useTheme } from '@/theme/ThemeProvider'
+import { morphVars } from '@/theme/themes'
 import { ParticleField } from './ParticleField'
 import { seeded } from '@/lib/utils'
 
@@ -32,9 +34,11 @@ const BEAMS = [
  * Performance budget (iGPU): no blur filters on large layers, pointer
  * parallax through motion values (zero React renders per move), and every
  * loop is a compositor-only transform/opacity animation that pauses while
- * the tab is hidden.
+ * the tab is hidden. The layer is its own `.palette-morph` scope, so a
+ * section switch morphs these ~50 nodes, not the whole document.
  */
 export function Background() {
+  const { theme } = useTheme()
   const reduced = useReducedMotion()
   const visible = usePageVisible()
   const paused = reduced || !visible
@@ -71,7 +75,8 @@ export function Background() {
     <div
       aria-hidden
       data-fx-paused={paused ? 'true' : undefined}
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      className="palette-morph pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      style={morphVars(theme)}
     >
       {/* 1 — base wash */}
       <div

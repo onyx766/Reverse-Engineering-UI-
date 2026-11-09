@@ -5,6 +5,7 @@ import { HoloPanel } from '@/components/ui/HoloPanel'
 import { HoloButton } from '@/components/ui/HoloButton'
 import { Chip } from '@/components/ui/Chip'
 import { useTheme } from '@/theme/ThemeProvider'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { PROFILE } from '@/data/profile'
 import {
   ABOUT_COPY,
@@ -18,12 +19,13 @@ import {
 import { cn } from '@/lib/utils'
 import { IdCard } from './IdCard'
 import { VerifyConsole } from './VerifyConsole'
-import { EASE, GLOW_HOVER, SWEEP } from './fx'
+import { EASE, GLOW_HOVER, SWEEP, entrance } from './fx'
 
 const BIO_BYTES = new TextEncoder().encode(BIO.map((p) => p.replace(/\*\*/g, '')).join('\n\n')).length
 
 export function AboutHero() {
   const { setSection } = useTheme()
+  const reduced = useReducedMotion()
   const copy = ABOUT_COPY.hero
 
   return (
@@ -31,7 +33,7 @@ export function AboutHero() {
       {/* ── heading ─────────────────────────────────────────────────── */}
       <div className="relative z-10 flex flex-col items-start lg:col-start-2 lg:row-start-1">
         <motion.div
-          initial={{ opacity: 0, x: -24 }}
+          initial={entrance(reduced, { opacity: 0, x: -24 })}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, ease: EASE }}
           className="flex flex-wrap items-center gap-2"
@@ -49,7 +51,7 @@ export function AboutHero() {
         </motion.div>
 
         <motion.p
-          initial={{ opacity: 0, y: 14 }}
+          initial={entrance(reduced, { opacity: 0, y: 14 })}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: EASE }}
           className="mt-6 font-mono text-[12px] uppercase tracking-[0.3em] text-muted"
@@ -58,7 +60,7 @@ export function AboutHero() {
         </motion.p>
 
         <motion.h1
-          initial={{ opacity: 0, y: 26, filter: 'blur(14px)' }}
+          initial={entrance(reduced, { opacity: 0, y: 26, filter: 'blur(14px)' })}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.95, delay: 0.14, ease: EASE }}
           className="mt-2 font-display text-[clamp(2.5rem,6.2vw,4.6rem)] font-black uppercase leading-[0.92] tracking-tight"
@@ -67,7 +69,7 @@ export function AboutHero() {
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 18 }}
+          initial={entrance(reduced, { opacity: 0, y: 18 })}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.26, ease: EASE }}
           className="mt-4 max-w-xl text-balance text-[18px] font-medium leading-snug text-ink/85"
@@ -103,7 +105,7 @@ export function AboutHero() {
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <p className="text-[16px] leading-relaxed text-muted">
-                  <Rich text={p} delay={0.5 + i * 0.25} />
+                  <Rich text={p} delay={0.5 + i * 0.25} reduced={reduced} />
                 </p>
               </div>
             ))}
@@ -119,12 +121,12 @@ export function AboutHero() {
 
         <ul className="mt-5 grid gap-3 sm:grid-cols-2">
           {QUICK_FACTS.map((f, i) => (
-            <FactTile key={f.label} fact={f} index={i} />
+            <FactTile key={f.label} fact={f} index={i} reduced={reduced} />
           ))}
         </ul>
 
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={entrance(reduced, { opacity: 0, y: 18 })}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
@@ -142,8 +144,8 @@ export function AboutHero() {
   )
 }
 
-/** Renders **phrase** as a highlighted span with a marker stroke that draws in. */
-function Rich({ text, delay }: { text: string; delay: number }) {
+/** Renders **phrase** as a highlighted span with a marker stroke that draws in (or is simply there, with reduced motion). */
+function Rich({ text, delay, reduced }: { text: string; delay: number; reduced: boolean }) {
   return (
     <>
       {text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
@@ -154,9 +156,10 @@ function Rich({ text, delay }: { text: string; delay: number }) {
             style={{
               backgroundImage: 'linear-gradient(transparent 60%, rgb(var(--accent) / 0.3) 60%)',
               backgroundPosition: '0 100%',
+              backgroundSize: reduced ? '100% 100%' : undefined,
             }}
-            initial={{ backgroundSize: '0% 100%' }}
-            whileInView={{ backgroundSize: '100% 100%' }}
+            initial={reduced ? undefined : { backgroundSize: '0% 100%' }}
+            whileInView={reduced ? undefined : { backgroundSize: '100% 100%' }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.9, delay, ease: EASE }}
           >
@@ -170,15 +173,15 @@ function Rich({ text, delay }: { text: string; delay: number }) {
   )
 }
 
-function FactTile({ fact, index }: { fact: QuickFact; index: number }) {
+function FactTile({ fact, index, reduced }: { fact: QuickFact; index: number; reduced: boolean }) {
   const Icon = fact.icon
   return (
     <motion.li
-      initial={{ opacity: 0, y: 22, filter: 'blur(8px)' }}
+      initial={entrance(reduced, { opacity: 0, y: 22, filter: 'blur(8px)' })}
       whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.7, delay: 0.15 + index * 0.08, ease: EASE }}
-      whileHover={{ y: -5 }}
+      whileHover={reduced ? undefined : { y: -5 }}
       className={cn('glass group relative overflow-hidden rounded-xl p-3.5', GLOW_HOVER)}
     >
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />

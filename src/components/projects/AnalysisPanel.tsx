@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion, useInView, useMotionValue } from 'framer-motion'
+import { motion, useInView, useMotionValue, useTransform } from 'framer-motion'
 import { Activity, Check, LoaderCircle } from 'lucide-react'
 import { HoloPanel } from '@/components/ui/HoloPanel'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -13,6 +13,8 @@ const RUN_MS = 2600
  * Right stage panel. Every time the focused project changes the analysis
  * re-runs: the bar sweeps 0 → 100 %, the percentage counts with it and each
  * applicable stage ticks from spinner to check in turn. Runs only while visible.
+ * The bar and the percentage are motion values written straight to the DOM;
+ * React re-renders only when a stage ticks over (a handful of times per run).
  */
 export function AnalysisPanel({
   project,
@@ -30,27 +32,38 @@ export function AnalysisPanel({
   const dense = density > 0
   const reduced = useReducedMotion()
   const rootRef = useRef<HTMLDivElement>(null)
+  const meterRef = useRef<HTMLDivElement>(null)
   const inView = useInView(rootRef, { margin: '-30px' })
-
-  const progress = useRef(0)
-  const bar = useMotionValue(0)
-  const [pct, setPct] = useState(0)
 
   const applicable = STAGES.filter((s) => project.stages[s.id])
   const m = Math.max(1, applicable.length)
+
+  /** linear stage clock, 0..1 */
+  const progress = useRef(0)
+  /** eased bar position, 0..1 */
+  const bar = useMotionValue(0)
+  const pctText = useTransform(bar, (v) => Math.round(v * 100))
+  /** stages completed so far (m = finished) */
+  const [done, setDone] = useState(0)
+
+  useEffect(() => {
+    const write = (v: number) => meterRef.current?.setAttribute('aria-valuenow', String(Math.round(v * 100)))
+    write(bar.get())
+    return bar.on('change', write)
+  }, [bar])
 
   // new project → start over
   useEffect(() => {
     progress.current = 0
     bar.set(0)
-    setPct(0)
+    setDone(0)
   }, [project.id, bar])
 
   useEffect(() => {
     if (reduced) {
       progress.current = 1
       bar.set(1)
-      setPct(100)
+      setDone(m)
       return
     }
     if (!inView || progress.current >= 1) return
@@ -65,16 +78,16 @@ export function AnalysisPanel({
       const p = progress.current
       const eased = 1 - Math.pow(1 - p, 2.2)
       bar.set(eased)
-      setPct(Math.round(eased * 100))
+      // same value → React bails out, so this renders only when a stage ticks over
+      setDone(p >= 1 ? m : Math.min(m - 1, Math.floor(eased * m)))
       if (p < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [project.id, inView, reduced, bar])
+  }, [project.id, inView, reduced, bar, m])
 
-  const p = pct / 100
-  const complete = pct >= 100
-  const doneCount = complete ? applicable.length : Math.min(applicable.length, Math.floor(p * m))
+  const complete = done >= m
+  const doneCount = Math.min(applicable.length, done)
 
   return (
     <div ref={rootRef} className={className}>
@@ -89,18 +102,19 @@ export function AnalysisPanel({
         <div className="flex items-end justify-between gap-3">
           <span className="font-sans text-[15px] font-semibold tracking-wide text-ink">Analysis Progress</span>
           <span className="font-display text-[19px] font-bold tabular-nums leading-none text-ink">
-            <span className="neon">{pct}</span>
+            <motion.span className="neon">{pctText}</motion.span>
             <span className="text-[13px] text-accent">%</span>
           </span>
         </div>
 
+        {/* aria-valuenow is written by the bar's change listener above */}
         <div
+          ref={meterRef}
           className="relative mt-2.5 h-2 overflow-hidden rounded-full bg-accent/[0.12]"
           role="progressbar"
           aria-label={`Analysis of ${project.title}`}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={pct}
         >
           <motion.span
             className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-gradient-to-r from-accent2 via-accent to-accent3"

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useInView } from 'framer-motion'
+import { motion, useInView, useMotionValue, useTransform, type MotionValue } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { cn } from '@/lib/utils'
+import { clamp, cn } from '@/lib/utils'
 import type { TermLine } from '@/components/ui/Terminal'
 
 const TONE = {
@@ -12,8 +12,10 @@ const TONE = {
 
 /**
  * Types a short shell session once it scrolls into view. Progress is a single
- * character counter, and untyped text is laid out invisibly so the box never
- * changes size while it types.
+ * character counter held in a motion value, so each keystroke writes text
+ * straight to the DOM instead of re-rendering React every few milliseconds
+ * (which would also keep interrupting the deferred mounts further down the
+ * page). Untyped text is laid out invisibly, so the box never changes size.
  */
 export function VerifyConsole({
   lines,
@@ -27,29 +29,44 @@ export function VerifyConsole({
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-40px' })
   const reduced = useReducedMotion()
-  const ends = useMemo(() => {
+  const starts = useMemo(() => {
     let acc = 0
-    return lines.map((l) => (acc += l.text.length))
+    return lines.map((l) => {
+      const start = acc
+      acc += l.text.length
+      return start
+    })
   }, [lines])
+  const ends = useMemo(() => lines.map((l, i) => starts[i] + l.text.length), [lines, starts])
   const total = ends[ends.length - 1] ?? 0
-  const [count, setCount] = useState(0)
-  // two characters per tick, but never skip past the end of a line
-  const nextStop = (c: number) => Math.min(c + 2, ends.find((e) => e > c) ?? total)
+  const count = useMotionValue(reduced ? total : 0)
+  const [done, setDone] = useState(reduced)
 
   useEffect(() => {
     if (!inView) return
     if (reduced) {
-      setCount(total)
+      count.set(total)
+      setDone(true)
       return
     }
-    if (count >= total) return
-    const pause = count === 0 ? 500 : ends.includes(count) ? 260 : speed
-    const t = setTimeout(() => setCount((c) => Math.min(total, nextStop(c))), pause)
-    return () => clearTimeout(t)
-  }, [inView, reduced, count, total, ends, speed])
-
-  const done = count >= total
-  let before = 0
+    let timer = 0
+    const tick = () => {
+      const c = count.get()
+      if (c >= total) {
+        setDone(true)
+        return
+      }
+      // two characters per tick, but never skip past the end of a line
+      const next = Math.min(c + 2, ends.find((e) => e > c) ?? total)
+      const pause = c === 0 ? 500 : ends.includes(c) ? 260 : speed
+      timer = window.setTimeout(() => {
+        count.set(next)
+        tick()
+      }, pause)
+    }
+    tick()
+    return () => window.clearTimeout(timer)
+  }, [inView, reduced, total, ends, speed, count])
 
   return (
     <div
@@ -60,31 +77,45 @@ export function VerifyConsole({
       )}
     >
       <div className="sr-only">
-        {lines.map((l) => (
-          <p key={l.text}>{l.text}</p>
+        {lines.map((l, i) => (
+          <p key={i}>{l.text}</p>
         ))}
       </div>
       <div aria-hidden>
-        {lines.map((l, i) => {
-          const typed = Math.max(0, Math.min(l.text.length, count - before))
-          const typing = !done && typed > 0 && typed < l.text.length
-          before += l.text.length
-          return (
-            <div key={i} className={cn('whitespace-pre-wrap break-words', TONE[l.tone ?? 'dim'])}>
-              {l.text.slice(0, typed)}
-              {typing && <Caret />}
-              <span className="invisible">{l.text.slice(typed)}</span>
-            </div>
-          )
-        })}
-        <div className="text-accent">
-          $ <span className={cn(!done && 'invisible')}><Caret /></span>
+        {lines.map((l, i) => (
+          <TypedLine key={i} line={l} start={starts[i]} count={count} />
+        ))}
+        {/* the next prompt only appears once the session has finished printing */}
+        <div className={cn('text-accent', !done && 'invisible')}>
+          $ <Caret />
         </div>
       </div>
     </div>
   )
 }
 
+function TypedLine({ line, start, count }: { line: TermLine; start: number; count: MotionValue<number> }) {
+  const { text } = line
+  const typed = (c: number) => clamp(c - start, 0, text.length)
+  const shown = useTransform(count, (c) => text.slice(0, typed(c)))
+  const rest = useTransform(count, (c) => text.slice(typed(c)))
+  // the caret sits on the line being typed; it takes no room anywhere else
+  const caret = useTransform(count, (c) => {
+    const t = typed(c)
+    return t > 0 && t < text.length ? 'inline-block' : 'none'
+  })
+
+  return (
+    <div className={cn('whitespace-pre-wrap break-words', TONE[line.tone ?? 'dim'])}>
+      <motion.span>{shown}</motion.span>
+      <motion.span className={CARET} style={{ display: caret }} />
+      <motion.span className="invisible">{rest}</motion.span>
+    </div>
+  )
+}
+
+const CARET = 'ml-0.5 inline-block h-3 w-1.5 animate-blink bg-accent align-middle'
+
 function Caret() {
-  return <span className="ml-0.5 inline-block h-3 w-1.5 animate-blink bg-accent align-middle" />
+  return <span className={CARET} />
 }

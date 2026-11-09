@@ -145,7 +145,7 @@ export function LabTopology() {
 
   return (
     <HoloPanel title="Analysis Lab" icon={Server} badge="isolated" from="bottom" delay={0.05} tilt={2.5}>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-start">
         <div ref={wrapRef} className={cn('relative min-w-0', !inView && '[&_*]:![animation-play-state:paused]')}>
           <svg
             ref={svgRef}
@@ -287,7 +287,7 @@ export function LabTopology() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
-          <NodeReadout node={activeNode} index={active} />
+          <NodeReadout node={activeNode} index={active} live={user !== null} />
           <Containment />
         </div>
       </div>
@@ -376,10 +376,14 @@ function BusShape({ box, vertical, on }: { box: Box; vertical: boolean; on: bool
   )
 }
 
-function NodeReadout({ node, index }: { node: LabNode; index: number }) {
+function NodeReadout({ node, index, live }: { node: LabNode; index: number; live: boolean }) {
   const color = statusColor(node.status)
   return (
-    <div className="relative min-h-[11.5rem] overflow-hidden rounded-xl border border-accent/25 bg-accent/[0.05] p-4" aria-live="polite">
+    // only announce nodes the visitor picked, not the idle auto-cycle
+    <div
+      className="relative min-h-[11.5rem] overflow-hidden rounded-xl border border-accent/25 bg-accent/[0.05] p-4"
+      aria-live={live ? 'polite' : 'off'}
+    >
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
       <motion.div
         key={node.id}
@@ -450,8 +454,9 @@ function Containment() {
             >
               <CircleCheck className="h-4 w-4 text-accent" aria-hidden />
             </motion.span>
-            <span className="text-[14px] font-semibold text-ink/90">{c.label}</span>
-            <span className="ml-auto hidden truncate font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted sm:inline">
+            <span className="whitespace-nowrap text-[14px] font-semibold text-ink/90">{c.label}</span>
+            {/* the side column is too narrow for the detail between lg and xl */}
+            <span className="ml-auto hidden min-w-0 truncate font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted sm:inline lg:hidden xl:inline">
               {c.detail}
             </span>
           </motion.li>

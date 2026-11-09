@@ -12,7 +12,7 @@ import { clamp, cn, seeded } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import type { IdCardData } from '@/data/about'
 import { CardBack, CardFront, Face, type FaceMotion } from './IdCardFaces'
-import { EASE } from './fx'
+import { EASE, entrance } from './fx'
 
 const facing = (deg: number) => {
   const a = ((deg % 360) + 360) % 360
@@ -128,7 +128,7 @@ export function IdCard({ data }: { data: IdCardData }) {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 60, rotateX: 22, scale: 0.92, filter: 'blur(14px)' }}
+        initial={entrance(reduced, { opacity: 0, y: 60, rotateX: 22, scale: 0.92, filter: 'blur(14px)' })}
         animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1, filter: 'blur(0px)' }}
         transition={{ duration: 1.1, delay: 0.15, ease: EASE }}
         style={{ transformPerspective: 1200 }}
@@ -207,7 +207,7 @@ export function IdCard({ data }: { data: IdCardData }) {
 
       {/* dock readout */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={entrance(reduced, { opacity: 0, y: 10 })}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.9, ease: EASE }}
         className="relative z-10 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted"

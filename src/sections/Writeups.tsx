@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SearchX, RotateCcw } from 'lucide-react'
 import { Section } from '@/components/layout/Section'
 import { SectionHeading } from '@/components/ui/SectionHeading'
+import { LazyMount } from '@/components/ui/LazyMount'
 import { FeaturedCard } from '@/components/writeups/FeaturedCard'
 import { WriteupCard } from '@/components/writeups/WriteupCard'
 import { WriteupReader } from '@/components/writeups/WriteupReader'
@@ -12,6 +13,7 @@ import {
   type TagFilter,
 } from '@/components/writeups/WriteupToolbar'
 import { FEATURED_WRITEUP, WRITEUPS, type Writeup } from '@/data/writeups'
+import { clearIntent, peekIntent } from '@/lib/intent'
 
 function matchesQuery(w: Writeup, q: string): boolean {
   if (!q) return true
@@ -26,7 +28,12 @@ export function Writeups() {
   const [query, setQuery] = useState('')
   const [tag, setTag] = useState<TagFilter>('All')
   const [sort, setSort] = useState<SortMode>('newest')
-  const [openId, setOpenId] = useState<string | null>(null)
+  // arriving from a Home card: open that article straight away
+  const [openId, setOpenId] = useState<string | null>(() => {
+    const id = peekIntent('writeups')
+    return id && WRITEUPS.some((w) => w.id === id) ? id : null
+  })
+  useEffect(() => clearIntent('writeups'), [])
 
   const q = query.trim()
   const isDefault = q === '' && tag === 'All'
@@ -94,11 +101,13 @@ export function Writeups() {
             <span className="h-px flex-1 bg-gradient-to-r from-accent/40 to-transparent" />
           </div>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {gridList.map((w, i) => (
-              <WriteupCard key={w.id} writeup={w} index={i} onOpen={setOpenId} />
-            ))}
-          </div>
+          <LazyMount minHeight={560} className="mt-6">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {gridList.map((w, i) => (
+                <WriteupCard key={w.id} writeup={w} index={i} onOpen={setOpenId} />
+              ))}
+            </div>
+          </LazyMount>
         </>
       )}
 

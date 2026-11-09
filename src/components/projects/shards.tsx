@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { AudioWaveform, Binary, GitBranch, Globe, TerminalSquare, type LucideIcon } from 'lucide-react'
 import {
   SHARD_DISASM,
@@ -31,8 +31,12 @@ interface FrameProps {
   className?: string
   style?: CSSProperties
   bodyClassName?: string
+  /** narrow pane: content is clipped with a soft right-edge fade instead of ellipses */
+  clip?: boolean
   children: ReactNode
 }
+
+const CLIP_MASK = 'linear-gradient(to right, black calc(100% - 22px), transparent)'
 
 /** Small floating glass readout used around the hologram. */
 export function ShardFrame({
@@ -44,10 +48,13 @@ export function ShardFrame({
   className,
   style,
   bodyClassName,
+  clip = false,
   children,
 }: FrameProps) {
   const Icon = SHARD_ICON[id]
   const label = SHARD_LABELS[id]
+  // only text readouts fade at the edge; the waveform and the graph scale to fit
+  const fade = clip && (id === 'disasm' || id === 'http' || id === 'hex')
   return (
     <div className={cn('preserve-3d', className)} style={style}>
       <div
@@ -56,14 +63,14 @@ export function ShardFrame({
       >
         <div
           className={cn(
-            'relative h-full overflow-hidden rounded-xl border transition-[border-color,box-shadow,opacity,transform] duration-700',
-            hot ? 'border-accent/80' : 'border-accent/30',
-            dim && 'opacity-60',
+            'relative h-full overflow-hidden rounded-xl border transition-[border-color,box-shadow,transform] duration-700',
+            hot ? 'border-accent/80' : dim ? 'border-accent/25' : 'border-accent/40',
           )}
           style={{
             transform: `rotateY(${turn}deg) translateZ(${hot ? 18 : 0}px)`,
+            // near-opaque so the hologram behind reads as depth, not as lines through the text
             background:
-              'linear-gradient(150deg, rgb(var(--surface) / 0.9), rgb(var(--deep) / 0.82) 70%), radial-gradient(120% 90% at 0% 0%, rgb(var(--accent) / 0.12), transparent 60%)',
+              'radial-gradient(120% 90% at 0% 0%, rgb(var(--accent) / 0.13), transparent 60%), linear-gradient(150deg, rgb(var(--surface) / 0.96), rgb(var(--deep) / 0.93) 70%)',
             boxShadow: hot
               ? '0 0 0 1px rgb(var(--accent) / 0.3) inset, 0 0 26px rgb(var(--accent) / 0.55), 0 18px 40px -18px rgb(0 0 0 / 0.9)'
               : '0 0 0 1px rgb(var(--accent) / 0.06) inset, 0 0 18px -6px rgb(var(--accent) / 0.35), 0 18px 40px -20px rgb(0 0 0 / 0.9)',
@@ -86,21 +93,31 @@ export function ShardFrame({
             />
           )}
 
-          <div className="relative flex items-center gap-1.5 border-b border-accent/15 px-2.5 py-1.5">
-            <Icon aria-hidden className={cn('h-3 w-3', hot ? 'text-accent' : 'text-muted')} />
-            <span className={cn('font-mono text-[9px] uppercase tracking-[0.16em]', hot ? 'text-ink' : 'text-muted')}>
-              {label.title}
-            </span>
-            <span className="ml-auto truncate font-mono text-[8.5px] tracking-[0.06em] text-muted/70">{label.meta}</span>
-            <span
-              aria-hidden
-              className={cn(
-                'h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500',
-                hot ? 'animate-pulse bg-accent shadow-glow-sm' : 'bg-muted/40',
-              )}
-            />
+          {/* a receding shard dims its readout, never its glass */}
+          <div className={cn('relative transition-opacity duration-700', dim && 'opacity-[0.8]')}>
+            <div className="relative flex items-center gap-1.5 border-b border-accent/15 px-2.5 py-1.5">
+              <Icon aria-hidden className={cn('h-3 w-3 shrink-0', hot ? 'text-accent' : 'text-muted')} />
+              <span className={cn('font-mono text-[9.5px] uppercase tracking-[0.16em]', hot ? 'text-ink' : 'text-muted')}>
+                {label.title}
+              </span>
+              <span className="ml-auto truncate font-mono text-[9px] tracking-[0.06em] text-muted/75">
+                {clip ? (label.metaShort ?? label.meta) : label.meta}
+              </span>
+              <span
+                aria-hidden
+                className={cn(
+                  'h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500',
+                  hot ? 'animate-pulse bg-accent shadow-glow-sm' : 'bg-muted/40',
+                )}
+              />
+            </div>
+            <div
+              className={cn('relative py-2', fade ? 'overflow-hidden pl-2 pr-0' : 'px-2.5', bodyClassName)}
+              style={fade ? { maskImage: CLIP_MASK, WebkitMaskImage: CLIP_MASK } : undefined}
+            >
+              {children}
+            </div>
           </div>
-          <div className={cn('relative px-2.5 py-2', bodyClassName)}>{children}</div>
         </div>
       </div>
     </div>
@@ -133,18 +150,29 @@ function useStepper(length: number, ms: number, running: boolean, start = 0) {
   return i
 }
 
+interface BodyProps {
+  running: boolean
+  /** phone-sized type */
+  compact?: boolean
+  /** narrow pane: shorter addresses, lines clip (the frame fades the edge); defaults to `compact` */
+  clip?: boolean
+}
+
 /** Disassembly with a stepping instruction pointer. */
-export function DisasmBody({ running, compact }: { running: boolean; compact?: boolean }) {
+export function DisasmBody({ running, compact, clip = compact }: BodyProps) {
   const pc = useStepper(SHARD_DISASM.length, 820, running, 4)
+  // narrow panes drop the zero-padding: 00401238 → 401238, 0x00401050 → 0x401050
+  const short = (v: string) => (clip ? v.replace(/^(0x)?00/, '$1') : v)
   return (
-    <div className={cn('font-mono leading-[1.62]', compact ? 'text-[9.5px]' : 'text-[10.5px]')}>
+    <div className={cn('font-mono leading-[1.62]', compact ? 'text-[9.5px]' : 'text-[11px]')}>
       {SHARD_DISASM.map((ins, i) => {
         const on = i === pc
         return (
           <div
             key={ins.addr}
             className={cn(
-              'relative flex items-center gap-2 whitespace-nowrap rounded-[3px] pl-2.5 pr-1 transition-colors duration-300',
+              'relative flex items-center whitespace-nowrap rounded-[3px] pr-1 transition-colors duration-300',
+              clip ? 'gap-1.5 pl-2' : 'gap-2 pl-2.5',
               on ? 'bg-accent/20 text-ink' : 'text-ink/80',
             )}
           >
@@ -154,9 +182,13 @@ export function DisasmBody({ running, compact }: { running: boolean; compact?: b
             >
               ▸
             </span>
-            <span className={cn('w-[4.7em] shrink-0', on ? 'text-accent' : 'text-muted/75')}>{ins.addr}</span>
+            <span className={cn('shrink-0', clip ? 'w-[3.7em]' : 'w-[4.7em]', on ? 'text-accent' : 'text-muted/75')}>
+              {short(ins.addr)}
+            </span>
             <span className={cn('w-[2.9em] shrink-0 font-semibold', on ? 'neon' : 'text-accent3')}>{ins.mnemonic}</span>
-            <span className={cn('truncate', ins.target ? 'text-accent2' : '')}>{ins.operands}</span>
+            <span className={cn('min-w-0', clip ? 'overflow-hidden' : 'truncate', ins.target && 'text-accent2')}>
+              {ins.target ? short(ins.operands) : ins.operands}
+            </span>
           </div>
         )
       })}
@@ -170,7 +202,7 @@ export function HexBody({ running, compact }: { running: boolean; compact?: bool
   const field = SHARD_HEX_FIELDS[fi]
 
   return (
-    <div className={cn('font-mono', compact ? 'text-[9.5px]' : 'text-[10.5px]')}>
+    <div className={cn('font-mono', compact ? 'text-[9.5px]' : 'text-[11px]')}>
       {SHARD_HEX.map((row, r) => (
         <div key={row.offset}>
           {r === 3 && (
@@ -220,64 +252,87 @@ export function HexBody({ running, compact }: { running: boolean; compact?: bool
   )
 }
 
-/** Request/response typed out on a loop. */
-export function HttpBody({ running, compact }: { running: boolean; compact?: boolean }) {
-  const full = useMemo(() => SHARD_HTTP.map((l) => l.text), [])
-  const total = full.reduce((n, t) => n + t.length, 0)
-  const [shown, setShown] = useState(total)
+const HTTP_TOTAL = SHARD_HTTP.reduce((n, l) => n + l.text.length, 0)
+const HTTP_REQ = SHARD_HTTP.filter((l) => l.dir === '>').reduce((n, l) => n + l.text.length, 0)
 
-  useEffect(() => {
+/**
+ * Request/response typed out on a loop. The typing writes straight to the DOM
+ * (text nodes + a data attribute for the caret), so the loop never re-renders React.
+ */
+export function HttpBody({ running, compact, clip = compact }: BodyProps) {
+  const rows = useRef<(HTMLDivElement | null)[]>([])
+  const texts = useRef<(HTMLSpanElement | null)[]>([])
+
+  useLayoutEffect(() => {
+    const paint = (shown: number) => {
+      let budget = shown
+      SHARD_HTTP.forEach((l, i) => {
+        const visible = Math.max(0, Math.min(l.text.length, budget))
+        budget -= l.text.length
+        const text = texts.current[i]
+        const row = rows.current[i]
+        if (text && text.textContent?.length !== visible) text.textContent = l.text.slice(0, visible)
+        if (row) {
+          row.style.opacity = visible === 0 ? '0' : ''
+          row.dataset.typing = visible > 0 && visible < l.text.length ? 'on' : 'off'
+        }
+      })
+    }
+
     if (!running) {
-      setShown(total)
+      paint(HTTP_TOTAL)
       return
     }
     let n = 0
     let t: ReturnType<typeof setTimeout>
-    const reqChars = full.slice(0, 3).reduce((a, s) => a + s.length, 0)
     const tick = () => {
       n += 2
-      setShown(Math.min(n, total))
-      if (n >= total) {
+      paint(Math.min(n, HTTP_TOTAL))
+      if (n >= HTTP_TOTAL) {
         t = setTimeout(() => {
           n = 0
-          setShown(0)
+          paint(0)
           t = setTimeout(tick, 500)
         }, 2600)
         return
       }
       // a beat of "latency" between request and response
-      t = setTimeout(tick, n >= reqChars && n < reqChars + 2 ? 520 : 24)
+      t = setTimeout(tick, n >= HTTP_REQ && n < HTTP_REQ + 2 ? 520 : 24)
     }
-    setShown(0)
+    paint(0)
     t = setTimeout(tick, 400)
     return () => clearTimeout(t)
-  }, [running, full, total])
+  }, [running])
 
-  let budget = shown
   return (
-    <div className={cn('font-mono leading-[1.6]', compact ? 'text-[9.5px]' : 'text-[10.5px]')}>
-      {SHARD_HTTP.map((l, i) => {
-        const visible = Math.max(0, Math.min(l.text.length, budget))
-        budget -= l.text.length
-        const typing = visible > 0 && visible < l.text.length
-        return (
-          <div
-            key={i}
-            className={cn('flex gap-1.5 whitespace-nowrap', i === 3 && 'mt-1', visible === 0 && 'opacity-0')}
+    <div className={cn('font-mono leading-[1.6]', compact ? 'text-[9.5px]' : 'text-[11px]')}>
+      {SHARD_HTTP.map((l, i) => (
+        <div
+          key={i}
+          ref={(el) => {
+            rows.current[i] = el
+          }}
+          data-typing="off"
+          className={cn('group/ln flex gap-1.5 whitespace-nowrap', i === 3 && 'mt-1')}
+        >
+          <span className={cn('shrink-0', l.dir === '>' ? 'text-accent' : 'text-accent2')}>{l.dir}</span>
+          <span
+            className={cn(
+              'min-w-0',
+              clip ? 'overflow-hidden' : 'truncate',
+              l.tone === 'status' ? 'font-semibold text-emerald-300' : l.tone === 'header' ? 'text-muted' : 'text-ink',
+            )}
           >
-            <span className={l.dir === '>' ? 'text-accent' : 'text-accent2'}>{l.dir}</span>
+            {/* text is written by the typing loop above */}
             <span
-              className={cn(
-                'truncate',
-                l.tone === 'status' ? 'font-semibold text-emerald-300' : l.tone === 'header' ? 'text-muted' : 'text-ink',
-              )}
-            >
-              {l.text.slice(0, visible)}
-              {typing && <span className="ml-px inline-block h-[1em] w-[0.5em] translate-y-[2px] animate-blink bg-accent" />}
-            </span>
-          </div>
-        )
-      })}
+              ref={(el) => {
+                texts.current[i] = el
+              }}
+            />
+            <span className="ml-px hidden h-[1em] w-[0.5em] translate-y-[2px] animate-blink bg-accent group-data-[typing=on]/ln:inline-block" />
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
@@ -326,9 +381,9 @@ export function WaveBody({ compact }: { compact?: boolean }) {
         </span>
       </div>
       <div className="mt-1 flex justify-between font-mono text-[8px] tracking-[0.08em] text-muted/70">
-        <span>0 ms</span>
+        <span>0 s</span>
         <span className="text-accent/90">1,284 frames</span>
-        <span>250 ms</span>
+        <span>120 s</span>
       </div>
     </div>
   )
@@ -337,7 +392,7 @@ export function WaveBody({ compact }: { compact?: boolean }) {
 const CFG_NODES = [
   { id: 'a', label: '401230', sub: 'entry', x: 64, y: 4, w: 72, kind: 'neutral' },
   { id: 'b', label: '401248', sub: 'fail', x: 8, y: 52, w: 70, kind: 'bad' },
-  { id: 'c', label: '401270', sub: 'jne', x: 122, y: 52, w: 70, kind: 'good' },
+  { id: 'c', label: '401270', sub: 'ok', x: 122, y: 52, w: 70, kind: 'good' },
   { id: 'd', label: '401290', sub: 'ret', x: 64, y: 100, w: 72, kind: 'neutral' },
 ] as const
 

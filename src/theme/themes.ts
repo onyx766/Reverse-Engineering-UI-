@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 /**
  * Per-section theme engine.
  * Every nav destination owns a distinct palette; switching sections
@@ -142,26 +144,76 @@ export const NAV_ITEMS: SectionId[] = [
   'about',
 ]
 
+/** CSS custom-property names of the seven palette slots. */
+const SLOTS = [
+  ['accent', 'accent'],
+  ['accent-2', 'accent2'],
+  ['accent-3', 'accent3'],
+  ['surface', 'surface'],
+  ['deep', 'deep'],
+  ['ink', 'ink'],
+  ['muted', 'muted'],
+] as const
+
 /**
- * Writes the palette as per-channel custom properties. index.css registers
- * those channels with @property and transitions them, so the whole UI
- * morphs smoothly from one section's palette to the next.
+ * Snaps the :root palette (per-channel custom properties; index.css builds
+ * the "R G B" triplets from them). Changing a custom property on :root
+ * re-styles every element in the document, so the app calls this only when
+ * the page is nearly empty: on first render, and at the swap between the
+ * outgoing and the incoming section. The visible morph runs on the small
+ * `.palette-morph` scopes instead (see morphVars).
  */
 export function applyTheme(theme: Theme) {
   const root = document.documentElement
-  const write = (name: string, triplet: string) => {
-    const [r, g, b] = triplet.split(' ')
+  for (const [name, key] of SLOTS) {
+    const [r, g, b] = theme[key].split(' ')
     root.style.setProperty(`--${name}-r`, r)
     root.style.setProperty(`--${name}-g`, g)
     root.style.setProperty(`--${name}-b`, b)
   }
-  write('accent', theme.accent)
-  write('accent-2', theme.accent2)
-  write('accent-3', theme.accent3)
-  write('surface', theme.surface)
-  write('deep', theme.deep)
-  write('ink', theme.ink)
-  write('muted', theme.muted)
-  root.dataset.theme = theme.id
+  markTheme(theme)
+}
+
+/** Section id on <html data-theme> and the browser UI colour; no style cost. */
+export function markTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme.id
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.gl.fog)
+}
+
+const PALETTE_CACHE = new Map<SectionId, CSSProperties>()
+const MORPH_CACHE = new Map<SectionId, CSSProperties>()
+
+/**
+ * The palette as fixed "R G B" custom properties, for an element that must
+ * not follow :root: a section wrapper carries its own section's colours, so
+ * the outgoing section keeps them while it fades. Cached per theme, so the
+ * style object is referentially stable.
+ */
+export function paletteVars(theme: Theme): CSSProperties {
+  let vars = PALETTE_CACHE.get(theme.id)
+  if (!vars) {
+    vars = Object.fromEntries(SLOTS.map(([name, key]) => [`--${name}`, theme[key]])) as CSSProperties
+    PALETTE_CACHE.set(theme.id, vars)
+  }
+  return vars
+}
+
+/**
+ * Channel values for a `.palette-morph` element (background, navbar, cursor):
+ * the class rebuilds the triplets from these registered channels and
+ * transitions them, so when the theme changes, only that element's subtree
+ * is re-styled per frame while the palette morphs.
+ */
+export function morphVars(theme: Theme): CSSProperties {
+  let vars = MORPH_CACHE.get(theme.id)
+  if (!vars) {
+    const entries: [string, string][] = []
+    for (const [name, key] of SLOTS) {
+      const [r, g, b] = theme[key].split(' ')
+      entries.push([`--${name}-r`, r], [`--${name}-g`, g], [`--${name}-b`, b])
+    }
+    vars = Object.fromEntries(entries) as CSSProperties
+    MORPH_CACHE.set(theme.id, vars)
+  }
+  return vars
 }

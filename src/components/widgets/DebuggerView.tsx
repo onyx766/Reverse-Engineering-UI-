@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Pause, Play, RotateCcw, StepForward, type LucideIcon } from 'lucide-react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -41,6 +41,8 @@ const FLAGS = [
   { id: 'OF', name: 'overflow' },
 ]
 const LINE_H = 20
+/** trace rows shown when the widget is not asked to fill spare height */
+const BASE_ROWS = 5
 const MASK64 = (1n << 64n) - 1n
 
 const pad64 = (addr: string) => addr.replace(/^0x/i, '').toUpperCase().padStart(16, '0')
@@ -118,12 +120,21 @@ export function DebuggerView({
   regs,
   trace,
   interval = 1100,
+  fill = false,
 }: {
   regs: Reg[]
   trace: TraceCall[]
   interval?: number
+  /**
+   * Grow the trace window into spare height. Only takes effect when the
+   * parent is a flex column taller than the widget (e.g. a stretched grid
+   * panel); otherwise the trace keeps its default five rows.
+   */
+  fill?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const traceRef = useRef<HTMLDivElement>(null)
+  const [fitRows, setFitRows] = useState(BASE_ROWS)
   const inView = useInView(ref, { margin: '-40px' })
   const reduced = useReducedMotion()
   const tipId = useId()
@@ -134,6 +145,9 @@ export function DebuggerView({
   const [hoverReg, setHoverReg] = useState<string | null>(null)
   const [focusReg, setFocusReg] = useState<string | null>(null)
   const [pinReg, setPinReg] = useState<string | null>(null)
+  // roving tabindex: the register file is one Tab stop, arrow keys walk the 2-column grid
+  const regRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [rovingReg, setRovingReg] = useState(0)
 
   const snaps = useMemo(() => buildSnapshots(regs, trace), [regs, trace])
   const segments = useMemo(() => segment(trace), [trace])
@@ -142,7 +156,10 @@ export function DebuggerView({
   const snap = snaps[s]
   const done = len > 0 && s >= len
   const auto = running && (!reduced || userRun)
-  const ticking = auto && inView && !holding && len > 0
+  // inspecting a register holds the run: mouse over the grid, keyboard focus, or a pinned tap,
+  // so the value under the reader never changes mid-read
+  const hold = holding || focusReg !== null || pinReg !== null
+  const ticking = auto && inView && !hold && len > 0
 
   useEffect(() => {
     if (!ticking) return
@@ -157,11 +174,43 @@ export function DebuggerView({
     if (!inView) setPinReg(null)
   }, [inView])
 
+  // how many trace rows fit once the window has grown into spare height
+  useEffect(() => {
+    const el = traceRef.current
+    if (!fill || !el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() =>
+      setFitRows(Math.max(BASE_ROWS, Math.floor((el.clientHeight - 8) / LINE_H))),
+    )
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fill])
+
   useDismiss(ref, pinReg !== null, () => setPinReg(null))
 
   const advance = () => {
     setRunning(false)
     setStep((v) => (v >= len ? 0 : v + 1))
+  }
+
+  const onRegKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    const n = regs.length
+    const to =
+      e.key === 'ArrowRight'
+        ? i + 1
+        : e.key === 'ArrowLeft'
+          ? i - 1
+          : e.key === 'ArrowDown'
+            ? i + 2
+            : e.key === 'ArrowUp'
+              ? i - 2
+              : e.key === 'Home'
+                ? 0
+                : e.key === 'End'
+                  ? n - 1
+                  : null
+    if (to === null || to < 0 || to >= n) return
+    e.preventDefault()
+    regRefs.current[to]?.focus()
   }
   const toggleRun = () => {
     if (auto) {
@@ -174,16 +223,19 @@ export function DebuggerView({
 
   const inspect = hoverReg ?? focusReg ?? pinReg
   const regRows = Math.ceil(regs.length / 2)
-  const visible = Math.min(5, len)
+  const baseRows = Math.min(BASE_ROWS, len)
+  const visible = Math.min(fill ? fitRows : BASE_ROWS, len)
   const first = Math.max(0, Math.min(s - 2, len - visible))
-  const note =
-    s === 0
-      ? `breakpoint at ${trace[0]?.addr ?? '—'} · step to execute`
-      : (trace[s - 1].note ?? trace[s - 1].text)
+  const baseH = baseRows * LINE_H + 8
+  // the status line explains the instruction that just ran (the highlighted row is the next one)
+  const ran = s > 0 ? trace[s - 1] : undefined
+  const note = ran
+    ? (ran.note ?? ran.text)
+    : `breakpoint at ${trace[0]?.addr ?? '—'} · step to execute`
 
   const status = done
     ? { label: 'returned', tone: 'border-emerald-400/40 text-emerald-300', dot: 'bg-emerald-400' }
-    : auto && !holding
+    : auto && !hold
       ? { label: 'running', tone: 'border-accent/40 text-accent', dot: 'bg-accent animate-pulse' }
       : {
           label: auto ? 'hold' : 'break',
@@ -192,7 +244,7 @@ export function DebuggerView({
         }
 
   return (
-    <div ref={ref} className="flex flex-col gap-3">
+    <div ref={ref} className={cn('flex flex-col gap-3', fill && 'flex-1')}>
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={cn(
@@ -213,12 +265,15 @@ export function DebuggerView({
             label={auto ? 'Pause execution' : 'Run'}
             onClick={toggleRun}
           />
-          <CtrlButton icon={StepForward} label="Step into" text="Step" onClick={advance} />
+          {/* the trace steps over calls (crc32_ieee runs as one step), so this is a step-over */}
+          <CtrlButton icon={StepForward} label="Step over" text="Step" onClick={advance} />
           <CtrlButton icon={RotateCcw} label="Restart from breakpoint" onClick={() => setStep(0)} />
         </div>
       </div>
 
       <div
+        role="group"
+        aria-label="Registers. Arrow keys move between registers, Enter pins one."
         className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[10.5px] sm:gap-x-3 sm:text-[11px]"
         onPointerEnter={(e) => isMouse(e) && setHolding(true)}
         onPointerLeave={() => {
@@ -237,7 +292,11 @@ export function DebuggerView({
           return (
             <div key={r.name} className={cn('relative', open && 'z-20')}>
               <motion.button
+                ref={(el) => {
+                  regRefs.current[i] = el
+                }}
                 type="button"
+                tabIndex={i === rovingReg ? 0 : -1}
                 initial={{ opacity: 0, x: -10 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -246,11 +305,16 @@ export function DebuggerView({
                 aria-describedby={open ? tipId : undefined}
                 onPointerEnter={(e) => isMouse(e) && setHoverReg(r.name)}
                 onPointerLeave={() => setHoverReg(null)}
-                onFocus={(e) => isFocusVisible(e.currentTarget) && setFocusReg(r.name)}
+                onFocus={(e) => {
+                  setRovingReg(i)
+                  if (isFocusVisible(e.currentTarget)) setFocusReg(r.name)
+                }}
                 onBlur={() => setFocusReg(null)}
+                onKeyDown={(e) => onRegKey(e, i)}
                 onClick={() => setPinReg((p) => (p === r.name ? null : r.name))}
                 className={cn(
-                  'relative flex w-full items-center gap-2.5 overflow-hidden rounded-md border px-1.5 py-[3px] text-left transition-colors duration-300 sm:gap-3 [@media(pointer:coarse)]:min-h-10',
+                  // 16 hex digits (≈101px) must fit a 360px phone: tighter gap below 400px
+                  'relative flex w-full items-center gap-1 overflow-hidden rounded-md border px-1.5 py-[3px] text-left transition-colors duration-300 min-[400px]:gap-2.5 sm:gap-3 [@media(pointer:coarse)]:min-h-10',
                   open
                     ? 'border-accent/50 bg-accent/15'
                     : 'border-transparent hover:border-accent/30 hover:bg-accent/[0.07]',
@@ -269,7 +333,8 @@ export function DebuggerView({
                 <span className="relative w-[3ch] shrink-0 text-accent">{r.name}</span>
                 <span
                   className={cn(
-                    'relative min-w-0 truncate tabular-nums transition-colors duration-500',
+                    // if it still cannot fit, the ellipsis eats leading zeros, never the low digits
+                    'relative min-w-0 truncate tabular-nums transition-colors duration-500 [direction:rtl]',
                     changed ? 'text-accent3' : open ? 'text-ink' : 'text-muted',
                   )}
                 >
@@ -344,8 +409,9 @@ export function DebuggerView({
       </div>
 
       <div
+        ref={traceRef}
         className="relative overflow-hidden rounded-md border border-accent/10 bg-deep/30 font-mono text-[10.5px] [mask-image:linear-gradient(180deg,transparent,#000_7%,#000_93%,transparent)] sm:text-[11px]"
-        style={{ height: visible * LINE_H + 8 }}
+        style={fill ? { flex: `1 1 ${baseH}px`, minHeight: baseH } : { height: baseH }}
         aria-label="Execution trace"
         role="list"
       >
@@ -391,6 +457,9 @@ export function DebuggerView({
         aria-live={auto ? 'off' : 'polite'}
       >
         <span className="shrink-0 text-accent">;</span>
+        {ran && (
+          <span className="shrink-0 tabular-nums text-muted/60">{ran.addr.replace(/^0+(?=.{6})/, '')}</span>
+        )}
         <span className="truncate">{note}</span>
       </p>
     </div>

@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   AtSign,
@@ -72,6 +80,11 @@ const TYPE_OPTIONS = ENGAGEMENT_TYPES.map((t) => ({
 type Phase = 'form' | 'sending' | 'success' | 'error'
 
 const fid = (k: FieldKey) => `cf-${k}`
+/** the submit shortcut as the visitor's keyboard labels it */
+const MOD_KEY =
+  typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent)
+    ? '⌘'
+    : 'Ctrl'
 const snapshot = (v: FormValues) => JSON.stringify({ ...v, consent: false })
 const EMPTY_SNAPSHOT = snapshot(EMPTY_FORM)
 
@@ -104,6 +117,7 @@ export function ContactForm() {
   const formRef = useRef<HTMLFormElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLInputElement>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
   const messageRef = useRef<HTMLTextAreaElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const honeypot = useRef<HTMLInputElement>(null)
@@ -223,7 +237,7 @@ export function ContactForm() {
     update('message', FORM_COPY.template)
   }
 
-  const discard = () => {
+  const discard = (e: MouseEvent<HTMLButtonElement>) => {
     const prev = values
     setValues(EMPTY_FORM)
     setTouched({})
@@ -236,8 +250,18 @@ export function ContactForm() {
     toast({
       title: 'Draft discarded',
       body: 'The saved copy was removed from this browser.',
-      action: { label: 'Undo', onClick: () => setValues(prev) },
+      action: {
+        label: 'Undo',
+        onClick: (ev) => {
+          setValues(prev)
+          // keyboard users return to the form, not to <body>
+          if (ev.detail === 0) submitRef.current?.focus()
+        },
+      },
     })
+    // the discard button leaves with the draft: hand keyboard focus to its neighbour,
+    // the submit button, so nothing scrolls and focus never falls back to <body>
+    if (e.detail === 0) submitRef.current?.focus({ preventScroll: true })
   }
 
   const send = async (b: Brief) => {
@@ -361,8 +385,8 @@ export function ContactForm() {
   const hintType =
     lastType && values.types.includes(lastType) ? lastType : values.types[values.types.length - 1]
   const hint = ENGAGEMENT_TYPES.find((t) => t.id === hintType)
-  const badge =
-    phase === 'form' ? 'CH-01 · open' : phase === 'sending' ? 'TX · live' : phase === 'success' ? 'ACK' : 'NACK'
+  // one word, like the other panels' badges, so the title never truncates on 360 px phones
+  const badge = phase === 'form' ? 'Open' : phase === 'sending' ? 'TX' : phase === 'success' ? 'ACK' : 'NACK'
   const draftStatus =
     restored && savedAt
       ? `Unsent draft restored · ${hhmm(savedAt)}`
@@ -400,6 +424,8 @@ export function ContactForm() {
                 aria-label="Project enquiry"
                 className="flex flex-1 flex-col gap-5"
               >
+                {/* honeypot: invisible to people, irresistible to form bots; password
+                    managers are told to leave it alone so real visitors never trip it */}
                 <input
                   ref={honeypot}
                   type="text"
@@ -407,6 +433,10 @@ export function ContactForm() {
                   tabIndex={-1}
                   autoComplete="off"
                   aria-hidden
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-bwignore
+                  data-form-type="other"
                   className="pointer-events-none absolute left-0 top-0 h-0 w-0 opacity-0"
                 />
 
@@ -555,6 +585,7 @@ export function ContactForm() {
                   </div>
 
                   <button
+                    ref={submitRef}
                     type="submit"
                     className="group relative flex h-[52px] w-full items-center justify-center overflow-hidden rounded-[14px] border border-accent/60 bg-accent/15 font-display text-[12.5px] font-bold uppercase tracking-[0.2em] text-ink transition-[background-color,border-color,box-shadow,transform] duration-300 hover:border-accent hover:bg-accent/25 hover:shadow-glow active:scale-[0.99]"
                   >
@@ -577,7 +608,7 @@ export function ContactForm() {
                       aria-hidden
                       className="absolute right-4 hidden rounded border border-accent/30 bg-deep/40 px-1.5 py-0.5 font-mono text-[9.5px] font-normal tracking-[0.08em] text-muted sm:inline-block"
                     >
-                      Ctrl ↵
+                      {MOD_KEY} ↵
                     </kbd>
                   </button>
                 </div>

@@ -131,7 +131,7 @@ const RAW: RawWriteup[] = [
       },
       {
         type: 'paragraph',
-        text: 'The tell is always the same: one small function with a huge number of callers. I sorted functions by incoming reference count in Ghidra (`Window > Functions`, then the *Reference Count* column) and the second row was a 40-byte leaf with 212 xrefs. Opening it, the decompiler showed the classic shape — a loop reading one byte, XORing it, writing it back, and mutating a key as it goes.',
+        text: 'The tell is always the same: one small function with a huge number of callers. Ghidra’s Symbol Table carries an incoming *Reference Count* column, so I opened it (`Window > Symbol Table`), filtered to functions, and sorted descending — the second row was a 40-byte leaf with 212 xrefs. Opening it, the decompiler showed the classic shape — a loop reading one byte, XORing it, writing it back, and mutating a key as it goes.',
       },
       {
         type: 'code',
@@ -164,7 +164,7 @@ void deob(byte *buf, uint len) {
       },
       {
         type: 'paragraph',
-        text: 'I reproduced the recurrence on paper against one known call to sanity-check it before automating. The caller does `LEA RCX, [DAT_0041e200]; MOV EDX, 0x1c; CALL deob`, so the buffer is 28 bytes at `0x41e200`. Decoding by hand: `k0 = 0x5A`, `p0 = c0 ^ 0x5A`, `k1 = (0x5A + c0) ^ 0x1F`, and so on. The first eight bytes resolved to `\\\\.\\pipe\\` — a named-pipe path — which confirmed both the seed and the update rule.',
+        text: 'I reproduced the recurrence on paper against one known call to sanity-check it before automating. The caller is `__fastcall`, so it does `LEA ECX, [DAT_0041e200]; MOV EDX, 0x1c; CALL deob` — the buffer is 28 bytes at `0x41e200`. Decoding by hand: `k0 = 0x5A`, `p0 = c0 ^ 0x5A`, `k1 = (0x5A + c0) ^ 0x1F`, and so on. The first nine bytes resolved to `\\\\.\\pipe\\` — the prefix of a named-pipe path — which confirmed both the seed and the update rule.',
       },
       {
         type: 'heading',
@@ -180,7 +180,7 @@ void deob(byte *buf, uint len) {
         type: 'code',
         lang: 'python',
         code: `# annotate_xor.py — Ghidra/Jython. Run on the obfuscated program.
-from ghidra.program.model.symbol import SourceType, RefType
+from ghidra.program.model.symbol import SourceType
 
 DECODER = toAddr("00401c40")
 SEED, X = 0x5A, 0x1F
@@ -380,9 +380,9 @@ Java.perform(function () {
   var Mac = Java.use('javax.crypto.Mac');
   var SKS = Java.use('javax.crypto.spec.SecretKeySpec');
   var hex = function (b) {
-    var s = '', B = Java.array('byte', b);
-    for (var i = 0; i < B.length; i++)
-      s += ('0' + (B[i] & 0xff).toString(16)).slice(-2);
+    var s = '';
+    for (var i = 0; i < b.length; i++)
+      s += ('0' + (b[i] & 0xff).toString(16)).slice(-2);
     return s;
   };
   SKS.$init.overload('[B', 'java.lang.String').implementation = function (k, alg) {
@@ -635,7 +635,7 @@ types:
     blocks: [
       {
         type: 'paragraph',
-        text: 'Once you have captured a proprietary protocol, staring at the hex pane only scales so far. A Wireshark dissector turns every packet into labelled fields you can filter and follow, and because it understands the framing it will also reassemble messages that TCP has split or merged. A Lua post-dissector is the fastest way there — no recompiling Wireshark, just drop the script in the plugins folder and reload.',
+        text: 'Once you have captured a proprietary protocol, staring at the hex pane only scales so far. A Wireshark dissector turns every packet into labelled fields you can filter and follow, and because it understands the framing it will also reassemble messages that TCP has split or merged. A Lua dissector is the fastest way there — no recompiling Wireshark, just drop the script in the plugins folder and reload.',
       },
       {
         type: 'heading',

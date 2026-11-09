@@ -32,10 +32,10 @@ export function Footer() {
   return (
     <footer ref={ref} className="relative z-10 mx-auto w-full max-w-[1400px] px-4 pb-6 pt-6 sm:px-8 sm:pb-8">
       <motion.div
-        initial={{ opacity: 0, y: 46, rotateX: -9, filter: 'blur(10px)' }}
-        whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
+        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 46, rotateX: -9, filter: 'blur(10px)' }}
+        whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
         viewport={{ once: true, margin: '-40px' }}
-        transition={{ duration: 0.9, ease: EASE }}
+        transition={{ duration: reduced ? 0.4 : 0.9, ease: EASE }}
         style={{ transformPerspective: 1400 }}
         className="glass relative overflow-hidden rounded-2xl"
       >
@@ -69,13 +69,14 @@ export function Footer() {
 }
 
 function Column({ index, children }: { index: number; children: ReactNode }) {
+  const reduced = useReducedMotion()
   return (
     <motion.div
       className="min-w-0"
-      initial={{ opacity: 0, y: 22, filter: 'blur(8px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 22, filter: 'blur(8px)' }}
+      whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.75, delay: 0.12 + index * 0.08, ease: EASE }}
+      transition={{ duration: reduced ? 0.4 : 0.75, delay: reduced ? 0 : 0.12 + index * 0.08, ease: EASE }}
     >
       {children}
     </motion.div>

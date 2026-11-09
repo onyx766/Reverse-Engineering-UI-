@@ -20,8 +20,6 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { HANDSHAKE_FLOW, HANDSHAKE_LINES, HANDSHAKE_SPECS, RULES, type Rule } from '@/data/contact'
 import { EASE } from './fields'
 
-// padded: the shared Terminal currently drops the final character of every line
-
 /** "$ nox --open-channel": a Noise XX handshake typed out, beside the same exchange as a ladder. */
 export function HandshakePanel() {
   const [run, setRun] = useState(0)
@@ -34,16 +32,17 @@ export function HandshakePanel() {
       from="left"
       delay={0.05}
       tilt={5}
-      float
       className="h-full"
       bodyClassName="flex flex-col lg:min-h-[calc(100%-58px)]"
     >
       <div className="grid flex-1 gap-4 md:grid-cols-2">
+        {/* 11 px on phones keeps every 36-column row on one line down to 360 px */}
         <Terminal
           key={run}
           lines={HANDSHAKE_LINES}
           speed={12}
-          height="h-[19rem] md:h-full md:min-h-[19rem]"
+          className="text-[11px] sm:text-[11.5px]"
+          height="h-[18.5rem] md:h-full md:min-h-[19rem]"
         />
         <div className="flex min-w-0 flex-col gap-3">
           <div className="rounded-lg border border-accent/20 bg-deep/40 p-3">
@@ -51,7 +50,7 @@ export function HandshakePanel() {
               <span>initiator ⇄ responder</span>
               <span className="text-accent">XX</span>
             </p>
-            <ProtocolFlow exchanges={HANDSHAKE_FLOW} />
+            <ProtocolFlow exchanges={HANDSHAKE_FLOW} client="You" server="Nox" />
           </div>
           <dl className="grid grid-cols-2 gap-2">
             {HANDSHAKE_SPECS.map((s) => (

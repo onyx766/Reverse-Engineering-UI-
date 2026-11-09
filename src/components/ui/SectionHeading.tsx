@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 interface Props {
   eyebrow: string
@@ -9,6 +10,8 @@ interface Props {
   align?: 'center' | 'left'
 }
 
+const EASE = [0.22, 1, 0.36, 1] as const
+
 export function SectionHeading({
   eyebrow,
   title,
@@ -16,6 +19,10 @@ export function SectionHeading({
   className,
   align = 'center',
 }: Props) {
+  // reduced motion: plain fades (MotionConfig skips transforms, but not blur or letter-spacing)
+  const reduced = useReducedMotion()
+  const fade = { duration: 0.4, ease: EASE }
+
   return (
     <div
       className={cn(
@@ -25,10 +32,11 @@ export function SectionHeading({
       )}
     >
       <motion.span
-        initial={{ opacity: 0, y: 14, letterSpacing: '0.8em' }}
-        whileInView={{ opacity: 1, y: 0, letterSpacing: '0.42em' }}
+        // 0.5em, not wider: a long eyebrow must not wrap mid-entrance on a 360px phone
+        initial={reduced ? { opacity: 0, letterSpacing: '0.42em' } : { opacity: 0, y: 14, letterSpacing: '0.5em' }}
+        whileInView={reduced ? { opacity: 1, letterSpacing: '0.42em' } : { opacity: 1, y: 0, letterSpacing: '0.42em' }}
         viewport={{ once: true }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        transition={reduced ? fade : { duration: 0.7, ease: EASE }}
         className="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase text-accent"
       >
         <span className="h-px w-6 bg-accent/70" />
@@ -37,10 +45,10 @@ export function SectionHeading({
       </motion.span>
 
       <motion.h2
-        initial={{ opacity: 0, y: 24, filter: 'blur(10px)' }}
-        whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24, filter: 'blur(10px)' }}
+        whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
         viewport={{ once: true }}
-        transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+        transition={reduced ? fade : { duration: 0.8, delay: 0.08, ease: EASE }}
         className="text-balance font-display text-3xl font-black uppercase tracking-tight text-gradient sm:text-[42px]"
       >
         {title}
@@ -48,10 +56,10 @@ export function SectionHeading({
 
       {subtitle && (
         <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18 }}
+          whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+          transition={reduced ? fade : { duration: 0.8, delay: 0.16, ease: EASE }}
           className="max-w-2xl text-balance text-[15px] leading-relaxed text-muted"
         >
           {subtitle}
@@ -59,10 +67,10 @@ export function SectionHeading({
       )}
 
       <motion.span
-        initial={{ scaleX: 0 }}
+        initial={reduced ? false : { scaleX: 0 }}
         whileInView={{ scaleX: 1 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.9, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.9, delay: 0.22, ease: EASE }}
         className={cn(
           'mt-1 h-px w-44 bg-gradient-to-r from-transparent via-accent to-transparent',
           align === 'left' && 'origin-left bg-gradient-to-r from-accent to-transparent',

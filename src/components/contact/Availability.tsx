@@ -229,11 +229,15 @@ export function Availability() {
                   style={{ left: `${(a / 24) * 100}%`, width: `${((b - a) / 24) * 100}%` }}
                 />
               ))}
+              {/* full-width carrier: translateX(%) is relative to the track, so the marker
+                  glides on the compositor instead of re-laying out every second */}
               <span
-                className="absolute top-0 h-[30px] w-px bg-ink shadow-[0_0_10px_rgb(var(--accent))] transition-[left] duration-700 ease-linear"
-                style={{ left: `${pos}%` }}
+                className="absolute inset-x-0 top-0 h-[30px] transition-transform duration-700 ease-linear"
+                style={{ transform: `translateX(${pos}%)` }}
               >
-                <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-accent shadow-glow-sm" />
+                <span className="absolute left-0 top-0 h-full w-px bg-ink shadow-[0_0_10px_rgb(var(--accent))]">
+                  <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-accent shadow-glow-sm" />
+                </span>
               </span>
             </div>
             <div className="mt-0.5 flex justify-between font-mono text-[9px] text-muted/70">

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Monitor, Server, type LucideIcon } from 'lucide-react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -47,7 +47,30 @@ export function ProtocolFlow({ exchanges, interval = 1150, client = 'Client', se
   const [hover, setHover] = useState<number | null>(null)
   const [focus, setFocus] = useState<number | null>(null)
   const [pinned, setPinned] = useState<number | null>(null)
+  // roving tabindex: the ladder is one Tab stop, arrow keys walk the exchanges
+  const [roving, setRoving] = useState(0)
   const open = hover ?? focus ?? pinned
+
+  const onRowKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    if (e.key === 'Escape') {
+      setPinned(null)
+      return
+    }
+    const n = exchanges.length
+    const to =
+      e.key === 'ArrowDown' || e.key === 'ArrowRight'
+        ? i + 1
+        : e.key === 'ArrowUp' || e.key === 'ArrowLeft'
+          ? i - 1
+          : e.key === 'Home'
+            ? 0
+            : e.key === 'End'
+              ? n - 1
+              : null
+    if (to === null || to < 0 || to >= n) return
+    e.preventDefault()
+    rowRefs.current[to]?.focus()
+  }
 
   useEffect(() => {
     if (!inView || reduced || open !== null) return
@@ -79,12 +102,15 @@ export function ProtocolFlow({ exchanges, interval = 1150, client = 'Client', se
       <Endpoint icon={Monitor} label={client} active={sender === 'up'} />
 
       <div
+        role="group"
+        aria-label={`${client} to ${server} exchanges. Arrow keys move between them, Enter pins one open.`}
         className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 sm:gap-2"
         onPointerLeave={() => setHover(null)}
       >
         {exchanges.map((x, i) => {
           const active = !reduced && i === step - 1 && open === null
-          const done = reduced || i < step - 1 || (open !== null && step - 1 >= i)
+          // while one exchange is open the replay is frozen and the whole capture reads as recorded
+          const done = reduced || open !== null || i < step - 1
           const inspected = open === i
           const lit = active || done || inspected
           return (
@@ -94,6 +120,7 @@ export function ProtocolFlow({ exchanges, interval = 1150, client = 'Client', se
                 rowRefs.current[i] = el
               }}
               type="button"
+              tabIndex={i === roving ? 0 : -1}
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -102,10 +129,13 @@ export function ProtocolFlow({ exchanges, interval = 1150, client = 'Client', se
               aria-expanded={x.raw ? inspected : undefined}
               aria-describedby={inspected && x.raw ? popId : undefined}
               onPointerEnter={(e) => isMouse(e) && setHover(i)}
-              onFocus={(e) => isFocusVisible(e.currentTarget) && setFocus(i)}
+              onFocus={(e) => {
+                setRoving(i)
+                if (isFocusVisible(e.currentTarget)) setFocus(i)
+              }}
               onBlur={() => setFocus(null)}
               onClick={() => setPinned((p) => (p === i ? null : i))}
-              onKeyDown={(e) => e.key === 'Escape' && setPinned(null)}
+              onKeyDown={(e) => onRowKey(e, i)}
               className={cn(
                 'relative flex w-full items-center gap-2 overflow-hidden rounded-md border px-2 py-1.5 text-left font-mono text-[10.5px] transition-[color,background-color,border-color,box-shadow] duration-300 [@media(pointer:coarse)]:min-h-10',
                 lit ? TONE[x.tone ?? 'info'] : 'border-white/5 bg-white/[0.02] text-muted/50',

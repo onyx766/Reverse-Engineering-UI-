@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import type { Insn } from '@/components/widgets/Disassembly'
 import type { CfgBlock, CfgEdge } from '@/components/widgets/CfgGraph'
-import type { FieldKind, HexField, HexRow } from '@/components/widgets/HexDump'
+import type { FieldKind, HexDecoded, HexField, HexRow } from '@/components/widgets/HexDump'
 import type { Exchange } from '@/components/widgets/ProtocolFlow'
 import type { Reg, TraceCall } from '@/components/widgets/DebuggerView'
 
@@ -43,8 +43,9 @@ export interface PlatformGroup {
 /**
  * The four analysis panels describe one engagement, so every value below is
  * consistent across them: the API delivers the 64-byte RFFT blob, the hex
- * view decodes it, and rfft_check() is the firmware routine that validates it.
- * Encodings, branch displacements, CRC-32, Adler-32, HMAC and lengths are real.
+ * view decodes it, and rfft_check() is the x86-64 firmware routine that
+ * validates it. Encodings, branch displacements, CRC-32, Adler-32, the zlib
+ * stream, HMAC, JWT and Content-Lengths are all real and recomputable.
  */
 export const SECTION_COPY = {
   eyebrow: 'Core Expertise',
@@ -54,7 +55,7 @@ export const SECTION_COPY = {
   capabilities: { title: 'Capabilities', meta: 'six disciplines · one workflow' },
   platforms: {
     title: 'Platforms & Architectures',
-    subtitle: 'ISAs, binary formats and operating systems I work in every week',
+    subtitle: 'ISAs, binary formats and operating systems from real engagements',
   },
 }
 
@@ -62,12 +63,12 @@ export const CASE_FILE = {
   id: 'Case 0x1F',
   title: 'One target, four lenses.',
   summary:
-    'Every panel below is the same authorised engagement: the cloud API that ships a config blob to a proprietary IoT camera, the blob’s on-disk format, and the firmware routine that validates it — read statically, then stepped live.',
+    'Every panel below is the same authorised engagement: the cloud API that ships a config blob to a proprietary network video recorder, the blob’s on-disk format, and the x86-64 firmware routine that validates it — read statically, then stepped live.',
 }
 
 export const PANELS = {
   binary: { title: 'Binary Analysis', badge: 'x86-64 · ELF', listing: '.text · rfft_check', graph: 'control flow · 6 blocks' },
-  protocol: { title: 'API & Protocol Analysis', badge: 'TLS 1.3', client: 'camd', server: 'api' },
+  protocol: { title: 'API & Protocol Analysis', badge: 'TLS 1.3', client: 'nvrd', server: 'api' },
   debugger: { title: 'Debugger Analysis', badge: 'Live' },
   format: { title: 'File Format Analysis', badge: 'RFFT v2' },
 }
@@ -273,6 +274,15 @@ export const HEX_FIELDS: HexField[] = [
   { name: 'crc32', offset: 0x3c, size: 4, kind: 'footer', type: 'u32 LE', value: '0x883E07C1', note: 'CRC-32/ISO-HDLC over 0x00–0x3B · matches ✓' },
 ]
 
+/** chunk[0] inflated: the 28-byte zlib stream at 0x20 becomes the 20-byte config the loader accepts */
+export const HEX_DECODED: HexDecoded = {
+  label: 'inflate(chunk[0])',
+  meta: '28 B → 20 B',
+  value: '{"fps":25,"ir":true}',
+  note: 'Adler-32 ✓ · CRC-32 ✓ · rfft_check → 0',
+  kind: 'data',
+}
+
 export const HEX_LABELS: Partial<Record<FieldKind, string>> = {
   header: 'Header',
   meta: 'Chunk table',
@@ -300,7 +310,14 @@ export const HEX: HexRow[] = Array.from({ length: Math.ceil(SAMPLE_BYTES.length 
   }
 })
 
-/* ── network: how the blob reaches the device (captured on an authorised test unit) ── */
+/*
+ * ── network: how the blob reaches the device (captured on an authorised test unit) ──
+ * X-Signature is a real HMAC-SHA256 of the canonical string under the unit's
+ * provisioning key (demo key: sha256(b"nox-demo/NVR-7F3A-0192/provisioning")).
+ * The session token is a real HS256 JWT ({"sub":"NVR-7F3A-0192",
+ * "scope":"config:read","iat":1730985600,"exp":1730989200}), which makes the
+ * 200 response body exactly 210 bytes.
+ */
 
 export const EXCHANGES: Exchange[] = [
   {
@@ -311,11 +328,11 @@ export const EXCHANGES: Exchange[] = [
     raw: [
       'POST /v2/device/session HTTP/1.1',
       'Host: api.camera.example',
-      'User-Agent: camd/4.2.17 (linux; armv7l)',
+      'User-Agent: nvrd/4.2.17 (linux; x86_64)',
       'Content-Type: application/json',
       'Content-Length: 40',
       '',
-      '{"device":"CAM-7F3A-0192","fw":"4.2.17"}',
+      '{"device":"NVR-7F3A-0192","fw":"4.2.17"}',
     ],
   },
   {
@@ -337,13 +354,18 @@ export const EXCHANGES: Exchange[] = [
     dir: 'up',
     tone: 'info',
     note: 'hmac',
+    // same body as the first attempt: the signature covers sha256(body)
     raw: [
       'POST /v2/device/session HTTP/1.1',
       'Host: api.camera.example',
-      'X-Device-Id: CAM-7F3A-0192',
-      'X-Timestamp: 1730985600',
-      'X-Signature: d326b15c879884c6…6c3d51cf',
+      'User-Agent: nvrd/4.2.17 (linux; x86_64)',
+      'Content-Type: application/json',
       'Content-Length: 40',
+      'X-Device-Id: NVR-7F3A-0192',
+      'X-Timestamp: 1730985600',
+      'X-Signature: 8170cebc6f855947…5dcc5d61',
+      '',
+      '{"device":"NVR-7F3A-0192","fw":"4.2.17"}',
     ],
   },
   {
@@ -355,7 +377,7 @@ export const EXCHANGES: Exchange[] = [
       'HTTP/1.1 200 OK',
       'Content-Type: application/json',
       'Cache-Control: no-store',
-      'Content-Length: 187',
+      'Content-Length: 210',
       '',
       '{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi…","ttl":3600}',
     ],
@@ -388,10 +410,10 @@ export const EXCHANGES: Exchange[] = [
   },
 ]
 
-/** Signing routine lifted from the device daemon; reproduces the X-Signature above. */
+/** Signing routine lifted from the vendor's cloud client library; reproduces the X-Signature above. */
 export const SIGNER = {
   title: 'recovered signer',
-  source: 'camd · sub_2A1F0',
+  source: 'libcloud.so · sub_2A1F0',
   lines: [
     'import hmac',
     'from hashlib import sha256',
@@ -403,7 +425,7 @@ export const SIGNER = {
     '',
     '# sign(key, "POST", "/v2/device/session",',
     '#      1730985600, body)',
-    '# → d326b15c…6c3d51cf  ✓ matches X-Signature',
+    '# → 8170cebc…5dcc5d61  ✓ matches X-Signature',
   ],
 }
 
@@ -537,7 +559,7 @@ export const CAPABILITIES: Capability[] = [
   {
     title: 'Tooling & Automation',
     icon: Wrench,
-    body: 'Parsers, loaders, emulators and plugins that turn a one-off teardown into a repeatable, tested pipeline other engineers can run.',
+    body: 'Parsers, loaders, emulators and plugins with tests behind them, so when the vendor ships a new build the whole analysis re-runs instead of starting over.',
     tags: ['Python', 'C++', 'Rust'],
     deliverables: 'CLI tools · IDA / Ghidra plugins · CI-tested packages with docs',
   },
@@ -565,7 +587,7 @@ export const PLATFORMS: PlatformGroup[] = [
       { name: 'Windows', detail: 'user & kernel mode · WinDbg', icon: Monitor },
       { name: 'Linux', detail: 'glibc / musl · ptrace · LD_PRELOAD', icon: SquareTerminal },
       { name: 'Android', detail: 'DEX / ART · JNI .so · Frida', icon: Smartphone },
-      { name: 'Embedded RTOS', detail: 'bare metal · Cortex-M · MIPS SoCs', icon: CircuitBoard },
+      { name: 'RTOS & bare metal', detail: 'Cortex-M · MIPS SoCs · SWD / JTAG', icon: CircuitBoard },
     ],
   },
 ]

@@ -3,6 +3,7 @@ import { FileLock2, MapPin, ShieldCheck, Timer } from 'lucide-react'
 import { Section } from '@/components/layout/Section'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Chip } from '@/components/ui/Chip'
+import { LazyMount } from '@/components/ui/LazyMount'
 import { ToastProvider } from '@/components/contact/Toast'
 import { ContactForm } from '@/components/contact/ContactForm'
 import { ChannelTiles } from '@/components/contact/ChannelTiles'
@@ -12,6 +13,16 @@ import { HandshakePanel, RulesPanel } from '@/components/contact/Handshake'
 import { AVAILABILITY, CONTACT } from '@/data/contact'
 import { PROFILE } from '@/data/profile'
 import { cn } from '@/lib/utils'
+
+/**
+ * Measured heights of the two deferred blocks per breakpoint, reserved while
+ * they wait to mount so the page length (and the scrollbar) holds still.
+ */
+function reserve(block: 'steps' | 'handshake') {
+  const w = typeof window === 'undefined' ? 1440 : window.innerWidth
+  const [xl, lg, sm, xs] = block === 'steps' ? [415, 477, 775, 1460] : [525, 555, 996, 1500]
+  return w >= 1280 ? xl : w >= 1024 ? lg : w >= 640 ? sm : xs
+}
 
 const chip = {
   hidden: { opacity: 0, y: 10, filter: 'blur(6px)' },
@@ -95,12 +106,17 @@ export function Contact() {
           </div>
         </div>
 
-        <EngagementSteps />
+        {/* below the fold everywhere: mounted once the switch settles or as they near the viewport */}
+        <LazyMount minHeight={reserve('steps')} margin="400px 0px" className="mt-16 sm:mt-20">
+          <EngagementSteps className="" />
+        </LazyMount>
 
-        <div className="mt-16 grid gap-6 sm:mt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-7">
-          <HandshakePanel />
-          <RulesPanel />
-        </div>
+        <LazyMount minHeight={reserve('handshake')} margin="400px 0px" className="mt-16 sm:mt-20">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-7">
+            <HandshakePanel />
+            <RulesPanel />
+          </div>
+        </LazyMount>
       </Section>
     </ToastProvider>
   )

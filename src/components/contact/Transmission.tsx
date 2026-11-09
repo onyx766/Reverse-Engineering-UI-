@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { motion, useAnimationFrame, useMotionValue, useTransform, type MotionValue } from 'framer-motion'
 import { Check, Mail, Monitor, Send, Server, type LucideIcon } from 'lucide-react'
 import { clamp, cn, seeded } from '@/lib/utils'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { PROFILE } from '@/data/profile'
-import { crc32, type Brief } from './lib'
+import { crc32, endpointLabel, type Brief } from './lib'
 import { EASE } from './fields'
 
 export type Delivery = 'pending' | 'ok' | 'fail'
@@ -30,6 +30,10 @@ interface LogLine {
 const NORMAL = { encode: 1000, frame: 260, flight: 560, ack: 380, confirm: 520, nack: 950 }
 const REDUCED = { encode: 0, frame: 0, flight: 0, ack: 0, confirm: 320, nack: 450 }
 const HEX_ROWS = 8
+/** React re-renders ~15x/s for the discrete events; motion values carry everything that glides */
+const TICK_MS = 66
+/** while the server thinks nothing moves, so the React clock drops to 4 fps */
+const IDLE_MS = 250
 
 type Stage = 'encode' | 'transmit' | 'await' | 'ack' | 'done' | 'nack'
 type FrameState = 'queued' | 'sent' | 'ack' | 'nack'
@@ -39,9 +43,9 @@ const easeInOut = (p: number) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2,
 
 /**
  * The "transmission" played after a valid submit: the message's real UTF-8
- * bytes scramble into an xxd-style dump, frames (with their real CRC-32s)
- * fly to the receiver with ACKs coming back, and the submit button collapses
- * into the progress bar it leaves behind.
+ * bytes scramble into a hex dump, frames (with their real CRC-32s) fly to the
+ * receiver with ACKs coming back, and the submit button collapses into the
+ * progress bar it leaves behind.
  */
 export function Transmission({ brief, mode, host, delivery, detail, onDone }: Props) {
   const reduced = useReducedMotion()
@@ -58,7 +62,11 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
   }, [bytes])
   const frames = chunks.length
 
+  // one clock drives the sequence: a motion value every frame for the packets, the
+  // progress fill and the scan line, React state a few times a second for the rest
+  const clock = useMotionValue(0)
   const [t, setT] = useState(0)
+  const lastTick = useRef(0)
   const resolvedAt = useRef<number | null>(delivery === 'pending' ? null : 0)
   const awaiting = useRef(false)
   const doneRef = useRef(onDone)
@@ -69,30 +77,22 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
     rootRef.current?.focus({ preventScroll: true })
   }, [])
 
-  // one clock drives the whole sequence; it idles at 4 fps while waiting on the server
-  useEffect(() => {
-    let raf = 0
-    let last = 0
-    const start = performance.now()
-    const loop = (now: number) => {
-      const el = now - start
-      if (!awaiting.current || el - last > 250) {
-        last = el
-        setT(el)
-      }
-      raf = requestAnimationFrame(loop)
+  useAnimationFrame((time) => {
+    if (fired.current) return
+    clock.set(time)
+    if (time - lastTick.current >= (awaiting.current ? IDLE_MS : TICK_MS)) {
+      lastTick.current = time
+      setT(time)
     }
-    raf = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(raf)
-  }, [])
+  })
 
   if (delivery !== 'pending' && resolvedAt.current === null) resolvedAt.current = t
 
   const encodeP = T.encode ? clamp(t / T.encode, 0, 1) : 1
   const launch = (i: number) => T.encode + i * T.frame
   const arrival = (i: number) => launch(i) + T.flight
-  const flight = (i: number) =>
-    T.flight ? clamp((t - launch(i)) / T.flight, 0, 1) : t >= launch(i) ? 1 : 0
+  const flightAt = (i: number, now: number) =>
+    T.flight ? clamp((now - launch(i)) / T.flight, 0, 1) : now >= launch(i) ? 1 : 0
   const allArrived = arrival(frames - 1)
   const resolved = resolvedAt.current
   // the final frame is only ACKed (or NACKed) after the earlier ACKs and the real delivery have settled
@@ -100,16 +100,12 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
   const finalAck = resolved === null ? Infinity : Math.max(settled, resolved)
   const ackAt = (i: number) => (i < frames - 1 ? arrival(i) + T.ack : finalAck + T.ack)
 
-  let sentFrac = 0
   let sent = 0
-  for (let i = 0; i < frames; i++) {
-    sentFrac += flight(i)
-    if (t >= launch(i)) sent++
-  }
-  sentFrac /= frames
+  for (let i = 0; i < frames; i++) if (t >= launch(i)) sent++
 
-  const confirmP =
-    delivery === 'ok' && t >= finalAck ? clamp((t - finalAck) / T.confirm, 0, 1) : 0
+  const confirmAt = (now: number) =>
+    delivery === 'ok' && now >= finalAck ? clamp((now - finalAck) / T.confirm, 0, 1) : 0
+  const confirmP = confirmAt(t)
 
   let stage: Stage
   if (encodeP < 1) stage = 'encode'
@@ -129,9 +125,17 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
   }
   const acked = chunks.filter((_, i) => frameState(i) === 'ack').length
 
-  const progress = failed
-    ? 0.15 + sentFrac * 0.75
-    : encodeP * 0.15 + sentFrac * 0.75 + confirmP * 0.1
+  const progressAt = (now: number) => {
+    let sentFrac = 0
+    for (let i = 0; i < frames; i++) sentFrac += flightAt(i, now)
+    sentFrac /= frames
+    if (failed) return 0.15 + sentFrac * 0.75
+    const enc = T.encode ? clamp(now / T.encode, 0, 1) : 1
+    return enc * 0.15 + sentFrac * 0.75 + confirmAt(now) * 0.1
+  }
+  // the transformer is re-read on every render, so it always sees the latest delivery state
+  const progress = useTransform(clock, progressAt)
+  const percent = useTransform(progress, (p) => `${Math.round(p * 100)}%`)
 
   useEffect(() => {
     if (fired.current) return
@@ -157,7 +161,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
       id: 'open',
       at: 0,
       tag: 'open',
-      text: mode === 'mailto' ? `mailto:${PROFILE.email}` : `POST https://${host}`,
+      text: mode === 'mailto' ? `mailto:${PROFILE.email}` : `POST ${endpointLabel()}`,
       tone: 'accent',
     },
     { id: 'enc', at: 0, tag: 'encode', text: `utf-8 · ${bytes.length} B → ${frames} frames` },
@@ -259,7 +263,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
           </span>
         </motion.div>
 
-        <HexStream bytes={bytes} encodeP={encodeP} t={t} reduced={reduced} />
+        <HexStream bytes={bytes} encodeP={encodeP} t={t} reduced={reduced} clock={clock} encodeMs={T.encode} />
 
         <motion.p
           initial={false}
@@ -295,43 +299,26 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
                 }}
               />
               {!reduced &&
-                chunks.map((_, i) => {
-                  const p = flight(i)
-                  if (p <= 0 || p >= 1) return null
-                  return (
-                    <span
-                      key={`f${i}`}
-                      aria-hidden
-                      className="absolute inset-0"
-                      style={{ transform: `translateX(${easeInOut(p) * 100}%)` }}
-                    >
-                      <span className="absolute left-0 top-[38%] flex -translate-x-full -translate-y-1/2 items-center">
-                        <span className="h-px w-10 bg-gradient-to-r from-transparent to-accent3" />
-                        <span className="h-2 w-3 rounded-[2px] bg-accent3 shadow-glow-sm" />
-                      </span>
+                chunks.map((c, i) => (
+                  <LaneMarker key={`f${c.offset}`} clock={clock} from={launch(i)} duration={T.flight}>
+                    <span className="absolute left-0 top-[38%] flex -translate-x-full -translate-y-1/2 items-center">
+                      <span className="h-px w-10 bg-gradient-to-r from-transparent to-accent3" />
+                      <span className="h-2 w-3 rounded-[2px] bg-accent3 shadow-glow-sm" />
                     </span>
-                  )
-                })}
+                  </LaneMarker>
+                ))}
               {!reduced &&
-                chunks.map((_, i) => {
-                  const from = ackAt(i) - T.ack
-                  const p = T.ack ? clamp((t - from) / T.ack, 0, 1) : 0
-                  if (p <= 0 || p >= 1 || frameState(i) === 'nack') return null
-                  return (
-                    <span
-                      key={`a${i}`}
-                      aria-hidden
-                      className="absolute inset-0"
-                      style={{ transform: `translateX(${(1 - easeInOut(p)) * 100}%)` }}
-                    >
+                chunks.map((c, i) =>
+                  frameState(i) === 'nack' ? null : (
+                    <LaneMarker key={`a${c.offset}`} clock={clock} from={ackAt(i) - T.ack} duration={T.ack} reverse>
                       <span className="absolute left-0 top-[72%] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent2 shadow-glow-sm" />
-                    </span>
-                  )
-                })}
+                    </LaneMarker>
+                  ),
+                )}
             </div>
             <Node
               icon={mode === 'mailto' ? Mail : Server}
-              label={mode === 'mailto' ? 'mail client' : host}
+              label={mode === 'mailto' ? 'mail app' : host}
               active={serverPulse || stage === 'ack' || stage === 'done'}
               failed={failed}
             />
@@ -411,9 +398,9 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
             <span className="hidden text-muted sm:inline">
               ack <span className="tabular-nums text-accent">{acked}</span>/{frames}
             </span>
-            <span className={cn('tabular-nums', failed ? 'text-rose-300' : 'text-ink')}>
-              {Math.round(progress * 100)}%
-            </span>
+            <motion.span className={cn('tabular-nums', failed ? 'text-rose-300' : 'text-ink')}>
+              {percent}
+            </motion.span>
           </span>
         </div>
         <motion.div
@@ -424,7 +411,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
           aria-label="Transmission progress"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={Math.round(progress * 100)}
+          aria-valuenow={Math.round(progressAt(t) * 100)}
           className={cn(
             'relative w-full overflow-hidden border transition-colors duration-300',
             failed ? 'border-rose-400/60 bg-rose-400/10' : 'border-accent/60 bg-accent/15',
@@ -440,13 +427,13 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
             <Send className="h-4 w-4" />
             Transmit message
           </motion.span>
-          <span
+          <motion.span
             aria-hidden
             className={cn(
               'absolute inset-0 origin-left',
               failed ? 'bg-rose-400/80' : 'bg-gradient-to-r from-accent via-accent2 to-accent3',
             )}
-            style={{ transform: `scaleX(${progress})` }}
+            style={{ scaleX: progress }}
           />
           {!reduced && !failed && stage !== 'done' && (
             <span
@@ -462,6 +449,30 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
         </motion.div>
       </div>
     </motion.div>
+  )
+}
+
+/** A packet or ACK gliding along the lane, positioned straight from the clock (no re-renders). */
+function LaneMarker({
+  clock,
+  from,
+  duration,
+  reverse,
+  children,
+}: {
+  clock: MotionValue<number>
+  from: number
+  duration: number
+  reverse?: boolean
+  children: ReactNode
+}) {
+  const p = useTransform(clock, (now) => (duration ? clamp((now - from) / duration, 0, 1) : 0))
+  const x = useTransform(p, (v) => `${(reverse ? 1 - easeInOut(v) : easeInOut(v)) * 100}%`)
+  const opacity = useTransform(p, (v) => (v > 0 && v < 1 ? 1 : 0))
+  return (
+    <motion.span aria-hidden className="absolute inset-0" style={{ x, opacity }}>
+      {children}
+    </motion.span>
   )
 }
 
@@ -550,19 +561,25 @@ function Node({
 }
 
 /**
- * xxd-style dump of the message's real UTF-8 bytes. Cells flicker through
- * random values until the encode sweep locks them to the actual byte.
+ * Hex dump of the message's real UTF-8 bytes, laid out exactly like
+ * `hexdump -C` (16 per row) or `xxd -c8 -g1` (8 per row, narrow panels).
+ * Cells flicker through random values until the encode sweep locks them to
+ * the actual byte; the text column fills in as each byte locks.
  */
 function HexStream({
   bytes,
   encodeP,
   t,
   reduced,
+  clock,
+  encodeMs,
 }: {
   bytes: Uint8Array
   encodeP: number
   t: number
   reduced: boolean
+  clock: MotionValue<number>
+  encodeMs: number
 }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const [perRow, setPerRow] = useState(() => (window.innerWidth >= 1024 ? 16 : 8))
@@ -582,6 +599,8 @@ function HexStream({
   const locked = Math.floor(encodeP * visible)
   const rng = seeded(7 + Math.floor(t / 60))
   const scanning = !reduced && encodeP < 1
+  const xxd = perRow !== 16
+  const scanTop = useTransform(clock, (now) => `${(encodeMs ? clamp(now / encodeMs, 0, 1) : 1) * 100}%`)
 
   return (
     <motion.div
@@ -592,20 +611,25 @@ function HexStream({
       className="relative overflow-hidden rounded-xl border border-accent/25 bg-deep/70 px-3 py-2.5 font-mono text-[10.5px] leading-[1.8] sm:text-[11px]"
     >
       {scanning && (
-        <span
+        <motion.span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 h-10 bg-gradient-to-b from-transparent via-accent/20 to-transparent"
-          style={{ top: `${encodeP * 100}%`, transform: 'translateY(-50%)' }}
+          className="pointer-events-none absolute inset-x-0 h-10 -translate-y-1/2 bg-gradient-to-b from-transparent via-accent/20 to-transparent"
+          style={{ top: scanTop }}
         />
       )}
       <div className="mb-1 flex items-center justify-between gap-3 text-[9.5px] uppercase tracking-[0.16em] text-muted">
-        <span className="truncate">payload · utf-8 · xxd -g1</span>
+        <span className="truncate">
+          payload · utf-8 · <span className="normal-case tracking-[0.06em]">{xxd ? 'xxd -c8 -g1' : 'hexdump -C'}</span>
+        </span>
         <span className="shrink-0 tabular-nums text-accent">{bytes.length.toLocaleString('en-US')} B</span>
       </div>
       <div aria-hidden className="no-scrollbar overflow-x-auto">
         {Array.from({ length: rows }, (_, r) => (
           <div key={r} className="flex gap-3 whitespace-pre">
-            <span className="text-muted/50">{hex(r * perRow, 8)}</span>
+            <span className="text-muted/50">
+              {hex(r * perRow, 8)}
+              {xxd ? ':' : ''}
+            </span>
             <span className="flex">
               {Array.from({ length: perRow }, (_, c) => {
                 const k = r * perRow + c
@@ -635,19 +659,18 @@ function HexStream({
               })}
             </span>
             <span className="text-muted/50">
-              |
-              {Array.from({ length: perRow }, (_, c) => {
+              {xxd ? '' : '|'}
+              {Array.from({ length: Math.min(perRow, visible - r * perRow) }, (_, c) => {
                 const k = r * perRow + c
-                if (k >= visible) return ' '
                 const b = bytes[k]
-                const ch = b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : '.'
+                const ch = k < locked && b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : '.'
                 return (
                   <span key={c} className={k < locked ? 'text-ink/85' : 'text-muted/40'}>
                     {ch}
                   </span>
                 )
               })}
-              |
+              {xxd ? '' : '|'}
             </span>
           </div>
         ))}

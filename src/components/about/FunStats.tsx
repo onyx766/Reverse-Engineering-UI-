@@ -1,35 +1,80 @@
-import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
-import { useCountUp } from '@/hooks/useCountUp'
+import { Fragment, useEffect, useRef } from 'react'
+import { animate, motion, useInView, useMotionValue, useTransform } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
 import type { FunStat } from '@/data/about'
-import { EASE, GLOW_HOVER, SWEEP } from './fx'
+import { EASE, GLOW_HOVER, SWEEP, entrance } from './fx'
 
 type CountStat = Extract<FunStat, { kind: 'count' }>
 type RatioStat = Extract<FunStat, { kind: 'ratio' }>
+type Vars = Record<string, string | number>
 
-const tileMotion = (index: number) => ({
-  initial: { opacity: 0, y: 30, rotateX: -14, filter: 'blur(8px)' },
+const tileMotion = (index: number, reduced: boolean) => ({
+  initial: entrance(reduced, { opacity: 0, y: 30, rotateX: -14, filter: 'blur(8px)' }),
   whileInView: { opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' },
   viewport: { once: true, margin: '-40px' },
   transition: { duration: 0.75, delay: index * 0.08, ease: EASE },
-  whileHover: { y: -6 },
+  whileHover: reduced ? undefined : { y: -6 },
   style: { transformPerspective: 1000 },
 })
 
+/** "{writeups} public write-ups" → "6 public write-ups" */
+const fill = (text: string, vars: Vars) => text.replace(/\{(\w+)\}/g, (m, k: string) => String(vars[k] ?? m))
+
 /** Count-up stat tiles: label, number, one line of context. */
-export function FunStats({ stats, className }: { stats: FunStat[]; className?: string }) {
+export function FunStats({
+  stats,
+  vars = {},
+  className,
+}: {
+  stats: FunStat[]
+  /** values for "{token}" placeholders in the notes */
+  vars?: Vars
+  className?: string
+}) {
+  const reduced = useReducedMotion()
   return (
     <div className={cn('grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5', className)}>
       {stats.map((s, i) =>
         s.kind === 'count' ? (
-          <CountTile key={s.label} stat={s} index={i} />
+          <CountTile key={s.label} stat={s} note={fill(s.note, vars)} index={i} reduced={reduced} />
         ) : (
-          <RatioTile key={s.label} stat={s} index={i} />
+          <RatioTile key={s.label} stat={s} note={fill(s.note, vars)} index={i} reduced={reduced} />
         ),
       )}
     </div>
+  )
+}
+
+/**
+ * Animates 0 → `to` the first time it scrolls into view. The digits are written
+ * straight from a motion value, so the count never re-renders React; screen
+ * readers get the final figure from a hidden twin.
+ */
+function CountUp({ to, duration = 1.6 }: { to: number; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-40px' })
+  const reduced = useReducedMotion()
+  const value = useMotionValue(reduced ? to : 0)
+  const text = useTransform(value, (v) => Math.round(v).toLocaleString())
+
+  useEffect(() => {
+    if (!inView) return
+    if (reduced) {
+      value.set(to)
+      return
+    }
+    const controls = animate(value, to, { duration, ease: [0.33, 1, 0.68, 1] })
+    return () => controls.stop()
+  }, [inView, reduced, to, duration, value])
+
+  return (
+    <>
+      <motion.span ref={ref} aria-hidden>
+        {text}
+      </motion.span>
+      <span className="sr-only">{to.toLocaleString()}</span>
+    </>
   )
 }
 
@@ -46,45 +91,83 @@ function TileChrome() {
   )
 }
 
-function CountTile({ stat, index }: { stat: CountStat; index: number }) {
-  const { ref, value } = useCountUp(stat.value)
+/** Labels reserve two lines, so the figures line up across a row whatever wraps. */
+const LABEL = 'min-h-[2.75em] font-mono text-[9.5px] uppercase leading-snug tracking-[0.18em] text-muted'
+const FIGURE = 'relative mt-3 font-display text-[clamp(2rem,3.4vw,2.6rem)] font-black leading-none tabular-nums text-ink'
+const NOTE = 'relative mt-2.5 text-pretty text-[13px] leading-snug text-muted'
+
+/**
+ * One line of context. Each "·"-separated phrase stays in one piece while it
+ * fits, so a narrow tile breaks at the dot rather than inside "write-ups"
+ * (a hyphen is a break opportunity, and the UI font has no non-breaking hyphen).
+ */
+function Note({ text }: { text: string }) {
+  return (
+    <p className={NOTE}>
+      {text.split(' · ').map((phrase, i) => (
+        <Fragment key={i}>
+          {i > 0 && ' · '}
+          <span className="inline-block">{phrase}</span>
+        </Fragment>
+      ))}
+    </p>
+  )
+}
+
+function CountTile({
+  stat,
+  note,
+  index,
+  reduced,
+}: {
+  stat: CountStat
+  note: string
+  index: number
+  reduced: boolean
+}) {
   const Icon = stat.icon
   return (
     <motion.div
-      {...tileMotion(index)}
+      {...tileMotion(index, reduced)}
       className={cn('glass group relative flex flex-col overflow-hidden rounded-xl p-4 sm:p-5', GLOW_HOVER)}
     >
       <TileChrome />
       <div className="relative flex items-start justify-between gap-2">
-        <span className="font-mono text-[9.5px] uppercase leading-snug tracking-[0.18em] text-muted">
-          {stat.label}
-        </span>
+        <span className={LABEL}>{stat.label}</span>
         <Icon
           aria-hidden
           className="h-4 w-4 shrink-0 text-accent/80 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:scale-125"
         />
       </div>
-      <p className="relative mt-auto pt-4 font-display text-[clamp(2rem,3.4vw,2.6rem)] font-black leading-none tabular-nums text-ink">
-        <span ref={ref}>{value.toLocaleString()}</span>
+      <p className={FIGURE}>
+        <CountUp to={stat.value} />
         {stat.suffix && <span className="neon">{stat.suffix}</span>}
       </p>
-      <p className="relative mt-2 text-[13px] leading-snug text-muted">{stat.note}</p>
+      <Note text={note} />
     </motion.div>
   )
 }
 
-function RatioTile({ stat, index }: { stat: RatioStat; index: number }) {
-  const { ref, value } = useCountUp(stat.right, 1900)
+function RatioTile({
+  stat,
+  note,
+  index,
+  reduced,
+}: {
+  stat: RatioStat
+  note: string
+  index: number
+  reduced: boolean
+}) {
   const boxRef = useRef<HTMLDivElement>(null)
   const inView = useInView(boxRef, { margin: '-40px' })
-  const reduced = useReducedMotion()
   const Icon = stat.icon
   const RightIcon = stat.rightIcon
 
   return (
     <motion.div
       ref={boxRef}
-      {...tileMotion(index)}
+      {...tileMotion(index, reduced)}
       className={cn(
         'glass group relative col-span-2 flex flex-col overflow-hidden rounded-xl p-4 sm:p-5 lg:col-span-1',
         GLOW_HOVER,
@@ -92,10 +175,8 @@ function RatioTile({ stat, index }: { stat: RatioStat; index: number }) {
     >
       <TileChrome />
       <div className="relative flex items-start justify-between gap-2">
-        <span className="font-mono text-[9.5px] uppercase leading-snug tracking-[0.18em] text-muted">
-          {stat.label}
-        </span>
-        <span aria-hidden className="flex items-center gap-1 text-accent/80">
+        <span className={LABEL}>{stat.label}</span>
+        <span aria-hidden className="flex shrink-0 items-center gap-1 text-accent/80">
           <span className="relative">
             <Icon className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-12" />
             {inView && !reduced && <Steam />}
@@ -104,12 +185,15 @@ function RatioTile({ stat, index }: { stat: RatioStat; index: number }) {
           <RightIcon className="h-4 w-4 transition-transform duration-500 group-hover:rotate-12" />
         </span>
       </div>
-      <p className="relative mt-auto flex items-baseline gap-2 pt-4 font-display text-[clamp(2rem,3.4vw,2.6rem)] font-black leading-none tabular-nums text-ink">
+      <p className={cn(FIGURE, 'flex items-baseline gap-2')}>
         <span>{stat.left}</span>
-        <span className="neon text-[0.8em]">:</span>
-        <span ref={ref}>{value}</span>
+        <span aria-hidden className="neon text-[0.8em]">
+          :
+        </span>
+        <span className="sr-only">to</span>
+        <CountUp to={stat.right} duration={1.9} />
       </p>
-      <p className="relative mt-2 text-[13px] leading-snug text-muted">{stat.note}</p>
+      <Note text={note} />
     </motion.div>
   )
 }

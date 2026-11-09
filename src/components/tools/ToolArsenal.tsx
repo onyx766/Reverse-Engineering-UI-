@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, LayoutGrid } from 'lucide-react'
+import { LazyMount } from '@/components/ui/LazyMount'
 import { TOOLS, TOOL_CATEGORIES } from '@/data/tools'
 import { cn } from '@/lib/utils'
-import { CATEGORY_BY_ID, CATEGORY_COUNT, CATEGORY_ICON, EASE, toolsFor, type CategoryFilter } from './meta'
+import { CATEGORY_BY_ID, CATEGORY_COUNT, CATEGORY_ICON, EASE, reserve, toolsFor, type CategoryFilter } from './meta'
 import { SubHeading } from './SubHeading'
 import { ToolCard } from './ToolCard'
 
@@ -36,7 +37,7 @@ export function ToolArsenal({
   const label = filter === 'all' ? 'all categories' : CATEGORY_BY_ID[filter].label
 
   return (
-    <div id="tools-arsenal" className="scroll-mt-28">
+    <div id="tools-arsenal">
       <SubHeading
         index="02"
         title="The Arsenal"
@@ -106,40 +107,45 @@ export function ToolArsenal({
         Showing {visible.length} tools in {label}.
       </p>
 
-      <motion.ul layout className="relative mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-5">
-        <AnimatePresence mode="popLayout">
-          {visible.map((t, i) => (
-            <motion.li
-              key={t.id}
-              layout="position"
-              initial={{ opacity: 0, y: 30, rotateX: -12, filter: 'blur(8px)' }}
-              whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.9, filter: 'blur(6px)', transition: { duration: 0.22 } }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{
-                default: { duration: 0.6, delay: (i % 4) * 0.07, ease: EASE },
-                layout: { type: 'spring', stiffness: 320, damping: 32 },
-              }}
-              className={cn('[perspective:1200px]', collapsed && i >= PHONE_PREVIEW && 'max-sm:hidden')}
-            >
-              <ToolCard tool={t} onOpen={onOpen} />
-            </motion.li>
-          ))}
-        </AnimatePresence>
-      </motion.ul>
+      {/* 32 cards are the heaviest mount in the section: they wait until the switch has settled */}
+      <LazyMount minHeight={reserve('arsenal')} margin="120px 0px" delay={900} className="mt-6">
+        <motion.ul layout className="relative grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-5">
+          <AnimatePresence mode="popLayout">
+            {visible.map((t, i) => (
+              <motion.li
+                key={t.id}
+                layout="position"
+                // no blur here: animating a filter on 32 cards is costly on weak GPUs, and the
+                // filter: blur(0px) framer leaves behind would switch off the card's glass blur
+                initial={{ opacity: 0, y: 30, rotateX: -12 }}
+                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.22 } }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{
+                  default: { duration: 0.6, delay: (i % 4) * 0.07, ease: EASE },
+                  layout: { type: 'spring', stiffness: 320, damping: 32 },
+                }}
+                className={cn('[perspective:1200px]', collapsed && i >= PHONE_PREVIEW && 'max-sm:hidden')}
+              >
+                <ToolCard tool={t} onOpen={onOpen} />
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </motion.ul>
 
-      {collapsed && (
-        <div className="mt-5 flex justify-center sm:hidden">
-          <button
-            type="button"
-            onClick={() => setExpanded(true)}
-            className="group inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent/45 bg-accent/10 px-5 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-ink transition-colors duration-300 hover:border-accent hover:bg-accent/20"
-          >
-            Show all {TOOLS.length} tools
-            <ChevronDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-          </button>
-        </div>
-      )}
+        {collapsed && (
+          <div className="mt-5 flex justify-center sm:hidden">
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="group inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent/45 bg-accent/10 px-5 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-ink transition-colors duration-300 hover:border-accent hover:bg-accent/20"
+            >
+              Show all {TOOLS.length} tools
+              <ChevronDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+            </button>
+          </div>
+        )}
+      </LazyMount>
     </div>
   )
 }

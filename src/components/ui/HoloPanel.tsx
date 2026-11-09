@@ -104,24 +104,33 @@ export function HoloPanel({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={handleLeave}
       onClick={onClick}
-      initial={{
-        opacity: 0,
-        ...offset,
-        rotateX: from === 'bottom' ? -12 : 0,
-        scale: 0.96,
-        filter: 'blur(10px)',
-      }}
-      whileInView={{
-        opacity: 1,
-        x: 0,
-        y: 0,
-        rotateX: 0,
-        rotateY: 0,
-        scale: 1,
-        filter: 'blur(0px)',
-      }}
+      // reduced motion: a plain fade (MotionConfig skips transforms, but not blur)
+      initial={
+        reduced
+          ? { opacity: 0 }
+          : {
+              opacity: 0,
+              ...offset,
+              rotateX: from === 'bottom' ? -12 : 0,
+              scale: 0.96,
+              filter: 'blur(10px)',
+            }
+      }
+      whileInView={
+        reduced
+          ? { opacity: 1 }
+          : {
+              opacity: 1,
+              x: 0,
+              y: 0,
+              rotateX: 0,
+              rotateY: 0,
+              scale: 1,
+              filter: 'blur(0px)',
+            }
+      }
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.85, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: reduced ? 0.4 : 0.85, delay: reduced ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}
       style={{ transformPerspective: 1300, rotateX, rotateY }}
       className={cn(
         'group/panel relative rounded-2xl',

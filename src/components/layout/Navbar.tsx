@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react'
 import { useTheme } from '@/theme/ThemeProvider'
-import { NAV_ITEMS, SECTION_ORDER, THEMES, type SectionId } from '@/theme/themes'
+import { NAV_ITEMS, SECTION_ORDER, THEMES, morphVars, type SectionId } from '@/theme/themes'
 import { HoloLogo } from '@/components/ui/HoloLogo'
 import { MagneticButton } from '@/components/ui/MagneticButton'
 import { ScrollProgress } from '@/components/fx/ScrollProgress'
@@ -43,7 +43,7 @@ function routeClick(e: MouseEvent<HTMLAnchorElement>, go: () => void) {
 }
 
 export function Navbar({ ready = true }: { ready?: boolean }) {
-  const { section, setSection } = useTheme()
+  const { section, theme, setSection } = useTheme()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
@@ -123,13 +123,22 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
   }
 
   return (
-    <>
+    // palette scope for the bar and the drawer: both are fixed, so this wrapper has no box of its own
+    <div className="palette-morph" style={morphVars(theme)}>
       <motion.header
         initial={{ y: -90, opacity: 0 }}
         animate={ready ? { y: 0, opacity: 1 } : { y: -90, opacity: 0 }}
         transition={{ duration: 0.9, ease: EASE, delay: ready ? 0.15 : 0 }}
         className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3 sm:px-4 sm:pt-5"
       >
+        {/* once scrolled, content fades out under the floating bar instead of showing cut lines above it */}
+        <div
+          aria-hidden
+          className={cn(
+            'absolute inset-x-0 top-0 -z-10 h-20 bg-gradient-to-b from-deep via-deep/70 to-transparent transition-opacity duration-500 sm:h-24',
+            scrolled ? 'opacity-100' : 'opacity-0',
+          )}
+        />
         {/* widths are sized for Orbitron, which is wider than its fallbacks */}
         <div
           className={cn(
@@ -160,13 +169,14 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
               className="group flex min-h-10 items-center gap-3 rounded-xl px-1.5 py-1 text-left transition-colors duration-300 focus-visible:bg-accent/10"
             >
               <HoloLogo size={38} />
-              <span className="hidden min-w-[4.75rem] leading-none sm:block">
-                <span className="block font-display text-[20px] font-black tracking-[0.18em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent">
+              {/* phones keep the wordmark (the bar has room for it); the subtitle joins from sm */}
+              <span className="block min-w-[4.75rem] leading-none">
+                <span className="block font-display text-[18px] font-black tracking-[0.18em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent sm:text-[20px]">
                   NOX
                 </span>
                 <span
                   className={cn(
-                    'mt-1 block font-mono text-[8.5px] uppercase leading-[1.35] tracking-[0.18em] text-muted lg:hidden xl:block',
+                    'mt-1 hidden font-mono text-[8.5px] uppercase leading-[1.35] tracking-[0.18em] text-muted sm:block lg:hidden xl:block',
                     scrolled && 'xl:hidden',
                   )}
                 >
@@ -194,7 +204,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
                 onClick={() => go('contact')}
                 strength={0.3}
                 className={cn(
-                  'group relative hidden overflow-hidden rounded-xl border px-3 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] transition-[color,border-color,background-color,box-shadow] duration-300 sm:inline-flex xl:px-4 xl:text-[12px] xl:tracking-[0.16em]',
+                  'group relative hidden min-h-10 overflow-hidden rounded-xl border px-3 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] transition-[color,border-color,background-color,box-shadow] duration-300 sm:inline-flex xl:px-4 xl:text-[12px] xl:tracking-[0.16em]',
                   section === 'contact'
                     ? 'border-accent bg-accent/20 text-ink shadow-glow'
                     : 'border-accent/45 bg-accent/10 text-accent hover:border-accent hover:text-ink hover:shadow-glow-sm focus-visible:border-accent focus-visible:text-ink',
@@ -342,7 +352,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   )
 }
 
