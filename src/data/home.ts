@@ -16,7 +16,7 @@ export const HERO = {
   /** quick-read specialisms under the call-to-action buttons */
   chips: ['x86-64', 'ARM64', 'PE / ELF', 'Firmware', 'Protocols', 'Emulation'],
   terminal: {
-    title: 'nox@workstation',
+    title: 'onyx@workstation',
     badge: 'triage',
     footLeft: 'sandboxed vm',
     footRight: 'pid 4821 · 0 crashes',
@@ -35,7 +35,7 @@ export const HERO = {
  * studies. Lines stay under ~36 characters so they fit a 360 px phone.
  */
 export const HERO_SESSION: TermLine[] = [
-  { text: '$ nox triage ./subject.exe', tone: 'dim' },
+  { text: '$ onyx triage ./subject.exe', tone: 'dim' },
   { text: 'PE32 · i386 · 5 sections ..... ok', tone: 'ok' },
   { text: 'base 0x00400000  entry 0x004014C0', tone: 'ok' },
   { text: 'imports  KERNEL32 ADVAPI32 WS2_32', tone: 'dim' },

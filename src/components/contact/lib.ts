@@ -203,7 +203,7 @@ export async function composeBrief(v: FormValues): Promise<Brief> {
   const message = v.message.trim()
   const d = await digest(message)
   return {
-    ref: `NOX-${d.hex.slice(0, 8).toUpperCase()}`,
+    ref: `ONYX-${d.hex.slice(0, 8).toUpperCase()}`,
     name: v.name.trim(),
     email: v.email.trim(),
     company: v.company.trim(),

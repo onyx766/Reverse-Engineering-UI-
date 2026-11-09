@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { ArrowUp, ArrowUpRight, Github, Link2, Mail } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, Github, Link2, Mail, Send } from 'lucide-react'
 import { HoloLogo } from '@/components/ui/HoloLogo'
 import { MagneticButton } from '@/components/ui/MagneticButton'
 import { FOOTER } from '@/data/site'
@@ -141,13 +141,13 @@ function Brand() {
       <a
         href="#home"
         onClick={routeClick(() => setSection('home'))}
-        aria-label="Nox, back to home"
+        aria-label="Onyx, back to home"
         className="group -m-1.5 flex items-center gap-3 rounded-xl p-1.5 transition-colors duration-300 hover:bg-accent/[0.06]"
       >
         <HoloLogo size={46} />
         <span className="leading-none">
           <span className="block font-display text-[22px] font-black tracking-[0.2em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent">
-            NOX
+            ONYX
           </span>
           <span className="mt-1.5 block font-mono text-[9.5px] uppercase tracking-[0.22em] text-muted">
             {FOOTER.eyebrow}
@@ -229,17 +229,9 @@ function Navigate() {
   )
 }
 
-function XMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="currentColor">
-      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-    </svg>
-  )
-}
-
 const SOCIAL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   GitHub: Github,
-  X: XMark,
+  Telegram: Send,
   Mail: Mail,
 }
 

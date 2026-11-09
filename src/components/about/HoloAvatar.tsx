@@ -13,11 +13,11 @@ function hex(r: number) {
 
 const OUTER = hex(72)
 const INNER = hex(64)
-const MONOGRAM = 'M74 130 V70 L126 130 V70'
-const TRACES = ['M74 135 V149', 'M126 65 V51', 'M70 100 H53', 'M130 100 H147']
+const MONOGRAM = 'M100 70 C118 70 126 82 126 100 C126 118 118 130 100 130 C82 130 74 118 74 100 C74 82 82 70 100 70 Z'
+const TRACES = ['M100 135 V149', 'M100 65 V51', 'M70 100 H53', 'M130 100 H147']
 const VIAS: [number, number][] = [
-  [74, 149],
-  [126, 51],
+  [100, 149],
+  [100, 51],
   [53, 100],
   [147, 100],
 ]
@@ -37,7 +37,7 @@ const TICKS = Array.from({ length: 60 }, (_, i) => {
 })
 
 /**
- * Generated holographic avatar: a circuit-trace "N" monogram inside a hex
+ * Generated holographic avatar: a circuit-trace "O" monogram inside a hex
  * scan frame. SMIL drives the loops so they stay off the main thread, and
  * they pause whenever the card is off-screen.
  */
@@ -170,8 +170,8 @@ export function HoloAvatar({
       />
       <path d={MONOGRAM} fill="none" stroke="rgb(var(--ink) / 0.55)" strokeWidth="1.2" strokeLinejoin="bevel" />
       {[
-        [74, 130],
-        [126, 70],
+        [100, 130],
+        [100, 70],
       ].map(([x, y]) => (
         <circle key={`${x}-${y}`} cx={x} cy={y} r="4.6" fill="rgb(var(--deep))" stroke="rgb(var(--accent-3))" strokeWidth="2" />
       ))}

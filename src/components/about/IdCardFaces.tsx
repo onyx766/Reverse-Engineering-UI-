@@ -324,7 +324,7 @@ function MiniMark() {
         strokeLinejoin="round"
       />
       <path
-        d="M8.6 16 V8 L15.4 16 V8"
+        d="M12 8 C14.6 8 15.4 10 15.4 12 C15.4 14 14.6 16 12 16 C9.4 16 8.6 14 8.6 12 C8.6 10 9.4 8 12 8 Z"
         fill="none"
         stroke="rgb(var(--accent-3))"
         strokeWidth="1.8"

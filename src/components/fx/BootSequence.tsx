@@ -3,7 +3,7 @@ import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import { cn, seeded } from '@/lib/utils'
 import { BOOT } from '@/data/site'
 
-const STORAGE_KEY = 'nox:booted'
+const STORAGE_KEY = 'onyx:booted'
 const RUN_MS = 2200
 const LINE_START_MS = 380
 const LINE_GAP_MS = 250

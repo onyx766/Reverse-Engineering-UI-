@@ -1,26 +1,27 @@
 export const PROFILE = {
-  handle: 'Nox',
-  name: 'Nox',
-  role: 'Reverse Engineer & Systems Developer',
+  handle: 'Onyx',
+  name: 'Onyx',
+  role: 'Reverse Engineer | Automation Engineer & AIO, ACO & ATC | Discord & Whop App Developer',
   // OWNER: real base / timezone (the footer clock and the contact page parse the "UTC+N" part)
   location: 'Remote · UTC+1',
   available: true,
   // OWNER: real contact address (also hard-coded in the <noscript> card of index.html)
-  email: 'contact@nox.re',
+  email: 'ryanma02228@gmail.com',
   tagline:
-    'Eight years taking software apart — binaries, protocols, file formats — and writing down exactly how every piece works.',
+    'Eight years taking software apart and automating what’s left — reverse engineering, AIO / ACO / ATC bots, and Discord & Whop apps.',
   roles: [
     'Reverse Engineer',
-    'Binary Analyst',
-    'Protocol Archaeologist',
-    'Systems Developer',
-    'Tooling Author',
+    'Automation Engineer',
+    'AIO Developer',
+    'ACO & ATC Specialist',
+    'Discord App Developer',
+    'Whop App Developer',
   ],
   // OWNER: real profile URLs and handles (the hrefs below are bare site roots)
   socials: [
-    { label: 'GitHub', href: 'https://github.com/', handle: '@nox' },
-    { label: 'X', href: 'https://x.com/', handle: '@nox_re' },
-    { label: 'Mail', href: 'mailto:contact@nox.re', handle: 'contact@nox.re' },
+    { label: 'GitHub', href: 'https://github.com/onyx766', handle: '@onyx766' },
+    { label: 'Telegram', href: 'https://t.me/onyxdev766', handle: '@onyxdev766' },
+    { label: 'Mail', href: 'mailto:ryanma02228@gmail.com', handle: 'ryanma02228@gmail.com' },
   ],
 }
 

@@ -166,7 +166,7 @@ export function Availability() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-                Nox local time · <span className="text-accent">{OWNER_TZ.label}</span>
+                Onyx local time · <span className="text-accent">{OWNER_TZ.label}</span>
               </p>
               <time
                 dateTime={`${o.toISOString().slice(0, 19)}${tzSuffix}`}

@@ -4,7 +4,7 @@ import { AVAILABILITY_STATUS, PGP_KEY, PROFILE } from './profile'
 
 export type EngagementId = 'binary' | 'protocol' | 'format' | 'tooling' | 'reimpl' | 'other'
 export type TimelineId = 'asap' | '2-4w' | '1-3m' | 'flexible'
-export type ChannelId = 'email' | 'github' | 'x' | 'pgp'
+export type ChannelId = 'email' | 'github' | 'telegram' | 'pgp'
 
 export interface ContactConfig {
   /**
@@ -41,7 +41,7 @@ export const CONTACT: ContactConfig = {
   endpoint: '',
   timeoutMs: 15000,
   subject: 'Engagement enquiry',
-  draftKey: 'nox:contact-draft:v1',
+  draftKey: 'onyx:contact-draft:v1',
   limits: {
     nameMin: 2,
     nameMax: 80,
@@ -141,7 +141,7 @@ export const FORM_COPY = {
   consent: 'I own the target or I am authorised to have it analysed',
   consentNote:
     'Work only starts on software, devices and data you own or hold written permission to have analysed.',
-  /** the attestation as it appears in the delivered brief (third person, it is read by Nox) */
+  /** the attestation as it appears in the delivered brief (third person, it is read by Onyx) */
   consentRecord: 'confirmed: sender owns the target or is authorised to have it analysed',
 }
 
@@ -184,7 +184,7 @@ export const PGP = {
 const social = (label: string) =>
   PROFILE.socials.find((s) => s.label.toLowerCase() === label.toLowerCase())
 
-// OWNER: the GitHub / X handles and URLs come from PROFILE.socials (src/data/profile.ts);
+// OWNER: the GitHub / Telegram handles and URLs come from PROFILE.socials (src/data/profile.ts);
 // the fallbacks below only apply if those entries are removed.
 export const CHANNELS: Channel[] = [
   {
@@ -200,16 +200,16 @@ export const CHANNELS: Channel[] = [
   {
     id: 'github',
     label: 'GitHub',
-    handle: social('GitHub')?.handle ?? '@nox',
+    handle: social('GitHub')?.handle ?? '@onyx766',
     note: 'Parsers, plugins & scripts',
-    href: social('GitHub')?.href ?? 'https://github.com/',
+    href: social('GitHub')?.href ?? 'https://github.com/onyx766',
   },
   {
-    id: 'x',
-    label: 'X',
-    handle: social('X')?.handle ?? '@nox_re',
-    note: 'Notes from the bench',
-    href: social('X')?.href ?? 'https://x.com/',
+    id: 'telegram',
+    label: 'Telegram',
+    handle: social('Telegram')?.handle ?? '@onyxdev766',
+    note: 'Fastest way to reach me',
+    href: social('Telegram')?.href ?? 'https://t.me/onyxdev766',
   },
   {
     id: 'pgp',
@@ -311,7 +311,7 @@ const row = (left: string, right: string, fill = ' ', width = 36) =>
  * initiator sees it, message sizes with empty payloads: 32 B, then 32 + 48 + 16, then 48 + 16.
  */
 export const HANDSHAKE_LINES: TermLine[] = [
-  { text: '$ nox --open-channel --pattern XX', tone: 'dim' },
+  { text: '$ onyx --open-channel --pattern XX', tone: 'dim' },
   { text: '[*] Noise_XX_25519_ChaChaPoly_BLAKE2s', tone: 'dim' },
   { text: row('[*] ephemeral X25519 keypair', 'ok', '.'), tone: 'ok' },
   { text: '[!] msg 1 in cleartext: no payload', tone: 'warn' },
@@ -323,7 +323,7 @@ export const HANDSHAKE_LINES: TermLine[] = [
   { text: '[*] h = 9f2c41d7e08a…a7306ce4', tone: 'dim' },
   { text: '[+] channel established', tone: 'ok' },
   { text: '[+] mutual auth · forward secrecy', tone: 'ok' },
-  { text: 'nox> listening. say hello.', tone: 'dim' },
+  { text: 'onyx> listening. say hello.', tone: 'dim' },
 ]
 
 /** The same three handshake messages as a client/responder ladder. */

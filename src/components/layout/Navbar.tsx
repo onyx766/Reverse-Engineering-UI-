@@ -164,7 +164,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
             <a
               href="#home"
               onClick={(e) => routeClick(e, () => go('home'))}
-              aria-label="Nox, home"
+              aria-label="Onyx, home"
               data-cursor-label="[1] home"
               className="group flex min-h-10 items-center gap-3 rounded-xl px-1.5 py-1 text-left transition-colors duration-300 focus-visible:bg-accent/10"
             >
@@ -172,7 +172,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
               {/* phones keep the wordmark (the bar has room for it); the subtitle joins from sm */}
               <span className="block min-w-[4.75rem] leading-none">
                 <span className="block font-display text-[18px] font-black tracking-[0.18em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent sm:text-[20px]">
-                  NOX
+                  ONYX
                 </span>
                 <span
                   className={cn(

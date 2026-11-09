@@ -780,7 +780,7 @@ Entry toc[hdr.entry_count] @ hdr.toc_offset;`,
 rule fw_update_key_schedule
 {
     meta:
-        author = "nox"
+        author = "onyx"
         note   = "key schedule in the update daemon, stable across 2.x builds"
     strings:
         // push.w {r4-r11, lr} ... mov.w rX, #0
@@ -1050,7 +1050,7 @@ flashrom -p linux_spi:dev=/dev/spidev0.0,spispeed=4000 -r spi_dump.bin`,
 /* ────────────────────────────── orbit hero ──────────────────────────── */
 
 export const ORBIT_CORE = {
-  label: 'nox/lab',
+  label: 'onyx/lab',
   caption: 'toolchain online',
 }
 

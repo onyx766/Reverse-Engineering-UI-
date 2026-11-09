@@ -478,15 +478,15 @@ print(r.status_code, r.json())`,
       },
       {
         type: 'paragraph',
-        text: 'Every sample began with the same four bytes, `4E 4F 58 31` — ASCII `NOX1`. A stable magic is the anchor for everything else. The next bytes varied slightly between files in a way that looked like a small version number and a count, so I lined several files up side by side in the hex editor and watched which fields moved together.',
+        text: 'Every sample began with the same four bytes, `4F 4E 59 31` — ASCII `ONY1`. A stable magic is the anchor for everything else. The next bytes varied slightly between files in a way that looked like a small version number and a count, so I lined several files up side by side in the hex editor and watched which fields moved together.',
       },
       {
         type: 'ascii',
         title: 'First 0x20 bytes, three files overlaid',
         art: `offset  00 01 02 03 04 05 06 07  08 09 0a 0b 0c 0d 0e 0f
-0000    4e 4f 58 31 02 00 03 00  20 00 00 00 .. .. .. ..   NOX1....  ...
+0000    4f 4e 59 31 02 00 03 00  20 00 00 00 .. .. .. ..   ONY1....  ...
         └ magic ──┘ └ver┘ └cnt┘  └ ofs_toc ┘
-          "NOX1"     2    3        0x20`,
+          "ONY1"     2    3        0x20`,
       },
       {
         type: 'paragraph',
@@ -535,7 +535,7 @@ def entropy(b: bytes) -> float:
 
 data = open("ui.pak", "rb").read()
 magic, ver, cnt, ofs = struct.unpack_from("<4sHHI", data, 0)
-assert magic == b"NOX1"
+assert magic == b"ONY1"
 for i in range(cnt):
     tag, bofs, blen, crc = struct.unpack_from("<4sIII", data, ofs + i * 16)
     body = data[bofs:bofs + blen]
@@ -568,12 +568,12 @@ for i in range(cnt):
         type: 'code',
         lang: 'yaml',
         code: `meta:
-  id: nox_container
+  id: onyx_container
   file-extension: pak
   endian: le
 seq:
   - id: magic
-    contents: [0x4e, 0x4f, 0x58, 0x31]   # "NOX1"
+    contents: [0x4f, 0x4e, 0x59, 0x31]   # "ONY1"
   - id: version
     type: u2
   - id: num_chunks
@@ -606,7 +606,7 @@ types:
       },
       {
         type: 'paragraph',
-        text: 'Compiling with `ksc -t python nox_container.ksy` produced a module that walks the TOC and exposes each chunk’s `body` as bytes. Decompression and CRC verification stay in a thin wrapper around it. The result is a parser anyone on the team can run against the full firmware dump — the exact opposite of a one-off hex-editor session that evaporates when you close the tab.',
+        text: 'Compiling with `ksc -t python onyx_container.ksy` produced a module that walks the TOC and exposes each chunk’s `body` as bytes. Decompression and CRC verification stay in a thin wrapper around it. The result is a parser anyone on the team can run against the full firmware dump — the exact opposite of a one-off hex-editor session that evaporates when you close the tab.',
       },
       {
         type: 'list',
@@ -670,24 +670,24 @@ types:
       },
       {
         type: 'paragraph',
-        text: 'A dissector starts by declaring a `Proto` and the `ProtoField`s that describe each header element. Giving fields proper types and an abbreviated name (`nox.type`) is what makes them filterable and lets Wireshark render enums and bitmasks for you.',
+        text: 'A dissector starts by declaring a `Proto` and the `ProtoField`s that describe each header element. Giving fields proper types and an abbreviated name (`onyx.type`) is what makes them filterable and lets Wireshark render enums and bitmasks for you.',
       },
       {
         type: 'code',
         lang: 'lua',
-        code: `local nox = Proto("nox", "Nox Control Protocol")
+        code: `local onyx = Proto("onyx", "Onyx Control Protocol")
 
 local TYPES = { [0]="hello", [1]="cmd", [2]="ack", [3]="event", [4]="bye" }
 
 local f = {
-  magic = ProtoField.uint16("nox.magic", "Magic", base.HEX),
-  mtype = ProtoField.uint8 ("nox.type",  "Type",  base.DEC, TYPES),
-  flags = ProtoField.uint8 ("nox.flags", "Flags", base.HEX),
-  len   = ProtoField.uint32("nox.len",   "Length", base.DEC),
-  seq   = ProtoField.uint16("nox.seq",   "Seq",   base.DEC),
-  body  = ProtoField.bytes ("nox.body",  "Payload"),
+  magic = ProtoField.uint16("onyx.magic", "Magic", base.HEX),
+  mtype = ProtoField.uint8 ("onyx.type",  "Type",  base.DEC, TYPES),
+  flags = ProtoField.uint8 ("onyx.flags", "Flags", base.HEX),
+  len   = ProtoField.uint32("onyx.len",   "Length", base.DEC),
+  seq   = ProtoField.uint16("onyx.seq",   "Seq",   base.DEC),
+  body  = ProtoField.bytes ("onyx.body",  "Payload"),
 }
-nox.fields = { f.magic, f.mtype, f.flags, f.len, f.seq, f.body }
+onyx.fields = { f.magic, f.mtype, f.flags, f.len, f.seq, f.body }
 
 local HDR = 8  -- bytes before the payload`,
       },
@@ -711,12 +711,12 @@ end
 
 -- dissect exactly one complete PDU
 local function dissect_one(tvb, pinfo, tree)
-  pinfo.cols.protocol = "NOX"
+  pinfo.cols.protocol = "ONYX"
   local n   = tvb(4, 4):uint()
   local mt  = tvb(2, 1):uint()
   pinfo.cols.info = string.format("%s len=%d", TYPES[mt] or "?", n)
 
-  local st = tree:add(nox, tvb(), "Nox Control Protocol")
+  local st = tree:add(onyx, tvb(), "Onyx Control Protocol")
   st:add(f.magic, tvb(0, 2))
   st:add(f.mtype, tvb(2, 1))
   st:add(f.flags, tvb(3, 1))
@@ -726,7 +726,7 @@ local function dissect_one(tvb, pinfo, tree)
   return HDR + n
 end
 
-function nox.dissector(tvb, pinfo, tree)
+function onyx.dissector(tvb, pinfo, tree)
   dissect_tcp_pdus(tvb, tree, HDR, get_len, dissect_one)
   return tvb:len()
 end`,
@@ -745,7 +745,7 @@ end`,
       },
       {
         type: 'paragraph',
-        text: 'Binding to a fixed port with `DissectorTable.get("tcp.port"):add(9000, nox)` works when the port is known, but devices love ephemeral ports. A heuristic dissector lets Wireshark offer each new TCP conversation to your code; you accept only if the magic matches, then pin the conversation so subsequent packets skip the check.',
+        text: 'Binding to a fixed port with `DissectorTable.get("tcp.port"):add(9000, onyx)` works when the port is known, but devices love ephemeral ports. A heuristic dissector lets Wireshark offer each new TCP conversation to your code; you accept only if the magic matches, then pin the conversation so subsequent packets skip the check.',
       },
       {
         type: 'code',
@@ -753,18 +753,18 @@ end`,
         code: `local function heur(tvb, pinfo, tree)
   if tvb:len() < HDR then return false end
   if tvb(0, 2):uint() ~= 0xAC1D then return false end
-  nox.dissector(tvb, pinfo, tree)
-  pinfo.conversation = nox      -- latch this flow to us
+  onyx.dissector(tvb, pinfo, tree)
+  pinfo.conversation = onyx      -- latch this flow to us
   return true
 end
 
-nox:register_heuristic("tcp", heur)
+onyx:register_heuristic("tcp", heur)
 -- and, when the port is known:
-DissectorTable.get("tcp.port"):add(9000, nox)`,
+DissectorTable.get("tcp.port"):add(9000, onyx)`,
       },
       {
         type: 'paragraph',
-        text: 'Dropped into `~/.config/wireshark/plugins/` (or the Windows personal plugins folder) and loaded with `Ctrl+Shift+L`, the capture stops being a wall of hex. Type `nox.type == cmd` in the filter bar and only command frames remain; expand a packet and the sequence numbers, flags, and payload boundaries are right there. From a working dissector it is a short hop to a replay client, because you now have an exact, filterable description of the wire format.',
+        text: 'Dropped into `~/.config/wireshark/plugins/` (or the Windows personal plugins folder) and loaded with `Ctrl+Shift+L`, the capture stops being a wall of hex. Type `onyx.type == cmd` in the filter bar and only command frames remain; expand a packet and the sequence numbers, flags, and payload boundaries are right there. From a working dissector it is a short hop to a replay client, because you now have an exact, filterable description of the wire format.',
       },
     ],
   },

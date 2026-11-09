@@ -1,7 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   BookMarked,
-  Briefcase,
   Bug,
   Building2,
   Code2,
@@ -10,10 +9,8 @@ import {
   Crosshair,
   FileSignature,
   FileText,
-  Flag,
   FlaskConical,
   Lightbulb,
-  Microchip,
   Network,
   Package,
   PackageCheck,
@@ -23,7 +20,6 @@ import {
   ScanSearch,
   ShieldCheck,
   Trophy,
-  User,
   Users,
   Wrench,
 } from 'lucide-react'
@@ -36,16 +32,16 @@ export const ABOUT_COPY = {
   hero: {
     eyebrow: 'Operator profile',
     command: 'whoami --verbose',
-    title: 'About Nox',
+    title: 'About Onyx',
     lead: 'The person you call when the only documentation left is the binary itself.',
   },
   timeline: {
     // short on purpose: the shared heading tracks its eyebrow in from 0.5em while
     // it fades in, and anything longer wraps for a moment on a 360px phone
     eyebrow: 'Career log',
-    title: 'Eight Years, Six Chapters',
+    title: 'Eight Years, Four Chapters',
     subtitle:
-      'From CTF crackmes and a malware triage queue to leading a tooling team and running my own practice. Every chapter built on the one before it.',
+      'From backend and systems work, through automation and API analysis, to leading reverse-engineering and automation projects. Every chapter built on the one before it.',
   },
   process: {
     eyebrow: 'Methodology',
@@ -96,13 +92,13 @@ export interface IdCardData {
 }
 
 export const ID_CARD: IdCardData = {
-  issuer: 'NOX · RE LAB',
+  issuer: 'ONYX · RE LAB',
   docType: 'Operator access badge',
   clearance: 'Class IV',
   name: PROFILE.name,
   role: PROFILE.role,
   fields: [
-    { label: 'Specialisation', value: 'Binary & protocol RE', wide: true },
+    { label: 'Specialisation', value: 'Reverse & automation engineering', wide: true },
     { label: 'Experience', value: `${yearsReversing} yrs` },
     { label: 'Base', value: PROFILE.location },
     {
@@ -116,7 +112,7 @@ export const ID_CARD: IdCardData = {
   issued: '2018.03',
   manifesto:
     'Every binary is a stack of decisions someone else compiled. I read them back: patiently, legally, and with notes good enough that nobody has to do it twice.',
-  signature: 'Nox',
+  signature: 'Onyx',
   // OWNER: the key itself lives in PGP_KEY (src/data/profile.ts), shared with Contact
   pgp: PGP_KEY,
   authorised: {
@@ -140,13 +136,13 @@ export const BADGE_LOG: TermLine[] = [
 
 /* ── bio ───────────────────────────────────────────────────────────── */
 
-export const BIO_FILE = '~/nox/about.md'
+export const BIO_FILE = '~/onyx/about.md'
 
 /** First-person paragraphs. Wrap a phrase in **double asterisks** to highlight it. */
 export const BIO: string[] = [
-  "I'm Nox, a reverse engineer. For eight years I've been the person teams call when the only documentation left is **the binary itself**: a stripped x86-64 service, an ARM firmware image, or a wire protocol nobody ever wrote down.",
-  'Most of my work is **interoperability and security review**: recovering file formats and protocols so legacy systems can be replaced, auditing firmware update paths, and finding memory-safety bugs before someone less friendly does. I live in IDA Pro and Ghidra, trace with Frida and WinDbg, and emulate with Unicorn when hardware is scarce.',
-  'Every engagement is **scoped and authorised in writing**, and ends with something you keep: a written spec, an annotated database, reproducible scripts and test vectors. Anything I do twice gets automated, which is where my open-source tools came from.',
+  "I'm Onyx, a reverse engineer and automation engineer. For eight years I've been the person teams call when the only documentation left is **the application itself**: a desktop binary, a web platform, an undocumented API or a network protocol nobody ever wrote down.",
+  'My work is **analysis and automation**: static and dynamic analysis of binaries, auth flows and wire protocols, then Python and C++ tooling, compatible integrations and AIO / ACO / ATC automation built from what I learn. I also build Discord and Whop apps. I live in Ghidra and IDA, debug with x64dbg and GDB, trace with Frida and capture with Wireshark and Burp Suite.',
+  'Every engagement is **scoped and authorised**, and ends with something you keep: a technical spec, diagrams, reproducible test cases and working tools. Anything I do twice gets automated.',
 ]
 
 export interface QuickFact {
@@ -158,12 +154,12 @@ export interface QuickFact {
 }
 
 export const QUICK_FACTS: QuickFact[] = [
-  { label: 'Focus', value: 'Binary & protocol RE, firmware security', icon: Crosshair },
-  { label: 'Platforms', value: 'Windows x64 · Linux / ELF · ARM Cortex-M · Android', icon: Cpu },
-  { label: 'Languages', value: 'C · C++ · Python · Rust · x86-64 & ARM asm', icon: Code2 },
+  { label: 'Focus', value: 'Reverse engineering, API & protocol analysis, automation', icon: Crosshair },
+  { label: 'Platforms', value: 'Windows · Linux · Networking · Docker', icon: Cpu },
+  { label: 'Languages', value: 'Python · C · C++ · JavaScript / TypeScript · Node.js', icon: Code2 },
   {
     label: 'Currently',
-    value: 'Writing a Ghidra loader for a proprietary firmware container',
+    value: 'Building compatible integrations and tooling from authorised analysis',
     icon: Radio,
     live: true,
   },
@@ -188,68 +184,46 @@ export const CAREER: CareerEntry[] = [
   {
     start: 2018,
     end: 2019,
-    role: 'CTF player & malware triage analyst',
-    org: 'Security operations centre',
+    role: 'Junior Software / Systems Engineer',
+    org: 'Engineering team',
     orgIcon: Users,
-    icon: Flag,
+    icon: Code2,
     summary:
-      'Weekend CTFs, weeknight triage queue: unpacking commodity loaders, writing YARA rules and learning to read x86 faster than the sandbox report.',
-    highlights: ['x86 · PE32', 'YARA', 'Unpacking', 'x64dbg', 'Crackmes'],
+      'Started with backend work, debugging and systems programming: Python and C/C++ utilities, Linux internals, and scripts for repetitive engineering and testing workflows. Learned assembly, debugging and binary formats along the way.',
+    highlights: ['Python', 'C / C++', 'Linux', 'Assembly basics', 'Static analysis'],
   },
   {
     start: 2019,
     end: 2021,
-    role: 'Binary analyst → vulnerability researcher',
-    org: 'Security consultancy',
+    role: 'Software Engineer — Automation & Analysis',
+    org: 'Product & integrations team',
     orgIcon: Building2,
-    icon: Bug,
+    icon: Repeat2,
     summary:
-      'Patch-diffed Windows services, triaged fuzzer crashes to root cause and reported memory-safety bugs through coordinated disclosure.',
-    highlights: ['BinDiff', 'WinDbg + TTD', 'WinAFL', 'Heap triage', 'CVD'],
+      'Built browser and API automation in Python and JavaScript, inspected HTTP traffic for integration work, and debugged third-party systems with undocumented behaviour. Shipped API clients, data-processing tools and workflow automation.',
+    highlights: ['Browser automation', 'REST · WebSockets', 'Auth flows', 'API clients', 'Backend services'],
   },
   {
     start: 2021,
-    end: 2022,
-    role: 'Protocol & interoperability engineer',
-    org: 'Systems integrator',
-    orgIcon: Building2,
+    end: 2024,
+    role: 'Reverse Engineer / Systems Engineer',
+    org: 'Engineering team',
+    orgIcon: Users,
     icon: Network,
     summary:
-      'Mapped undocumented binary protocols between legacy controllers and their management software, then specified clean-room clients that replaced them.',
-    highlights: ['Wireshark Lua', 'Scapy', 'Kaitai Struct', 'CRC & framing', 'Clean-room spec'],
-  },
-  {
-    start: 2022,
-    end: 2024,
-    role: 'Firmware & IoT security researcher',
-    org: 'Product security team',
-    orgIcon: Users,
-    icon: Microchip,
-    summary:
-      'Dumped flash over SWD and UART, unpacked SquashFS images and audited bootloaders and OTA update paths under emulation.',
-    highlights: ['UART · SWD', 'binwalk', 'Ghidra', 'QEMU · Unicorn', 'Secure boot'],
+      'Analysed desktop and web applications, HTTP/WebSocket APIs and custom network protocols. Did static and dynamic binary analysis, built Python and C++ debugging utilities, and wrote parsers and converters for proprietary file formats where authorised.',
+    highlights: ['Binary analysis', 'HTTP · WebSocket', 'Custom protocols', 'File formats', 'Tech write-ups'],
   },
   {
     start: 2024,
-    end: 2025,
-    role: 'Reverse engineering tooling lead',
-    org: 'Security consultancy · R&D',
+    end: null,
+    role: 'Senior Reverse Engineer / Automation Engineer',
+    org: 'Engineering team · Lead',
     orgIcon: Building2,
     icon: Wrench,
     summary:
-      'Led a four-person team building the shared analysis pipeline: headless Ghidra jobs, IDAPython plug-ins and a Frida tracing harness used on every engagement.',
-    highlights: ['Ghidra headless', 'IDAPython', 'Frida', 'CI pipelines', 'Mentoring'],
-  },
-  {
-    start: 2025,
-    end: null,
-    role: 'Independent reverse engineering consultant',
-    org: 'Independent',
-    orgIcon: User,
-    icon: Briefcase,
-    summary:
-      'Authorised engagements for vendors and integrators: interoperability, firmware audits, legacy format recovery and hands-on training for in-house teams.',
-    highlights: ['Interop', 'Firmware audits', 'Format recovery', 'Training'],
+      'Lead reverse-engineering and automation work across desktop apps, web platforms, APIs and networked systems. Document findings as specs, diagrams and reproducible test cases, build compatible integrations from authorised analysis, and mentor engineers on repeatable workflows.',
+    highlights: ['Ghidra · IDA', 'x64dbg · GDB', 'Frida', 'Wireshark', 'Mentoring'],
   },
 ]
 

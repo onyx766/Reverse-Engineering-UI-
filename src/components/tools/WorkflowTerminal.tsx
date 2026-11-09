@@ -79,7 +79,7 @@ export function WorkflowTerminal() {
             <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
           </span>
           <span className="ml-1 truncate font-mono text-[10px] tracking-[0.08em] text-muted">
-            nox@research-vm: {session.cwd ?? '~'}
+            onyx@research-vm: {session.cwd ?? '~'}
           </span>
           <button
             type="button"

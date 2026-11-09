@@ -20,7 +20,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { HANDSHAKE_FLOW, HANDSHAKE_LINES, HANDSHAKE_SPECS, RULES, type Rule } from '@/data/contact'
 import { EASE } from './fields'
 
-/** "$ nox --open-channel": a Noise XX handshake typed out, beside the same exchange as a ladder. */
+/** "$ onyx --open-channel": a Noise XX handshake typed out, beside the same exchange as a ladder. */
 export function HandshakePanel() {
   const [run, setRun] = useState(0)
 
@@ -50,7 +50,7 @@ export function HandshakePanel() {
               <span>initiator ⇄ responder</span>
               <span className="text-accent">XX</span>
             </p>
-            <ProtocolFlow exchanges={HANDSHAKE_FLOW} client="You" server="Nox" />
+            <ProtocolFlow exchanges={HANDSHAKE_FLOW} client="You" server="Onyx" />
           </div>
           <dl className="grid grid-cols-2 gap-2">
             {HANDSHAKE_SPECS.map((s) => (

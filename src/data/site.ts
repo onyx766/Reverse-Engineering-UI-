@@ -13,18 +13,18 @@ export interface BootLine {
 }
 
 export const BOOT = {
-  title: 'NOX',
+  title: 'ONYX',
   subtitle: '// reverse engineering lab',
   hint: 'click or press any key to skip',
   hud: {
-    topLeft: 'nox/lab · build 2026.11',
+    topLeft: 'onyx/lab · build 2026.11',
     topRight: 'session 0x7F3A9C',
     bottomLeft: 'image base 0x00400000',
     bottomRight: 'authorised targets only',
   },
   log: [
     { tag: 'mount', text: 'modules /lab/{core,ui,gl,fx}', status: 'ok' },
-    { tag: 'ldsym', text: 'nox.pdb · 12,847 symbols resolved', status: 'ok' },
+    { tag: 'ldsym', text: 'onyx.pdb · 12,847 symbols resolved', status: 'ok' },
     { tag: 'map', text: '.text @ 0x00401000 · r-x', status: 'ok' },
     { tag: 'gl', text: 'calibrating hologram · 7 palettes', status: 'ok' },
     { tag: 'scope', text: 'authorised engagements · NDA on', status: 'ok' },
@@ -64,7 +64,7 @@ export const FOOTER = {
   tagline: 'Binaries, protocols and file formats — taken apart, documented and rebuilt.',
   availability: AVAILABILITY_STATUS.open,
   build: '2026.11',
-  copyright: '© 2026 Nox',
+  copyright: '© 2026 Onyx',
   notice: 'Authorised research only · every engagement scoped in writing',
   shortcutHint: 'press 1–7 to jump',
   telemetry: 'lab telemetry',

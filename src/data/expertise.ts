@@ -313,7 +313,7 @@ export const HEX: HexRow[] = Array.from({ length: Math.ceil(SAMPLE_BYTES.length 
 /*
  * ── network: how the blob reaches the device (captured on an authorised test unit) ──
  * X-Signature is a real HMAC-SHA256 of the canonical string under the unit's
- * provisioning key (demo key: sha256(b"nox-demo/NVR-7F3A-0192/provisioning")).
+ * provisioning key (demo key: sha256(b"onyx-demo/NVR-7F3A-0192/provisioning")).
  * The session token is a real HS256 JWT ({"sub":"NVR-7F3A-0192",
  * "scope":"config:read","iat":1730985600,"exp":1730989200}), which makes the
  * 200 response body exactly 210 bytes.
