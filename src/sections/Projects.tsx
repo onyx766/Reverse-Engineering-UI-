@@ -214,6 +214,9 @@ function DesktopLayout(p: LayoutProps) {
   const designW = full ? 880 : 660
   const designH = full ? 440 : 430
   const k = clamp(middle / designW, 0.62, 1.2)
+  // the analysis panel's header chrome (padding, icon, gaps, status chip) takes 142px and
+  // "System Analysis" 147px: below 290px the chip would ellipsise the title (e.g. 1366px)
+  const analysisBadge = rp >= 290
 
   return (
     <div className="relative">
@@ -232,7 +235,7 @@ function DesktopLayout(p: LayoutProps) {
 
         <div className="absolute right-0 top-4 z-10" style={{ width: rp, perspective: 1100 }}>
           <div className="preserve-3d" style={{ transform: 'rotateY(-16deg)', transformOrigin: '70% 50%' }}>
-            <AnalysisPanel project={p.focused} badge={rp >= 280} density={density} />
+            <AnalysisPanel project={p.focused} badge={analysisBadge} density={density} />
           </div>
         </div>
       </div>

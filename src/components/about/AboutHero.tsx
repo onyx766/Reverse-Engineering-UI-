@@ -203,9 +203,31 @@ function FactTile({ fact, index, reduced }: { fact: QuickFact; index: number; re
               </span>
             )}
           </p>
-          <p className="mt-1 text-[14.5px] font-semibold leading-snug text-ink">{fact.value}</p>
+          <p className="mt-1 text-[14.5px] font-semibold leading-snug text-ink">
+            <Phrases text={fact.value} />
+          </p>
         </div>
       </div>
     </motion.li>
+  )
+}
+
+/**
+ * "A · B · C" wraps at the dots while each piece fits, so a narrow phone never
+ * splits "ARM Cortex-M" or "x86-64" at the hyphen (the UI font has no
+ * non-breaking hyphen). Same rule as the stat notes.
+ */
+function Phrases({ text }: { text: string }) {
+  const parts = text.split(' · ')
+  if (parts.length < 2) return <>{text}</>
+  return (
+    <>
+      {parts.map((phrase, i) => (
+        <Fragment key={i}>
+          {i > 0 && ' · '}
+          <span className="inline-block">{phrase}</span>
+        </Fragment>
+      ))}
+    </>
   )
 }

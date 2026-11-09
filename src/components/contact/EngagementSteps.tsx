@@ -54,10 +54,11 @@ export function EngagementSteps({ className = 'mt-16 sm:mt-20' }: { className?: 
           </motion.p>
           <motion.h3
             id={titleId}
-            initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            // reduced motion: a plain fade (MotionConfig skips transforms, but not blur)
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 16, filter: 'blur(8px)' }}
+            whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.06, ease: EASE }}
+            transition={reduced ? { duration: 0.4 } : { duration: 0.7, delay: 0.06, ease: EASE }}
             className="mt-2 font-display text-2xl font-black uppercase tracking-tight text-gradient sm:text-[28px]"
           >
             How an engagement works
@@ -88,8 +89,12 @@ export function EngagementSteps({ className = 'mt-16 sm:mt-20' }: { className?: 
             animate={{ scaleX: lit / (n - 1) }}
             transition={{ duration: reduced ? 0 : 0.7, ease: EASE }}
           />
+          {/* clipped to the rail and sized to it, so the glint runs node 01 -> 04 instead of
+              hanging in the empty margin left of the first node and vanishing mid-rail */}
           {inView && !reduced && (
-            <span className="absolute -inset-y-px left-0 w-40 animate-sweep bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+            <span className="absolute -inset-y-px inset-x-0 overflow-hidden">
+              <span className="absolute inset-y-0 left-0 w-1/3 animate-sweep bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+            </span>
           )}
         </div>
 
@@ -130,10 +135,10 @@ function StepCard({
   const Icon = ICONS[s.id] ?? Route
   return (
     <motion.li
-      initial={{ opacity: 0, y: 44, rotateX: -14, filter: 'blur(10px)' }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 44, rotateX: -14, filter: 'blur(10px)' }}
+      whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.8, delay: index * 0.1, ease: EASE }}
+      transition={reduced ? { duration: 0.4 } : { duration: 0.8, delay: index * 0.1, ease: EASE }}
       style={{ transformPerspective: 1200 }}
       onMouseEnter={() => onHover(index)}
       onMouseLeave={() => onHover(null)}
@@ -184,7 +189,8 @@ function StepCard({
 
       <div
         className={cn(
-          'glass relative w-full flex-1 overflow-hidden rounded-2xl p-5 transition-[transform,border-color,box-shadow] duration-500',
+          // a column, so every card's deliverable line sits on the same baseline across the row
+          'glass relative flex w-full flex-1 flex-col overflow-hidden rounded-2xl p-5 transition-[transform,border-color,box-shadow] duration-500',
           'group-hover:-translate-y-1.5 group-hover:border-accent/60 group-hover:shadow-[0_0_0_1px_rgb(var(--accent)/0.18)_inset,0_30px_70px_-28px_rgb(0_0_0/0.95),0_0_50px_-12px_rgb(var(--accent)/0.6)]',
           lit && 'border-accent/55',
         )}
@@ -201,11 +207,11 @@ function StepCard({
             lit ? 'bg-accent/25' : 'bg-accent/[0.08] group-hover:bg-accent/20',
           )}
         />
-        <span className="relative inline-block rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
+        <span className="relative inline-block self-start rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
           {s.duration}
         </span>
         <h4 className="relative mt-3 font-display text-[15px] font-bold tracking-wide text-ink">{s.title}</h4>
-        <p className="relative mt-2 text-[14.5px] leading-relaxed text-muted">{s.body}</p>
+        <p className="relative mt-2 flex-1 text-[14.5px] leading-relaxed text-muted">{s.body}</p>
         <p className="relative mt-4 flex items-center gap-1.5 border-t border-accent/15 pt-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-accent">
           <span aria-hidden>›</span>
           {s.deliverable}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { ArrowLeft, ArrowRight, Clock, ListTree, ChevronDown, BookOpen } from 'lucide-react'
 import { HoloModal } from '@/components/ui/HoloModal'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -89,17 +90,24 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
   }, [open, wu, toc])
 
   const goTo = useCallback(
-    (hid: string) => {
+    (hid: string, focusTarget = false) => {
       if (!wu) return
+      // collapse the phone list first: it sits above the article, so measuring
+      // before it closes would overshoot the heading by the list's height
+      flushSync(() => {
+        setActive(hid)
+        setTocOpen(false)
+      })
       const root = scrollRoot()
       const el = document.getElementById(headingDomId(wu.id, hid))
       if (root && el) {
         const top =
           el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop - 10
         root.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' })
+        // the phone list's buttons unmount on close — hand focus to the heading
+        // so it does not fall back to <body>, outside the dialog
+        if (focusTarget) el.focus({ preventScroll: true })
       }
-      setActive(hid)
-      setTocOpen(false)
     },
     [wu, reduced],
   )
@@ -189,7 +197,7 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
                     <li key={h.id}>
                       <button
                         type="button"
-                        onClick={() => goTo(h.id)}
+                        onClick={() => goTo(h.id, true)}
                         className={cn(
                           'block w-full rounded-md px-2 py-1.5 text-left text-[12.5px] transition-colors',
                           h.level === 3 && 'pl-5 text-[12px]',

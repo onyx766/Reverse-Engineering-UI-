@@ -40,7 +40,7 @@ export const ABOUT_COPY = {
     lead: 'The person you call when the only documentation left is the binary itself.',
   },
   timeline: {
-    // short on purpose: the shared heading tracks its eyebrow out to 0.8em while
+    // short on purpose: the shared heading tracks its eyebrow in from 0.5em while
     // it fades in, and anything longer wraps for a moment on a 360px phone
     eyebrow: 'Career log',
     title: 'Eight Years, Six Chapters',

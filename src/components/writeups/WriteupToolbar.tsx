@@ -50,7 +50,7 @@ export function WriteupToolbar({
             placeholder="Search title, summary or tag…"
             autoComplete="off"
             spellCheck={false}
-            className="h-11 w-full rounded-xl border border-accent/25 bg-deep/60 pl-10 pr-10 font-mono text-[13px] text-ink placeholder:text-muted/60 transition-colors duration-300 focus:border-accent/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className="h-11 w-full rounded-xl border border-accent/25 bg-deep/60 pl-10 pr-10 font-mono text-[13px] text-ink placeholder:text-muted/60 transition-colors duration-300 focus:border-accent/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
@@ -121,14 +121,15 @@ function SortButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'inline-flex h-full items-center gap-1.5 rounded-lg px-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent',
+        // phones: the toggle has its own full-width row, so split it evenly and keep the labels
+        'inline-flex h-full flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent sm:flex-none',
         active
           ? 'border border-accent/50 bg-accent/15 text-ink shadow-glow-sm'
           : 'border border-transparent text-muted hover:text-ink',
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
-      <span className="hidden sm:inline">{label}</span>
+      <Icon aria-hidden className="h-3.5 w-3.5 shrink-0" />
+      {label}
     </button>
   )
 }

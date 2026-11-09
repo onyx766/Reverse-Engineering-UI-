@@ -85,9 +85,18 @@
   }
 
   html {
-    scroll-behavior: smooth;
-    /* anchor jumps, scrollIntoView and keyboard focus all land clear of the fixed navbar (ends at 88px) */
+    /*
+     * No global scroll-behavior: smooth. It made every keyboard-focus scroll
+     * smooth, and framer-motion restores window.scrollY after measuring a
+     * height animation (scrollTo(0, y), smooth under that rule), which
+     * cancelled the in-flight focus scroll: tabbing through the contact form
+     * left focus below the fold. Every deliberate smooth scroll in the app
+     * passes behavior: 'smooth' itself.
+     */
+    /* anchor jumps, scrollIntoView and keyboard focus all land clear of the fixed navbar (ends at 88px),
+       and a focus ring scrolled in from below keeps a little air under it */
     scroll-padding-top: 7rem;
+    scroll-padding-bottom: 1rem;
     -webkit-tap-highlight-color: transparent;
   }
 

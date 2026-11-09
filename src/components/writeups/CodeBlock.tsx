@@ -119,22 +119,25 @@ export function CodeBlock({ code, lang }: { code: string; lang: string }) {
         </button>
       </div>
 
-      {/* body */}
+      {/* body — gutter and code share one fixed row height so the numbers
+          stay level with their lines however long the block is */}
       <div className="flex">
         {/* line-number gutter (static) */}
         <div
           aria-hidden
-          className="select-none border-r border-accent/10 bg-white/[0.015] py-3 pl-3 pr-2.5 text-right font-mono text-[11px] leading-[1.65] text-muted/40"
+          className="select-none border-r border-accent/10 bg-white/[0.015] py-3 pl-3 pr-2.5 text-right font-mono text-[11px] leading-[19px] text-muted/40"
         >
           {lines.map((_, i) => (
-            <div key={i}>{i + 1}</div>
+            <div key={i} className="h-[19px]">
+              {i + 1}
+            </div>
           ))}
         </div>
         {/* code (scrolls horizontally) */}
         <div className="holo-scroll min-w-0 flex-1 overflow-x-auto py-3 pl-3 pr-4">
-          <pre className="font-mono text-[11.5px] leading-[1.65] text-ink/90">
+          <pre className="font-mono text-[11.5px] leading-[19px] text-ink/90">
             {lines.map((line, i) => (
-              <div key={i} className="whitespace-pre">
+              <div key={i} className="h-[19px] whitespace-pre">
                 {line.length ? highlight(line, re) : ' '}
               </div>
             ))}

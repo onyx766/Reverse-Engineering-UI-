@@ -79,8 +79,17 @@ export function TiltCard({
       onMouseMove={move}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={leave}
-      initial={{ opacity: 0, ...offset, rotateX: from === 'bottom' ? -10 : 0, scale: 0.97, filter: 'blur(10px)' }}
-      whileInView={{ opacity: 1, x: 0, y: 0, rotateX: 0, scale: 1, filter: 'blur(0px)' }}
+      // reduced motion: a plain fade, no slide / tilt / blur
+      initial={
+        reduced
+          ? { opacity: 0 }
+          : { opacity: 0, ...offset, rotateX: from === 'bottom' ? -10 : 0, scale: 0.97, filter: 'blur(10px)' }
+      }
+      whileInView={
+        reduced
+          ? { opacity: 1 }
+          : { opacity: 1, x: 0, y: 0, rotateX: 0, scale: 1, filter: 'blur(0px)' }
+      }
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
       style={{ transformPerspective: 1300, rotateX, rotateY }}

@@ -231,90 +231,109 @@ export function DesktopStage({ hot, running, visible, width, compact }: StagePro
   )
 }
 
+const TRACE_SVG = 'absolute inset-0 h-full w-full overflow-visible'
+
+/**
+ * Circuit traces in three stacked SVGs, so the glows are not re-filtered every frame:
+ * rails (static) → everything that moves (flowing dashes, pulses, rings, rose beacons) on
+ * its own compositor layer → the static glowing nodes on top. The moving layer is the
+ * only one that repaints while idle, and it holds just the few glows that animate.
+ */
 function Traces({ design, hot, running }: { design: StageDesign; hot: ShardId[]; running: boolean }) {
+  const viewBox = `0 0 ${design.w} ${design.h}`
+  const traces = design.traces.map((t) => ({ ...t, isHot: !!t.shard && hot.includes(t.shard), deco: !t.shard }))
   return (
-    <svg
-      aria-hidden
-      className="absolute inset-0 h-full w-full overflow-visible"
-      viewBox={`0 0 ${design.w} ${design.h}`}
-      fill="none"
-    >
-      <defs>
-        <filter id="pjTraceGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="2.4" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      {design.traces.map((t, i) => {
-        const isHot = !!t.shard && hot.includes(t.shard)
-        const deco = !t.shard
-        return (
+    <>
+      <svg aria-hidden className={TRACE_SVG} viewBox={viewBox} fill="none">
+        <defs>
+          <filter id="pjTraceGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        {traces.map((t, i) => (
+          <motion.path
+            key={t.id}
+            d={t.d}
+            stroke={t.isHot ? 'rgb(var(--accent) / 0.6)' : 'rgb(var(--accent) / 0.3)'}
+            strokeWidth={t.isHot ? 2.4 : 1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.9, delay: 0.5 + i * 0.06, ease: 'easeOut' }}
+            style={{ transition: 'stroke 0.6s, stroke-width 0.6s' }}
+          />
+        ))}
+      </svg>
+
+      <svg aria-hidden className={TRACE_SVG} viewBox={viewBox} fill="none" style={{ willChange: 'transform' }}>
+        {traces.map((t, i) => (
           <g key={t.id}>
             <motion.path
               d={t.d}
-              stroke={isHot ? 'rgb(var(--accent) / 0.6)' : 'rgb(var(--accent) / 0.3)'}
-              strokeWidth={isHot ? 2.4 : 1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.9, delay: 0.5 + i * 0.06, ease: 'easeOut' }}
-              style={{ transition: 'stroke 0.6s, stroke-width 0.6s' }}
-            />
-            <motion.path
-              d={t.d}
-              stroke={isHot ? 'rgb(var(--accent-3))' : deco ? 'rgb(var(--accent) / 0.6)' : 'rgb(var(--accent-3) / 0.75)'}
-              strokeWidth={isHot ? 2 : 1.3}
+              stroke={t.isHot ? 'rgb(var(--accent-3))' : t.deco ? 'rgb(var(--accent) / 0.6)' : 'rgb(var(--accent-3) / 0.75)'}
+              strokeWidth={t.isHot ? 2 : 1.3}
               strokeLinecap="round"
               strokeDasharray="6 10"
-              filter={isHot ? 'url(#pjTraceGlow)' : undefined}
+              filter={t.isHot ? 'url(#pjTraceGlow)' : undefined}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 1.1 + i * 0.05 }}
-              style={{ animation: `pj-dash ${isHot ? 0.9 : deco ? 3.2 : 2.2}s linear infinite` }}
+              style={{ animation: `pj-dash ${t.isHot ? 0.9 : t.deco ? 3.2 : 2.2}s linear infinite` }}
             />
-            {isHot && running && (
+            {t.isHot && running && (
               <circle r="3.2" fill="rgb(var(--ink))" filter="url(#pjTraceGlow)">
                 <animateMotion dur="1.4s" repeatCount="indefinite" path={t.d} keyPoints="0;1" keyTimes="0;1" />
               </circle>
             )}
-            {t.nodes.map((n, k) => (
-              <g key={k}>
-                {n.tone === 'end' && isHot && (
-                  <circle
-                    cx={n.x}
-                    cy={n.y}
-                    r="9"
-                    fill="none"
-                    stroke="rgb(var(--accent) / 0.7)"
-                    style={{
-                      transformBox: 'fill-box',
-                      transformOrigin: 'center',
-                      animation: 'pj-ring 1.8s ease-out infinite',
-                    }}
-                  />
-                )}
+            {t.nodes.map((n, k) =>
+              n.tone === 'end' && t.isHot ? (
                 <circle
+                  key={k}
                   cx={n.x}
                   cy={n.y}
-                  r={n.tone === 'end' ? 3.6 : n.tone === 'rose' ? 3.2 : 2.4}
-                  fill={n.tone === 'rose' ? 'rgb(244 63 94)' : n.tone === 'end' ? 'rgb(var(--accent-3))' : 'rgb(var(--accent))'}
-                  filter="url(#pjTraceGlow)"
-                  style={
-                    n.tone === 'rose'
-                      ? { transformBox: 'fill-box', transformOrigin: 'center', animation: `pj-node ${2.2 + k * 0.4}s ease-in-out infinite` }
-                      : undefined
-                  }
+                  r="9"
+                  fill="none"
+                  stroke="rgb(var(--accent) / 0.7)"
+                  style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'pj-ring 1.8s ease-out infinite' }}
                 />
-              </g>
-            ))}
+              ) : n.tone === 'rose' ? (
+                <circle
+                  key={k}
+                  cx={n.x}
+                  cy={n.y}
+                  r="3.2"
+                  fill="rgb(244 63 94)"
+                  filter="url(#pjTraceGlow)"
+                  style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: `pj-node ${2.2 + k * 0.4}s ease-in-out infinite` }}
+                />
+              ) : null,
+            )}
           </g>
-        )
-      })}
-    </svg>
+        ))}
+      </svg>
+
+      <svg aria-hidden className={TRACE_SVG} viewBox={viewBox} fill="none">
+        {traces.map((t) =>
+          t.nodes.map((n, k) =>
+            n.tone === 'rose' ? null : (
+              <circle
+                key={`${t.id}${k}`}
+                cx={n.x}
+                cy={n.y}
+                r={n.tone === 'end' ? 3.6 : 2.4}
+                fill={n.tone === 'end' ? 'rgb(var(--accent-3))' : 'rgb(var(--accent))'}
+                filter="url(#pjTraceGlow)"
+              />
+            ),
+          ),
+        )}
+      </svg>
+    </>
   )
 }
 

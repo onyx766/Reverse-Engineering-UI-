@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { HoloModal } from '@/components/ui/HoloModal'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { PROFICIENCY_LABEL, TOOLS_AS_OF_YEAR, type Tool } from '@/data/tools'
 import { cn } from '@/lib/utils'
 import { CATEGORY_BY_ID, CATEGORY_ICON, EASE } from './meta'
@@ -41,6 +42,8 @@ export function ToolDetailModal({
   }, [tool, list.length, prev, next, onNavigate])
 
   const cat = tool ? CATEGORY_BY_ID[tool.category] : null
+  // reduced motion: paging only cross-fades (MotionConfig skips transforms, but not blur)
+  const reduced = useReducedMotion()
 
   return (
     <HoloModal
@@ -68,8 +71,8 @@ export function ToolDetailModal({
       {tool && cat && (
         <motion.div
           key={tool.id}
-          initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12, filter: 'blur(6px)' }}
+          animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.4, ease: EASE }}
           className="flex flex-col gap-5"
         >

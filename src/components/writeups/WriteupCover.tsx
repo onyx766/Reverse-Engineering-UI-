@@ -26,7 +26,7 @@ export function WriteupCover({ motif, seed = 1, animated = false, dense = false,
   const idle = animated && !reduced
 
   return (
-    <div className={cn('relative overflow-hidden', className)} aria-hidden>
+    <div className={cn('relative overflow-hidden [container-type:inline-size]', className)} aria-hidden>
       {/* wash */}
       <div
         className="absolute inset-0"
@@ -50,7 +50,14 @@ export function WriteupCover({ motif, seed = 1, animated = false, dense = false,
       <svg
         viewBox="0 0 320 180"
         preserveAspectRatio="xMidYMid slice"
-        className="absolute inset-0 h-full w-full"
+        className={cn(
+          'absolute inset-0 h-full w-full',
+          // hero: always fit the width (centred). A box wider than 16:9 still
+          // crops top/bottom like `slice`; a taller one (lg side column, small
+          // phones) shows the whole scene, so client, server and pin readout
+          // are never sliced off at the sides
+          dense && 'bottom-auto top-1/2 aspect-[16/9] h-auto -translate-y-1/2',
+        )}
       >
         <Motif motif={motif} seed={seed} idle={idle} dense={dense} />
       </svg>
@@ -58,11 +65,12 @@ export function WriteupCover({ motif, seed = 1, animated = false, dense = false,
       {/* scanline sweep on hover */}
       <span className="pointer-events-none absolute inset-x-0 -top-1/3 h-1/3 bg-gradient-to-b from-transparent via-accent/20 to-transparent opacity-0 transition-all duration-700 group-hover:top-full group-hover:opacity-100" />
 
-      {/* corner readout */}
-      <span className="pointer-events-none absolute left-3 top-2.5 max-w-[calc(100%-1.5rem)] truncate whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.2em] text-accent/70">
+      {/* corner readout — tighter on narrow thumbnails (Home's 96px phone rows)
+          so the longest label still fits on one line without an ellipsis */}
+      <span className="pointer-events-none absolute left-3 top-2.5 max-w-[calc(100%-1.5rem)] truncate whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.2em] text-accent/70 [@container(max-width:8rem)]:left-2 [@container(max-width:8rem)]:max-w-[calc(100%-1rem)] [@container(max-width:8rem)]:tracking-[0.06em]">
         {LABEL[motif]}
       </span>
-      <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[9px] tracking-[0.14em] text-muted/60">
+      <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[9px] tracking-[0.14em] text-muted/60 [@container(max-width:8rem)]:right-2">
         0x{(0x1a40 + seed * 0x40).toString(16)}
       </span>
 
@@ -212,16 +220,17 @@ function Shield({ idle, dense = false }: { idle: boolean; dense?: boolean }) {
               </rect>
             </>
           )}
-          {/* fingerprint / pin readout */}
+          {/* fingerprint / pin readout — label clear of the first row, last row
+              clear of the channel, scan bar no wider than the hex */}
           <g transform="translate(236 50)">
-            <text x="0" y="-5" className="fill-accent font-mono" style={{ fontSize: 6, letterSpacing: '1px', opacity: 0.75 }}>
+            <text x="0" y="-9" className="fill-accent font-mono" style={{ fontSize: 6, letterSpacing: '1px', opacity: 0.75 }}>
               sha256/pin
             </text>
             {fp.map((row, i) => (
               <text
                 key={i}
                 x="0"
-                y={i * 11}
+                y={i * 9}
                 className="fill-ink font-mono"
                 style={{ fontSize: 7, opacity: i === 2 ? 0.92 : 0.38 }}
               >
@@ -229,8 +238,8 @@ function Shield({ idle, dense = false }: { idle: boolean; dense?: boolean }) {
               </text>
             ))}
             {idle && (
-              <rect x="-4" y="14" width="62" height="10" fill="rgb(var(--accent) / 0.16)">
-                <animate attributeName="y" values="-10;46;-10" dur="5.2s" repeatCount="indefinite" />
+              <rect x="-3" y="11" width="42" height="9" fill="rgb(var(--accent) / 0.16)">
+                <animate attributeName="y" values="-7;29;-7" dur="5.2s" repeatCount="indefinite" />
               </rect>
             )}
           </g>
@@ -261,7 +270,7 @@ function Shield({ idle, dense = false }: { idle: boolean; dense?: boolean }) {
           fill="rgb(var(--accent) / 0.1)"
           stroke="rgb(var(--accent) / 0.65)"
           strokeWidth="1.6"
-          className="transition-transform duration-500 group-hover:scale-105"
+          className="transition-transform duration-500 [transform-box:fill-box] group-hover:scale-105"
           style={{ transformOrigin: 'center' }}
         />
         <path
@@ -360,7 +369,9 @@ function Graph({ idle }: { idle: boolean }) {
         {idle && <animate attributeName="stroke-dashoffset" values="0;16" dur="1.3s" repeatCount="indefinite" />}
       </path>
       {nodes.map((x) => (
-        <circle key={x} cx={x} cy="92" r="5" fill="rgb(var(--accent) / 0.25)" stroke="rgb(var(--accent))" strokeWidth="1.4" className="transition-transform duration-500 group-hover:scale-125" />
+        // fill-box: scale each node about its own centre (SVG defaults to the
+        // viewBox origin, which flung the nodes off the trace on hover)
+        <circle key={x} cx={x} cy="92" r="5" fill="rgb(var(--accent) / 0.25)" stroke="rgb(var(--accent))" strokeWidth="1.4" className="origin-center transition-transform duration-500 [transform-box:fill-box] group-hover:scale-125" />
       ))}
       <g className="transition-transform duration-500 group-hover:translate-x-[4px]">
         <circle cx="110" cy="92" r="8" fill="none" stroke="rgb(var(--accent-3))" strokeWidth="1.4" />

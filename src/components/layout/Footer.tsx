@@ -216,8 +216,9 @@ function Navigate() {
                 <span className="truncate font-sans text-[14px] font-semibold uppercase tracking-[0.12em] transition-transform duration-300 group-hover:translate-x-0.5">
                   {THEMES[id].label}
                 </span>
+                {/* the dash only fits beside the longest labels once the column is wide (lg+) */}
                 {active && (
-                  <span aria-hidden className="ml-auto h-px w-3 shrink-0 bg-accent shadow-glow-sm" />
+                  <span aria-hidden className="ml-auto hidden h-px w-3 shrink-0 bg-accent shadow-glow-sm lg:block" />
                 )}
               </a>
             </li>

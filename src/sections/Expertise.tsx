@@ -178,13 +178,17 @@ function useMinWidth(px: number) {
   return ok
 }
 
+/** Reduced motion: plain fades, like the shared panels and headings (MotionConfig skips transforms, not blur). */
+const FADE = { duration: 0.4, ease: EASE }
+
 function CaseBrief() {
+  const reduced = useReducedMotion()
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18, filter: 'blur(10px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18, filter: 'blur(10px)' }}
+      whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.8, delay: 0.24, ease: EASE }}
+      transition={reduced ? FADE : { duration: 0.8, delay: 0.24, ease: EASE }}
       className="glass relative mx-auto mt-9 flex max-w-5xl flex-col gap-2.5 overflow-hidden rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5"
     >
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
@@ -351,12 +355,13 @@ function SignerSnippet() {
 }
 
 function SubHeading({ title, meta }: { title: string; meta: string }) {
+  const reduced = useReducedMotion()
   return (
     <motion.div
-      initial={{ opacity: 0, x: -24, filter: 'blur(8px)' }}
-      whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, x: -24, filter: 'blur(8px)' }}
+      whileInView={reduced ? { opacity: 1 } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.7, ease: EASE }}
+      transition={reduced ? FADE : { duration: 0.7, ease: EASE }}
       className="flex items-center gap-3"
     >
       <span aria-hidden className="h-2 w-2 shrink-0 rotate-45 border border-accent bg-accent/30 shadow-glow-sm" />
@@ -413,12 +418,14 @@ function CapabilityCard({ cap, index, total }: { cap: Capability; index: number;
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 34, rotateX: -12, filter: 'blur(10px)' }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 34, rotateX: -12, filter: 'blur(10px)' }}
+      whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.75, delay: (index % 3) * 0.08, ease: EASE }}
+      transition={reduced ? FADE : { duration: 0.75, delay: (index % 3) * 0.08, ease: EASE }}
       style={{ transformPerspective: 1000 }}
-      className="group/cap relative h-full"
+      // two rows of the caps grid (subgrid): the deliverables row lines up across every card in a row,
+      // so the dividers and hints never sit at different heights when one card's list wraps longer
+      className="group/cap relative row-span-2 grid grid-rows-subgrid"
     >
       <div
         aria-hidden
@@ -435,7 +442,7 @@ function CapabilityCard({ cap, index, total }: { cap: Capability; index: number;
         whileHover={reduced ? undefined : { y: -6 }}
         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
         style={{ rotateX, rotateY, transformPerspective: 900 }}
-        className="glass relative flex h-full flex-col overflow-hidden rounded-xl p-5 group-hover/cap:border-accent/60"
+        className="glass relative row-span-2 grid grid-rows-subgrid overflow-hidden rounded-xl p-5 group-hover/cap:border-accent/60"
       >
         {!reduced && (
           <motion.div
@@ -454,42 +461,44 @@ function CapabilityCard({ cap, index, total }: { cap: Capability; index: number;
         <span aria-hidden className={cn(bracket, 'bottom-2 left-2 border-b border-l')} />
         <span aria-hidden className={cn(bracket, 'bottom-2 right-2 border-b border-r')} />
 
-        <div className="relative flex items-start justify-between gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-accent/35 bg-accent/10 text-accent shadow-glow-sm transition-transform duration-500 group-hover/cap:-rotate-6 group-hover/cap:scale-110">
-            <Icon className="h-5 w-5" />
-          </span>
-          <span className="pt-1 font-mono text-[10px] tracking-[0.16em] text-muted transition-colors duration-300 group-hover/cap:text-accent">
-            {n(index + 1)} / {n(total)}
-          </span>
-        </div>
-
-        <h4 id={titleId} className="relative mt-4 font-display text-[15px] font-bold tracking-wide text-ink">
-          {cap.title}
-        </h4>
-        <p className="relative mt-2 text-[14px] leading-relaxed text-muted">{cap.body}</p>
-        <div className="relative mt-3 flex flex-wrap gap-1.5">
-          {cap.tags.map((t) => (
-            <Chip key={t} size="xs">
-              {t}
-            </Chip>
-          ))}
-        </div>
-
-        <div className="relative mt-auto pt-4">
-          <div className="grid border-t border-accent/15 pt-3 font-mono text-[10.5px] leading-relaxed">
-            <p
-              aria-hidden
-              className="flex items-center gap-2 text-muted/60 transition-[opacity,transform] duration-500 [grid-area:1/1] group-focus-within/cap:-translate-y-1 group-focus-within/cap:opacity-0 group-hover/cap:-translate-y-1 group-hover/cap:opacity-0 [@media(hover:none)]:hidden"
-            >
-              <span className="text-accent/70">▸</span>
-              typical deliverables
-              <span className="inline-block h-3 w-1.5 animate-blink bg-accent/60" />
-            </p>
-            <p className="opacity-0 transition-[opacity,clip-path] duration-700 [clip-path:inset(0_100%_0_0)] [grid-area:1/1] group-focus-within/cap:opacity-100 group-focus-within/cap:[clip-path:inset(0_0_0_0)] group-hover/cap:opacity-100 group-hover/cap:[clip-path:inset(0_0_0_0)] [@media(hover:none)]:opacity-100 [@media(hover:none)]:[clip-path:inset(0_0_0_0)]">
-              <span className="text-accent">▸ deliverables · </span>
-              <span className="text-ink/85">{cap.deliverables}</span>
-            </p>
+        {/* subgrid row 1 */}
+        <div className="relative">
+          <div className="flex items-start justify-between gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-accent/35 bg-accent/10 text-accent shadow-glow-sm transition-transform duration-500 group-hover/cap:-rotate-6 group-hover/cap:scale-110">
+              <Icon className="h-5 w-5" />
+            </span>
+            <span className="pt-1 font-mono text-[10px] tracking-[0.16em] text-muted transition-colors duration-300 group-hover/cap:text-accent">
+              {n(index + 1)} / {n(total)}
+            </span>
           </div>
+
+          <h4 id={titleId} className="mt-4 font-display text-[15px] font-bold tracking-wide text-ink">
+            {cap.title}
+          </h4>
+          <p className="mt-2 text-[14px] leading-relaxed text-muted">{cap.body}</p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {cap.tags.map((t) => (
+              <Chip key={t} size="xs">
+                {t}
+              </Chip>
+            ))}
+          </div>
+        </div>
+
+        {/* subgrid row 2: as tall as the longest list in this row, so the hint stays centred at one height */}
+        <div className="relative grid border-t border-accent/15 pt-3 font-mono text-[10.5px] leading-relaxed">
+          <p
+            aria-hidden
+            className="flex items-center gap-2 text-muted/60 transition-[opacity,transform] duration-500 [grid-area:1/1] group-focus-within/cap:-translate-y-1 group-focus-within/cap:opacity-0 group-hover/cap:-translate-y-1 group-hover/cap:opacity-0 [@media(hover:none)]:hidden"
+          >
+            <span className="text-accent/70">▸</span>
+            typical deliverables
+            <span className="inline-block h-3 w-1.5 animate-blink bg-accent/60" />
+          </p>
+          <p className="opacity-0 transition-[opacity,clip-path] duration-700 [clip-path:inset(0_100%_0_0)] [grid-area:1/1] group-focus-within/cap:opacity-100 group-focus-within/cap:[clip-path:inset(0_0_0_0)] group-hover/cap:opacity-100 group-hover/cap:[clip-path:inset(0_0_0_0)] [@media(hover:none)]:opacity-100 [@media(hover:none)]:[clip-path:inset(0_0_0_0)]">
+            <span className="text-accent">▸ deliverables · </span>
+            <span className="text-ink/85">{cap.deliverables}</span>
+          </p>
         </div>
       </motion.div>
     </motion.article>
@@ -505,10 +514,10 @@ function PlatformStrip() {
   return (
     <motion.section
       aria-labelledby={headingId}
-      initial={{ opacity: 0, y: 34, rotateX: -10, filter: 'blur(10px)' }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 34, rotateX: -10, filter: 'blur(10px)' }}
+      whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.85, ease: EASE }}
+      transition={reduced ? FADE : { duration: 0.85, ease: EASE }}
       style={{ transformPerspective: 1200 }}
       className="glass relative mt-8 overflow-hidden rounded-2xl py-4 sm:mt-10 sm:py-5"
     >

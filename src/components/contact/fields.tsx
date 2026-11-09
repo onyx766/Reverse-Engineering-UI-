@@ -16,6 +16,12 @@ const inputTone = (invalid: boolean) =>
 const PEER_FOCUS =
   'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent'
 
+/**
+ * Native checkbox / radio made invisible but kept over its whole card (not sr-only):
+ * a clipped 1x1 input isn't scrolled into view when it takes keyboard focus below the fold.
+ */
+const NATIVE_COVER = 'peer absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none opacity-0'
+
 const LABEL_TEXT = 'font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted'
 
 const describedBy = (...ids: (string | false | undefined)[]) => ids.filter(Boolean).join(' ') || undefined
@@ -49,9 +55,13 @@ export function FieldError({ id, message }: { id: string; message?: string }) {
         <motion.p
           key="err"
           id={id}
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
+          // max-height, not height: 'auto'. Measuring an auto height makes framer-motion
+          // restore window.scrollY on the next frame, which cancels the browser's pending
+          // focus scroll: tabbing on from a field whose error just appeared left focus below
+          // the fold. 72 px fits the longest message wrapped onto three lines.
+          initial={{ opacity: 0, maxHeight: 0 }}
+          animate={{ opacity: 1, maxHeight: 72 }}
+          exit={{ opacity: 0, maxHeight: 0 }}
           transition={{ duration: 0.26, ease: EASE }}
           className="overflow-hidden"
         >
@@ -337,7 +347,7 @@ export function ChipGroup<T extends string>({
                 }}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={describedBy(error && errId)}
-                className="peer sr-only"
+                className={NATIVE_COVER}
               />
               <span
                 className={cn(
@@ -442,7 +452,7 @@ export function SegmentGroup<T extends string>({
                 onChange={() => onChange(o.id)}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={describedBy(error && errId)}
-                className="peer sr-only"
+                className={NATIVE_COVER}
               />
               {on && (
                 <motion.span
@@ -523,7 +533,7 @@ export function ConsentField({
           required
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(noteId, error && errId)}
-          className="peer sr-only"
+          className={NATIVE_COVER}
         />
         <span
           aria-hidden

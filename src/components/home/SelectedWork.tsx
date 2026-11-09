@@ -107,6 +107,19 @@ function useActiveSlide(ref: React.RefObject<HTMLElement>, count: number) {
   return active
 }
 
+/**
+ * Keyboard focus on a card that only peeks into the phone snap row: the
+ * browser leaves a partly visible card where it is, so scroll the row until
+ * the card sits at its snap position. A no-op where the row does not scroll.
+ */
+function alignInRow(card: HTMLElement, still: boolean) {
+  const row = card.closest('ol')
+  if (!row || row.scrollWidth <= row.clientWidth + 1) return
+  const pad = parseFloat(getComputedStyle(row).scrollPaddingLeft) || 0
+  const delta = card.getBoundingClientRect().left - row.getBoundingClientRect().left - pad
+  if (Math.abs(delta) > 1) row.scrollBy({ left: delta, behavior: still ? 'auto' : 'smooth' })
+}
+
 function WorkCard({ project: p, index, onOpen }: { project: Project; index: number; onOpen: () => void }) {
   const [lit, setLit] = useState(false)
   const still = useReducedMotion()
@@ -126,7 +139,11 @@ function WorkCard({ project: p, index, onOpen }: { project: Project; index: numb
         onClick={onOpen}
         onPointerEnter={(e) => e.pointerType === 'mouse' && setLit(true)}
         onPointerLeave={() => setLit(false)}
-        onFocus={(e) => setLit(e.currentTarget.matches(':focus-visible'))}
+        onFocus={(e) => {
+          const keyboard = e.currentTarget.matches(':focus-visible')
+          setLit(keyboard)
+          if (keyboard) alignInRow(e.currentTarget, still)
+        }}
         onBlur={() => setLit(false)}
         className={cn(
           'group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border text-left',

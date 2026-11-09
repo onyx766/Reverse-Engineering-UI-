@@ -175,7 +175,7 @@ for s in idautils.Strings():
     years: 4,
     orbit: 0,
     usage:
-      'MLIL/HLIL and the Python API for fast dataflow questions — which callers hand memcpy a length they do not control?',
+      'MLIL/HLIL and the Python API for fast dataflow questions\u00a0— which callers hand memcpy a length they do not control?',
     specifics: [
       'Scripts over MLIL SSA that walk an argument back to its definition across call boundaries.',
       'Headless batch runs with binaryninja.load() to diff function hashes between builds.',
@@ -239,7 +239,7 @@ r2 -A -qc 'aflj' updaterd | jq -r '.[] | select(.name | test("crypt")) | .name'`
     specifics: [
       'ScyllaHide profiles that neutralise PEB.BeingDebugged, NtGlobalFlag and NtQueryInformationProcess checks.',
       'Conditional logging breakpoints that trace API arguments without ever halting the target.',
-      'Dump at OEP with Scylla, IAT autosearch, fix dump — a clean PE that loads straight into IDA.',
+      'Dump at OEP with Scylla, IAT autosearch, fix dump\u00a0— a clean PE that loads straight into IDA.',
     ],
     tags: ['ScyllaHide', 'Scylla', 'Tracing'],
     snippet: {
@@ -265,7 +265,7 @@ erun`,
       'TTD traces to walk backwards from a corrupted heap block to the exact write that caused it; KDNET sessions for kernel drivers.',
     specifics: [
       'TTD: a write breakpoint on the corrupted field, then g- to run backwards to the culprit.',
-      'Data-model queries over the trace — every RtlFreeHeap call that touched one pointer, with positions.',
+      'Data-model queries over the trace\u00a0— every RtlFreeHeap call that touched one pointer, with positions.',
       'Kernel debugging over KDNET with !analyze -v, !pool and !irp for driver bugs.',
     ],
     tags: ['TTD', 'dx queries', 'KDNET'],
@@ -320,7 +320,7 @@ BigCopy("memcpy")`,
     level: 3,
     years: 4,
     usage:
-      'Native Android libraries in debuggable test builds through lldb-server, plus the occasional macOS tool — scripted through the SB API.',
+      'Native Android libraries in debuggable test builds through lldb-server, plus the occasional macOS tool\u00a0— scripted through the SB API.',
     specifics: [
       'lldb-server platform on the device, platform select remote-android on the host, attach by pid.',
       'breakpoint command add -s python for logging breakpoints that never stop the app.',
@@ -374,7 +374,7 @@ Interceptor.attach(libcrypto.getExportByName("EVP_DecryptUpdate"), {
     years: 3,
     orbit: 1,
     usage:
-      'drcov coverage for crash triage — which blocks a malformed input reaches that a clean input never does.',
+      'drcov coverage for crash triage\u00a0— which blocks a malformed input reaches that a clean input never does.',
     specifics: [
       'drrun -t drcov per input, then diff the coverage sets in Lighthouse or Lightkeeper.',
       'Small drwrap clients that log allocation sizes around a suspect parser.',
@@ -396,7 +396,7 @@ Interceptor.attach(libcrypto.getExportByName("EVP_DecryptUpdate"), {
     level: 3,
     years: 3,
     usage:
-      'Pintools for instruction-precise memory traces — logging every table lookup to recover a custom cipher’s S-box.',
+      'Pintools for instruction-precise memory traces\u00a0— logging every table lookup to recover a custom cipher’s S-box.',
     specifics: [
       'INS_InsertPredicatedCall with IARG_MEMORYREAD_EA to log reads inside one routine only.',
       'IMG_AddInstrumentFunction callbacks so only the module under study is instrumented.',
@@ -414,7 +414,7 @@ Interceptor.attach(libcrypto.getExportByName("EVP_DecryptUpdate"), {
     years: 5,
     orbit: 1,
     usage:
-      'Emulate only the routine I care about — a string decryptor, a checksum, a key schedule — straight out of the binary.',
+      'Emulate only the routine I care about\u00a0— a string decryptor, a checksum, a key schedule\u00a0— straight out of the binary.',
     specifics: [
       'UC_HOOK_MEM_UNMAPPED hooks to learn which memory a routine expects before mapping it.',
       'Qiling with an extracted rootfs to run whole ARM / MIPS Linux binaries, faking missing hardware in syscall hooks.',
@@ -533,7 +533,7 @@ DissectorTable.get("tcp.port"):add(9530, p)`,
     specifics: [
       'mitmdump --mode transparent on the lab gateway; --mode wireguard for test phones.',
       'Addons that log request-signing headers so the signing scheme can be rebuilt offline.',
-      'A dedicated lab CA, installed only on test devices — never on production units.',
+      'A dedicated lab CA, installed only on test devices\u00a0— never on production units.',
     ],
     tags: ['Addons', 'Transparent', 'WireGuard'],
     snippet: {
@@ -578,7 +578,7 @@ addons = [SigLog()]`,
     level: 4,
     years: 6,
     usage:
-      'Once a protocol is understood it becomes Scapy layers — then replay, mutate and fuzz fields with correct lengths and checksums.',
+      'Once a protocol is understood it becomes Scapy layers\u00a0— then replay, mutate and fuzz fields with correct lengths and checksums.',
     specifics: [
       'Custom Packet classes with post_build to fix up lengths and CRCs automatically.',
       'bind_layers so rdpcap() decodes old captures with the new layer.',
@@ -766,7 +766,7 @@ Entry toc[hdr.entry_count] @ hdr.toc_offset;`,
     years: 8,
     orbit: 2,
     usage:
-      'Rules that pin a component across builds — byte patterns with wildcards around code that survives recompilation.',
+      'Rules that pin a component across builds\u00a0— byte patterns with wildcards around code that survives recompilation.',
     specifics: [
       'Hex patterns with jumps and nibble wildcards, anchored on prologues compilers keep stable.',
       'Module conditions (elf, pe, math.entropy) to cut false positives on large corpora.',
@@ -829,7 +829,7 @@ DECIMAL       HEXADECIMAL     DESCRIPTION
     level: 5,
     years: 8,
     usage:
-      'Reimplementations of recovered algorithms, loaders and fuzzing harnesses — and reading MSVC, GCC and Clang codegen fluently.',
+      'Reimplementations of recovered algorithms, loaders and fuzzing harnesses\u00a0— and reading MSVC, GCC and Clang codegen fluently.',
     specifics: [
       'Harnesses that load a target DLL and call internal functions by RVA for in-process fuzzing.',
       'Compiler idioms on sight: magic-number division, jump tables, SSO strings, vtable thunks.',
@@ -871,7 +871,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     specifics: [
       'struct and construct for binary parsing; capstone and keystone for (dis)assembly inside scripts.',
       'pwntools tubes for talking to services, serial consoles and emulated targets.',
-      'Typed, tested packages — not one-off notebooks — for anything a client will run again.',
+      'Typed, tested packages\u00a0— not one-off notebooks\u00a0— for anything a client will run again.',
     ],
     tags: ['pwntools', 'capstone', 'construct'],
   },
@@ -924,10 +924,10 @@ struct Entry {
     level: 5,
     years: 8,
     usage:
-      'Read it like prose — SysV, Win64 and AAPCS64 calling conventions, SIMD idioms — and hand-patch when a fix has to fit in the bytes available.',
+      'Read it like prose\u00a0— SysV, Win64 and AAPCS64 calling conventions, SIMD idioms\u00a0— and hand-patch when a fix has to fit in the bytes available.',
     specifics: [
       'Compiler idioms at a glance: imul / shr division by a constant, rep movsb copies, CFG dispatch thunks, endbr64 landing pads.',
-      'In-place patches sized to the original instruction — an ARM64 NOP is 1F 20 03 D5.',
+      'In-place patches sized to the original instruction\u00a0— an ARM64 NOP is 1F 20 03 D5.',
       'Thumb-2 and AArch64 encodings by hand when there is no assembler on the box.',
     ],
     tags: ['x86-64', 'AArch64', 'Thumb-2'],
@@ -948,7 +948,7 @@ verify_signature:
     level: 3,
     years: 3,
     usage:
-      'Mostly reversing it — names from pclntab, the register ABI, goroutine stacks — plus small proxies and CLI tools.',
+      'Mostly reversing it\u00a0— names from pclntab, the register ABI, goroutine stacks\u00a0— plus small proxies and CLI tools.',
     specifics: [
       'GoReSym to rebuild function names and types from stripped Go binaries.',
       'ABIInternal on amd64: integer arguments in RAX, RBX, RCX, RDI, RSI, R8–R11.',
@@ -967,7 +967,7 @@ verify_signature:
     level: 5,
     years: 8,
     usage:
-      'PE loader details, NT native APIs and ETW — the context that turns a disassembly listing into an explanation.',
+      'PE loader details, NT native APIs and ETW\u00a0— the context that turns a disassembly listing into an explanation.',
     specifics: [
       'Manual mapping by hand: sections, base relocations, TLS callbacks, delay-load imports.',
       'ETW providers and logman sessions to observe a process without attaching a debugger.',
@@ -1103,7 +1103,7 @@ export const SKILL_AXES: SkillAxis[] = [
     short: 'Dynamic',
     value: 92,
     baseline: 60,
-    note: 'Debuggers, TTD and Frida under anti-debug — trace first, then read only the code that actually ran.',
+    note: 'Debuggers, TTD and Frida under anti-debug\u00a0— trace first, then read only the code that actually ran.',
   },
   {
     id: 'protocols',
@@ -1135,7 +1135,7 @@ export const SKILL_AXES: SkillAxis[] = [
     short: 'Firmware',
     value: 77,
     baseline: 22,
-    note: 'UART and SWD access, flash dumps, Cortex-M emulation — the software side, not board design.',
+    note: 'UART and SWD access, flash dumps, Cortex-M emulation\u00a0— the software side, not board design.',
   },
   {
     id: 'mobile',

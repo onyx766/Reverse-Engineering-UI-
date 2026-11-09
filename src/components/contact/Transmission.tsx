@@ -214,7 +214,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
       role="group"
       aria-label="Transmitting your message"
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 0.98, filter: 'blur(6px)' }}
+      exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, filter: 'blur(6px)' }}
       transition={{ duration: 0.35, ease: EASE }}
       className="flex flex-1 flex-col outline-none"
     >

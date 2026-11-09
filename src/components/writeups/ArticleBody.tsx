@@ -48,7 +48,8 @@ function BlockView({ articleId, block }: { articleId: string; block: Block }) {
           <h2
             id={id}
             data-toc={block.id}
-            className="group/h scroll-mt-6 pt-7 font-display text-[19px] font-bold tracking-wide text-ink first:pt-1 sm:text-[21px]"
+            tabIndex={-1}
+            className="group/h scroll-mt-6 break-words pt-7 outline-none font-display text-[19px] font-bold tracking-wide text-ink first:pt-1 sm:text-[21px]"
           >
             <span className="mr-2 select-none font-mono text-accent/60">#</span>
             {block.text}
@@ -60,7 +61,8 @@ function BlockView({ articleId, block }: { articleId: string; block: Block }) {
         <h3
           id={id}
           data-toc={block.id}
-          className="scroll-mt-6 pt-5 font-display text-[15.5px] font-semibold tracking-wide text-accent2"
+          tabIndex={-1}
+          className="scroll-mt-6 break-words pt-5 outline-none font-display text-[15.5px] font-semibold tracking-wide text-accent2"
         >
           {block.text}
         </h3>

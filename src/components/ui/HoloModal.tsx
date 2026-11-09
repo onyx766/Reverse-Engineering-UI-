@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion'
 import { X, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 export interface HoloModalProps {
   open: boolean
@@ -59,6 +60,7 @@ function ModalPanel({
 }: HoloModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
+  const reduced = useReducedMotion()
   const closeRef = useRef(onClose)
   closeRef.current = onClose
   const titleId = useId()
@@ -143,10 +145,11 @@ function ModalPanel({
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          initial={{ opacity: 0, y: 56, rotateX: 16, scale: 0.94, filter: 'blur(12px)' }}
-          animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, y: 32, rotateX: -10, scale: 0.96, filter: 'blur(8px)' }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          // reduced motion: a plain fade (MotionConfig skips transforms, but not blur)
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 56, rotateX: 16, scale: 0.94, filter: 'blur(12px)' }}
+          animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, rotateX: 0, scale: 1, filter: 'blur(0px)' }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: 32, rotateX: -10, scale: 0.96, filter: 'blur(8px)' }}
+          transition={{ duration: reduced ? 0.3 : 0.55, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
             'glass-strong relative mx-auto flex max-h-[calc(100dvh-1rem)] w-full flex-col overflow-clip rounded-2xl shadow-glow-lg outline-none sm:max-h-[88vh]',
             WIDTH[size],

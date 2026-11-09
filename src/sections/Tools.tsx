@@ -41,7 +41,8 @@ export function Tools() {
       <SectionHeading
         eyebrow="Daily Driver"
         title="Tools & Environment"
-        subtitle="The disassemblers, debuggers, tracers and runtimes I live inside every day — and the isolated lab they run in."
+        // no-break space: a narrow phone must not start a line with the dash
+        subtitle={'The disassemblers, debuggers, tracers and runtimes I live inside every day\u00a0— and the isolated lab they run in.'}
         className="mx-auto"
       />
 
@@ -66,7 +67,7 @@ export function Tools() {
         <SubHeading
           index="03"
           title="Range & Routine"
-          kicker="How deep each skill goes — and what a working session looks like"
+          kicker={'How deep each skill goes\u00a0— and what a working session looks like'}
         />
         <LazyMount minHeight={reserve('routine')} margin="300px 0px" delay={1600} className="mt-6">
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:gap-7">
@@ -77,7 +78,7 @@ export function Tools() {
       </div>
 
       <div className="mt-20 sm:mt-24">
-        <SubHeading index="04" title="The Lab" kicker="Isolated by design — nothing leaves without a reason" />
+        <SubHeading index="04" title="The Lab" kicker={'Isolated by design\u00a0— nothing leaves without a reason'} />
         <LazyMount minHeight={reserve('lab')} margin="300px 0px" delay={2200} className="mt-6">
           <LabTopology />
         </LazyMount>

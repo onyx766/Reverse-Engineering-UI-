@@ -88,11 +88,22 @@ function IsoBox({ x, y, z, a, b = a, h, ox, oy, glow = 1, topFill }: BoxProps) {
   )
 }
 
-/** Shared <defs>: glow filter + floor gradient, ids unique per instance. */
+/**
+ * Shared <defs>: glow filters + floor gradient, ids unique per instance. `glow` wraps a
+ * single element; `glows` is the same glow for a whole group of moving parts (one filter
+ * pass per frame instead of one per part), with a fixed region covering the artwork.
+ */
 function Defs({ id }: { id: string }) {
   return (
     <defs>
       <filter id={`${id}glow`} x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur stdDeviation="2.2" result="b" />
+        <feMerge>
+          <feMergeNode in="b" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+      <filter id={`${id}glows`} filterUnits="userSpaceOnUse" x="-20" y="-20" width="240" height="160">
         <feGaussianBlur stdDeviation="2.2" result="b" />
         <feMerge>
           <feMergeNode in="b" />
@@ -230,18 +241,20 @@ function BinaryChip({ id, hover }: IlluProps) {
           <path key={v} d={`M${v} 18 V42 M18 ${v} H42`} />
         ))}
       </g>
-      {pins.map((p, i) => (
-        <motion.g
-          key={`fx${p}`}
-          initial={false}
-          animate={{ opacity: hover ? [0.5, 1, 0.7] : 0.8 }}
-          transition={hover ? { duration: 0.9, repeat: Infinity, repeatType: 'mirror', delay: i * 0.09 } : { duration: 0.3 }}
-          filter={`url(#${id}glow)`}
-        >
-          <IsoBox x={60} y={p} z={1.5} a={7} b={3.2} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(var(--accent-3))" />
-          <IsoBox x={p} y={60} z={1.5} a={3.2} b={7} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(var(--accent-3))" />
-        </motion.g>
-      ))}
+      {/* the lit pins flicker: one glow pass for all of them */}
+      <g filter={`url(#${id}glows)`}>
+        {pins.map((p, i) => (
+          <motion.g
+            key={`fx${p}`}
+            initial={false}
+            animate={{ opacity: hover ? [0.5, 1, 0.7] : 0.8 }}
+            transition={hover ? { duration: 0.9, repeat: Infinity, repeatType: 'mirror', delay: i * 0.09 } : { duration: 0.3 }}
+          >
+            <IsoBox x={60} y={p} z={1.5} a={7} b={3.2} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(var(--accent-3))" />
+            <IsoBox x={p} y={60} z={1.5} a={3.2} b={7} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(var(--accent-3))" />
+          </motion.g>
+        ))}
+      </g>
     </>
   )
 }
@@ -273,6 +286,9 @@ function ProtocolNet({ id, hover }: IlluProps) {
   const oy = 62
   const pts = NET_NODES.map((p) => iso(p, ox, oy))
   const floor = NET_NODES.map(([x, y]) => iso([x, y, 0], ox, oy))
+  const edges = NET_EDGES.map(
+    ([a, b]) => `M${pts[a][0].toFixed(1)} ${pts[a][1].toFixed(1)} L${pts[b][0].toFixed(1)} ${pts[b][1].toFixed(1)}`,
+  )
   return (
     <>
       <Floor id={id} cx={100} cy={66} rx={78} ry={30} />
@@ -287,38 +303,39 @@ function ProtocolNet({ id, hover }: IlluProps) {
           <ellipse cx={floor[i][0]} cy={floor[i][1]} rx={3.6} ry={1.8} fill="rgb(var(--accent) / 0.35)" />
         </g>
       ))}
-      {NET_EDGES.map(([a, b], i) => {
-        const d = `M${pts[a][0].toFixed(1)} ${pts[a][1].toFixed(1)} L${pts[b][0].toFixed(1)} ${pts[b][1].toFixed(1)}`
-        return (
-          <g key={i}>
-            <motion.path
-              d={d}
-              stroke="rgb(var(--accent-3))"
-              strokeWidth={0.9}
-              initial={false}
-              animate={{ opacity: hover ? 0.95 : 0.55 }}
-              transition={{ duration: 0.4 }}
-            />
-            {hover && i % 2 === 0 && (
-              <circle r={1.8} fill="rgb(var(--ink))" filter={`url(#${id}glow)`}>
-                <animateMotion dur="1.3s" repeatCount="indefinite" begin={`${i * 0.12}s`} path={d} />
-              </circle>
-            )}
-          </g>
-        )
-      })}
-      {pts.map(([x, y], i) => (
-        <motion.circle
+      {edges.map((d, i) => (
+        <motion.path
           key={i}
-          cx={x}
-          cy={y}
-          r={i === 0 ? 6.5 : 4.6}
-          fill={`url(#${id}node)`}
-          filter={`url(#${id}glow)`}
-          animate={hover ? { scale: [1, 1.25, 1] } : { scale: 1 }}
-          transition={hover ? { duration: 1.1, repeat: Infinity, delay: i * 0.12 } : { duration: 0.3 }}
+          d={d}
+          stroke="rgb(var(--accent-3))"
+          strokeWidth={0.9}
+          initial={false}
+          animate={{ opacity: hover ? 0.95 : 0.55 }}
+          transition={{ duration: 0.4 }}
         />
       ))}
+      {/* pulses and beating nodes are what moves while lit: one glow pass for all of them */}
+      <g filter={`url(#${id}glows)`}>
+        {hover &&
+          edges.map((d, i) =>
+            i % 2 === 0 ? (
+              <circle key={i} r={1.8} fill="rgb(var(--ink))">
+                <animateMotion dur="1.3s" repeatCount="indefinite" begin={`${i * 0.12}s`} path={d} />
+              </circle>
+            ) : null,
+          )}
+        {pts.map(([x, y], i) => (
+          <motion.circle
+            key={i}
+            cx={x}
+            cy={y}
+            r={i === 0 ? 6.5 : 4.6}
+            fill={`url(#${id}node)`}
+            animate={hover ? { scale: [1, 1.25, 1] } : { scale: 1 }}
+            transition={hover ? { duration: 1.1, repeat: Infinity, delay: i * 0.12 } : { duration: 0.3 }}
+          />
+        ))}
+      </g>
     </>
   )
 }
@@ -514,7 +531,8 @@ function ToolingKit({ id, hover }: IlluProps) {
             transition={{ duration: 0.5, delay: hover ? i * 0.12 : 0, ease: EASE }}
           />
         ))}
-        <rect x={20} y={34} width={4} height={6} fill="rgb(var(--accent))" className="animate-blink" />
+        {/* blinks only while lit: an idle blink would re-filter the whole card twice a second */}
+        <rect x={20} y={34} width={4} height={6} fill="rgb(var(--accent))" className={hover ? 'animate-blink' : undefined} />
       </g>
       {/* combination wrench: ring end with a hex socket, open jaw at the other end */}
       <defs>

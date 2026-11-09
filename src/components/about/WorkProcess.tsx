@@ -127,7 +127,7 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
               }}
               onKeyDown={(e) => onKey(e, i)}
               className={cn(
-                // scroll margins keep a card that receives focus clear of the fixed navbar
+                // a focused card stops clear of the screen's bottom edge (html scroll-padding-top clears the navbar)
                 'glass group relative flex h-full scroll-mb-6 flex-col overflow-hidden rounded-2xl p-5 transition-[transform,border-color,box-shadow] duration-500',
                 on ? cn(GLOW_ACTIVE, 'motion-safe:xl:-translate-y-2') : 'hover:border-accent/50',
               )}

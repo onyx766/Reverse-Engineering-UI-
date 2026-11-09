@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Boxes, ChevronRight, LayoutGrid } from 'lucide-react'
 import { HoloPanel } from '@/components/ui/HoloPanel'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { TOOLS, TOOL_CATEGORIES, type ToolCategoryId } from '@/data/tools'
 import { cn } from '@/lib/utils'
 import { CATEGORY_COUNT, CATEGORY_ICON, EASE, type CategoryFilter } from './meta'
@@ -30,6 +31,8 @@ export function LoadoutPanel({
   onHighlight: (c: ToolCategoryId | null) => void
 }) {
   const light = (id: CategoryFilter) => onHighlight(id === 'all' ? null : id)
+  // reduced motion: rows only fade (MotionConfig skips transforms, but not blur)
+  const reduced = useReducedMotion()
 
   return (
     <HoloPanel
@@ -47,8 +50,8 @@ export function LoadoutPanel({
           return (
             <motion.li
               key={r.id}
-              initial={{ opacity: 0, x: -16, filter: 'blur(6px)' }}
-              whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              initial={reduced ? { opacity: 0 } : { opacity: 0, x: -16, filter: 'blur(6px)' }}
+              whileInView={reduced ? { opacity: 1 } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.3 + i * 0.05, ease: EASE }}
             >

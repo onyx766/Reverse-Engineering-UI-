@@ -72,6 +72,13 @@ const enter = {
   exit: { opacity: 0, y: -10, filter: 'blur(6px)' },
   transition: { duration: 0.6, ease: EASE },
 }
+/** reduced motion: a plain fade (MotionConfig skips transforms, but not blur) */
+const fade = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.4 },
+}
 
 export function TxSuccess({
   brief,
@@ -103,7 +110,7 @@ export function TxSuccess({
   ]
 
   return (
-    <motion.div {...enter} className="flex flex-1 flex-col items-center justify-center gap-6 py-2 text-center">
+    <motion.div {...(reduced ? fade : enter)} className="flex flex-1 flex-col items-center justify-center gap-6 py-2 text-center">
       <div className="relative grid h-24 w-24 place-items-center">
         {!reduced && (
           <>
@@ -225,8 +232,9 @@ export function TxError({
   onEdit: () => void
   headingRef: Ref<HTMLHeadingElement>
 }) {
+  const reduced = useReducedMotion()
   return (
-    <motion.div {...enter} className="flex flex-1 flex-col items-center justify-center gap-6 py-2 text-center">
+    <motion.div {...(reduced ? fade : enter)} className="flex flex-1 flex-col items-center justify-center gap-6 py-2 text-center">
       <div className="relative grid h-20 w-20 place-items-center">
         <span aria-hidden className="absolute inset-0 animate-flicker rounded-2xl border border-rose-400/50 bg-rose-400/10" />
         <ServerCrash aria-hidden className="relative h-8 w-8 text-rose-300" />

@@ -14,6 +14,7 @@ import {
 } from '@/components/writeups/WriteupToolbar'
 import { FEATURED_WRITEUP, WRITEUPS, type Writeup } from '@/data/writeups'
 import { clearIntent, peekIntent } from '@/lib/intent'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 function matchesQuery(w: Writeup, q: string): boolean {
   if (!q) return true
@@ -125,10 +126,12 @@ export function Writeups() {
 }
 
 function EmptyState({ query, onReset }: { query: string; onReset: () => void }) {
+  const still = useReducedMotion()
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      // reduced motion: a plain fade, no slide / blur
+      initial={still ? { opacity: 0 } : { opacity: 0, y: 24, filter: 'blur(8px)' }}
+      animate={still ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className="mx-auto mt-12 max-w-md"
     >

@@ -4,6 +4,7 @@ import { Timer } from 'lucide-react'
 import { HoloPanel } from '@/components/ui/HoloPanel'
 import { TIME_IN_TOOL } from '@/data/tools'
 import { useCountUp } from '@/hooks/useCountUp'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { seeded } from '@/lib/utils'
 import { EASE, TOOL_BY_ID } from './meta'
 import { ToolMonogram } from './ToolMonogram'
@@ -39,6 +40,8 @@ export function TimeInToolPanel({
   const sparkRef = useRef<HTMLDivElement>(null)
   const listShown = useInView(listRef, { once: true, margin: '-30px' })
   const sparkShown = useInView(sparkRef, { once: true, margin: '-20px' })
+  // reduced motion: rows only fade (MotionConfig skips transforms, but not blur)
+  const reduced = useReducedMotion()
 
   return (
     <HoloPanel
@@ -69,8 +72,8 @@ export function TimeInToolPanel({
           return (
             <motion.li
               key={row.toolId}
-              initial={{ opacity: 0, x: 16, filter: 'blur(6px)' }}
-              whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              initial={reduced ? { opacity: 0 } : { opacity: 0, x: 16, filter: 'blur(6px)' }}
+              whileInView={reduced ? { opacity: 1 } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.3 + i * 0.06, ease: EASE }}
             >

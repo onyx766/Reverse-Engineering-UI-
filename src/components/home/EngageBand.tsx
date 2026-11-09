@@ -22,6 +22,23 @@ function spellResponse(t: string) {
   return m ? `${m[1]} hours` : t
 }
 
+/**
+ * Joins note fragments into one sentence-cased line: ["free", "Feasibility + rough
+ * estimate"] -> "Free · feasibility + rough estimate". Acronyms ("NDA …") keep their case.
+ */
+function sentence(parts: string[]) {
+  return parts
+    .filter(Boolean)
+    .map((p, i) =>
+      i === 0
+        ? p.charAt(0).toUpperCase() + p.slice(1)
+        : /^[A-Z][a-z]/.test(p)
+          ? p.charAt(0).toLowerCase() + p.slice(1)
+          : p,
+    )
+    .join(' · ')
+}
+
 /** First Monday at least `weeks` out — the same rule the Contact availability panel uses. */
 function nextStart(weeks: number) {
   const d = new Date(Date.now() + weeks * 7 * 864e5)
@@ -51,7 +68,7 @@ export function EngageBand() {
             icon: PhoneCall,
             label: COPY.facts.intro,
             value: introLength,
-            note: [...introTerms, intro.deliverable].join(' · '),
+            note: sentence([...introTerms, intro.deliverable]),
           },
         ]
       : []),
@@ -118,10 +135,11 @@ export function EngageBand() {
                 />
                 <span className={cn('relative inline-flex h-2 w-2 rounded-full', open ? 'bg-emerald-400' : 'bg-amber-400')} />
               </span>
-              <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink">
+              <span className="whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink">
                 {open ? AVAILABILITY.status : AVAILABILITY.bookedStatus}
               </span>
-              <span className="hidden font-mono text-[10.5px] text-muted sm:inline">
+              {/* the detail would break the pill onto two lines in the narrow lg pitch column (1024–1279) */}
+              <span className="hidden font-mono text-[10.5px] text-muted sm:inline lg:hidden xl:inline">
                 · {open ? AVAILABILITY.detail : AVAILABILITY.bookedDetail}
               </span>
             </div>

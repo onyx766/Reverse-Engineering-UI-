@@ -2,11 +2,13 @@ import { Fragment, type ReactNode } from 'react'
 import { DIFFICULTY_WEIGHT, type Difficulty } from '@/data/writeups'
 import { cn } from '@/lib/utils'
 
-/* ── inline markdown: `code` and **bold** ─────────────────────────────────── */
+/* ── inline markdown: `code`, **bold** and *emphasis* ─────────────────────── */
 
-const INLINE = /(`[^`]+`|\*\*[^*]+\*\*)/g
+// order matters: code first (its body is literal), then bold, then a single-
+// asterisk emphasis that must open and close on a non-space character
+const INLINE = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*\s](?:[^*]*[^*\s])?\*)/g
 
-/** Renders a string with inline `code` and **bold** spans. */
+/** Renders a string with inline `code`, **bold** and *emphasis* spans. */
 export function InlineText({ text }: { text: string }): JSX.Element {
   const nodes: ReactNode[] = []
   let last = 0
@@ -20,16 +22,22 @@ export function InlineText({ text }: { text: string }): JSX.Element {
       nodes.push(
         <code
           key={k++}
-          className="rounded-[4px] border border-accent/20 bg-accent/10 px-1 py-px font-mono text-[0.88em] text-accent2"
+          className="break-words rounded-[4px] border border-accent/20 bg-accent/10 px-1 py-px font-mono text-[0.88em] text-accent2"
         >
           {tok.slice(1, -1)}
         </code>,
       )
-    } else {
+    } else if (tok[1] === '*') {
       nodes.push(
         <strong key={k++} className="font-semibold text-ink">
           {tok.slice(2, -2)}
         </strong>,
+      )
+    } else {
+      nodes.push(
+        <em key={k++} className="italic text-ink/90">
+          {tok.slice(1, -1)}
+        </em>,
       )
     }
     last = m.index + tok.length

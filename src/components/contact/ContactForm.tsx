@@ -410,10 +410,15 @@ export function ContactForm() {
           {phase === 'form' && (
             <motion.div
               key="form"
-              initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, filter: 'blur(6px)', transition: { duration: 0.3 } }}
-              transition={{ duration: 0.55, ease: EASE }}
+              // reduced motion: a plain fade (MotionConfig skips transforms, but not blur)
+              initial={reduced ? { opacity: 0 } : { opacity: 0, y: 14, filter: 'blur(8px)' }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={
+                reduced
+                  ? { opacity: 0, transition: { duration: 0.3 } }
+                  : { opacity: 0, filter: 'blur(6px)', transition: { duration: 0.3 } }
+              }
+              transition={{ duration: reduced ? 0.4 : 0.55, ease: EASE }}
               className="flex flex-1 flex-col"
             >
               <form

@@ -147,7 +147,7 @@ export default function App() {
  * threshold flip re-renders only this, not the section on stage.
  */
 function BackdropCore({ section }: { section: SectionId }) {
-  const pastHero = useScrolledPast(section === 'home')
+  const pastHero = useScrolledPast(section === 'home', HOME_STORY_ANCHOR)
   const placement = pastHero ? undefined : CORE_PLACEMENT[section]
   return (
     <SilentBoundary>
@@ -166,15 +166,28 @@ function BackdropCore({ section }: { section: SectionId }) {
   )
 }
 
-/** true while `active` and the page is scrolled past `fraction` of the viewport; state flips only at the threshold */
-function useScrolledPast(active: boolean, fraction = 0.75) {
+/** id of Home's first story block (HOME_BLOCK_IDS.capabilities); present before the block mounts */
+const HOME_STORY_ANCHOR = 'home-what-i-do'
+
+/**
+ * true while `active` and the visitor has scrolled past `fraction` of the
+ * viewport, or the `anchorId` element has risen above 70% of it (on landscape
+ * screens the story arrives well before the scroll fraction). State flips only
+ * at the threshold.
+ */
+function useScrolledPast(active: boolean, anchorId?: string, fraction = 0.75) {
   const [past, setPast] = useState(false)
   useEffect(() => {
     if (!active) return
     let raf = 0
     const check = () => {
       raf = 0
-      setPast(window.scrollY > window.innerHeight * fraction)
+      const vh = window.innerHeight
+      const y = window.scrollY
+      // the anchor rule waits for a first scroll: on tall monitors the story already
+      // sits in the lower viewport at y = 0, and the hero should still arrive with its core
+      const anchor = anchorId && y > 48 ? document.getElementById(anchorId) : null
+      setPast(y > vh * fraction || (!!anchor && anchor.getBoundingClientRect().top < vh * 0.7))
     }
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(check)
@@ -187,7 +200,7 @@ function useScrolledPast(active: boolean, fraction = 0.75) {
       window.removeEventListener('resize', schedule)
       if (raf) cancelAnimationFrame(raf)
     }
-  }, [active, fraction])
+  }, [active, anchorId, fraction])
   return active && past
 }
 

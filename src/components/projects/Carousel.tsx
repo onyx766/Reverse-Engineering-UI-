@@ -519,7 +519,9 @@ function ArcFloor({ L }: { L: Layout }) {
       className="pointer-events-none absolute left-1/2 -translate-x-1/2"
       style={{ width: w, height: h, top: L.cardH * 0.6, zIndex: 0 }}
     >
-      <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="h-full w-full overflow-visible">
+      {/* the turning dashed ring repaints every frame: it gets its own layer between the
+          static floor art below and above it, so the gradients and blurred glints stay cached */}
+      <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
         <defs>
           <radialGradient id="pjFloorFill" cx="50%" cy="40%" r="60%">
             <stop offset="0%" stopColor="rgb(var(--accent))" stopOpacity="0.2" />
@@ -533,6 +535,13 @@ function ArcFloor({ L }: { L: Layout }) {
         </defs>
         <ellipse cx="500" cy="44" rx="490" ry="58" fill="url(#pjFloorFill)" />
         <ellipse cx="500" cy="44" rx="490" ry="58" fill="none" stroke="url(#pjFloorRim)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <svg
+        viewBox="0 0 1000 120"
+        preserveAspectRatio="none"
+        className="absolute inset-0 h-full w-full overflow-visible"
+        style={{ willChange: 'transform' }}
+      >
         <ellipse
           cx="500"
           cy="50"
@@ -545,6 +554,8 @@ function ArcFloor({ L }: { L: Layout }) {
           vectorEffect="non-scaling-stroke"
           style={{ animation: 'pj-dash 2.6s linear infinite' }}
         />
+      </svg>
+      <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
         <ellipse cx="500" cy="58" rx="380" ry="38" fill="none" stroke="rgb(var(--accent-2) / 0.25)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         {[300, 700].map((x) => (
           <ellipse key={x} cx={x} cy={100} rx={46} ry={3} fill="rgb(var(--accent-3) / 0.75)" style={{ filter: 'blur(2px)' }} />

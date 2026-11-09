@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
 import { EASE } from './meta'
 
@@ -21,12 +22,14 @@ export function SubHeading({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
+  // reduced motion: a plain fade (MotionConfig skips transforms, but not blur)
+  const reduced = useReducedMotion()
 
   return (
     <div ref={ref} className={cn('flex flex-wrap items-end justify-between gap-x-6 gap-y-3', className)}>
       <motion.div
-        initial={{ opacity: 0, x: -24, filter: 'blur(8px)' }}
-        whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+        initial={reduced ? { opacity: 0 } : { opacity: 0, x: -24, filter: 'blur(8px)' }}
+        whileInView={reduced ? { opacity: 1 } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.7, ease: EASE }}
         className="flex min-w-0 items-center gap-3.5"
@@ -44,7 +47,7 @@ export function SubHeading({
             {title}
           </h3>
           {kicker && (
-            <p className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted">
+            <p className="mt-0.5 text-pretty font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted">
               {kicker}
             </p>
           )}
