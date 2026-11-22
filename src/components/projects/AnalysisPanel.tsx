@@ -16,20 +16,11 @@ const RUN_MS = 2600
  * The bar and the percentage are motion values written straight to the DOM;
  * React re-renders only when a stage ticks over (a handful of times per run).
  */
-export function AnalysisPanel({
-  project,
-  className,
-  badge = true,
-  density = 0,
-}: {
-  project: Project
-  className?: string
-  /** status chip in the header (dropped when the panel is narrow) */
-  badge?: boolean
-  /** 0 = roomy, 1 = short viewport, 2 = very short viewport (drops the footer) */
-  density?: 0 | 1 | 2
-}) {
-  const dense = density > 0
+/**
+ * The analysis run shared by both panel designs: the bar sweeps 0 → 100 %, the
+ * percentage counts with it and each applicable stage ticks over in turn.
+ */
+export function useAnalysisRun(project: Project) {
   const reduced = useReducedMotion()
   const rootRef = useRef<HTMLDivElement>(null)
   const meterRef = useRef<HTMLDivElement>(null)
@@ -88,6 +79,25 @@ export function AnalysisPanel({
 
   const complete = done >= m
   const doneCount = Math.min(applicable.length, done)
+
+  return { reduced, rootRef, meterRef, applicable, bar, pctText, done, m, complete, doneCount }
+}
+
+export function AnalysisPanel({
+  project,
+  className,
+  badge = true,
+  density = 0,
+}: {
+  project: Project
+  className?: string
+  /** status chip in the header (dropped when the panel is narrow) */
+  badge?: boolean
+  /** 0 = roomy, 1 = short viewport, 2 = very short viewport (drops the footer) */
+  density?: 0 | 1 | 2
+}) {
+  const dense = density > 0
+  const { reduced, rootRef, meterRef, applicable, bar, pctText, complete, doneCount } = useAnalysisRun(project)
 
   return (
     <div ref={rootRef} className={className}>
@@ -182,7 +192,7 @@ export function AnalysisPanel({
                   {state === 'running' && <LoaderCircle className="h-4 w-4 animate-spin text-accent3" />}
                   {state === 'pending' && <span className="h-2 w-2 rounded-full border border-muted/50" />}
                   {state === 'na' && (
-                    <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted/50">n/a</span>
+                    <span className="font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted/50">n/a</span>
                   )}
                 </span>
                 {state === 'running' && !reduced && (
@@ -195,7 +205,7 @@ export function AnalysisPanel({
 
         <div
           className={cn(
-            'flex items-center justify-between gap-2 border-t border-accent/15 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted',
+            'flex items-center justify-between gap-2 border-t border-accent/15 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted',
             dense ? 'mt-2 pt-2' : 'mt-3 pt-2.5',
             density === 2 && 'hidden',
           )}

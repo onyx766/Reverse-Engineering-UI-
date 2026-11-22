@@ -77,7 +77,7 @@ export function ToolCard({ tool, onOpen }: { tool: Tool; onOpen: (id: string) =>
         )}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
+          className="pointer-events-none absolute inset-0 opacity-0"
           style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgb(var(--ink)) 0 1px, transparent 1px 4px)' }}
         />
         <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
@@ -100,7 +100,7 @@ export function ToolCard({ tool, onOpen }: { tool: Tool; onOpen: (id: string) =>
             <h4 className="font-display text-[15px] font-bold leading-tight tracking-wide text-ink">
               {tool.name}
             </h4>
-            <p className="mt-1 font-mono text-[9.5px] uppercase tracking-[0.16em] text-accent">
+            <p className="mt-1 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent">
               {cat.short} <span className="text-muted">· {tool.years} yrs</span>
             </p>
           </div>
@@ -120,7 +120,7 @@ export function ToolCard({ tool, onOpen }: { tool: Tool; onOpen: (id: string) =>
           {tool.tags.map((tag) => (
             <li
               key={tag}
-              className="rounded-md border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-muted transition-colors duration-300 group-hover/card:border-accent/35 group-hover/card:text-ink/80"
+              className="rounded-md border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 group-hover/card:border-accent/35 group-hover/card:text-ink/80"
             >
               {tag}
             </li>
@@ -129,7 +129,7 @@ export function ToolCard({ tool, onOpen }: { tool: Tool; onOpen: (id: string) =>
 
         <div className="relative mt-3.5 flex items-center gap-2.5 border-t border-accent/10 pt-3">
           <ProficiencyMeter level={tool.level} size="sm" shimmer="card" className="flex-1" />
-          <span className="w-[4.6rem] shrink-0 text-right font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted">
+          <span className="w-[4.6rem] shrink-0 text-right font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
             {PROFICIENCY_LABEL[tool.level]}
           </span>
         </div>

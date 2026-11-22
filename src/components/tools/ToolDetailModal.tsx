@@ -80,7 +80,7 @@ export function ToolDetailModal({
             <div className="flex items-center gap-4">
               <ToolMonogram tool={tool} size="lg" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                <div className="flex items-baseline justify-between gap-3 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
                   <span>Proficiency</span>
                   <span className="text-ink">
                     {tool.level}/5 · <span className="text-accent">{PROFICIENCY_LABEL[tool.level]}</span>
@@ -97,12 +97,12 @@ export function ToolDetailModal({
           </div>
 
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-accent">How I use it</h3>
+            <h3 className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">How I use it</h3>
             <p className="mt-1.5 text-[15px] leading-relaxed text-ink/90">{tool.usage}</p>
           </section>
 
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-accent">Field notes</h3>
+            <h3 className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">Field notes</h3>
             <ul className="mt-2 flex flex-col gap-2">
               {tool.specifics.map((s, i) => (
                 <motion.li
@@ -123,7 +123,7 @@ export function ToolDetailModal({
 
           {tool.snippet && (
             <section>
-              <h3 className="mb-2 font-mono text-[10px] uppercase tracking-[0.22em] text-accent">Snippet</h3>
+              <h3 className="mb-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">Snippet</h3>
               <CodeBlock code={tool.snippet.code} lang={tool.snippet.lang} />
             </section>
           )}
@@ -132,7 +132,7 @@ export function ToolDetailModal({
             {tool.tags.map((tag) => (
               <li
                 key={tag}
-                className="rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink/80"
+                className="rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-ink/80"
               >
                 {tag}
               </li>
@@ -147,7 +147,7 @@ export function ToolDetailModal({
 function Stat({ term, value }: { term: string; value: string }) {
   return (
     <div className="rounded-lg border border-accent/20 bg-accent/[0.05] px-2.5 py-1.5">
-      <dt className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted">{term}</dt>
+      <dt className="font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">{term}</dt>
       <dd className="truncate text-[15px] font-bold leading-tight text-ink">{value}</dd>
     </div>
   )
@@ -161,7 +161,7 @@ function PagerButton({ dir, label, onClick }: { dir: 'prev' | 'next'; label: str
       onClick={onClick}
       aria-label={`${dir === 'prev' ? 'Previous' : 'Next'} tool: ${label}`}
       className={cn(
-        'group inline-flex min-h-[40px] max-w-[42%] items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/[0.06] px-3 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted transition-colors duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink',
+        'group inline-flex min-h-[40px] max-w-[42%] items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/[0.06] px-3 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink',
         dir === 'next' && 'flex-row-reverse',
       )}
     >

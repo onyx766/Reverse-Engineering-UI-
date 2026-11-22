@@ -197,7 +197,7 @@ function CaseBrief() {
         className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-sweep bg-gradient-to-r from-transparent via-accent/[0.08] to-transparent"
         style={{ animationDuration: '7s' }}
       />
-      <span className="relative inline-flex shrink-0 items-center gap-2 self-start rounded-md border border-accent/40 bg-accent/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-accent sm:self-center">
+      <span className="relative inline-flex shrink-0 items-center gap-2 self-start rounded-md border border-accent/40 bg-accent/10 px-2 py-1 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent sm:self-center">
         <span className="relative flex h-1.5 w-1.5">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
@@ -278,7 +278,7 @@ function PaneLabel({
   narrow?: boolean
 }) {
   return (
-    <div className="mb-2 flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted">
+    <div className="mb-2 flex items-center gap-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
       <Icon className="h-3 w-3 shrink-0 text-accent" />
       <span className="truncate">{text}</span>
       <span
@@ -332,7 +332,7 @@ function SignerSnippet() {
       transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
       className="group/code relative mt-4 overflow-hidden rounded-lg border border-accent/20 bg-deep/60 transition-colors duration-300 hover:border-accent/45"
     >
-      <div className="flex items-center gap-2 border-b border-accent/15 px-3 py-1.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted">
+      <div className="flex items-center gap-2 border-b border-accent/15 px-3 py-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
         <KeyRound className="h-3 w-3 shrink-0 text-accent transition-transform duration-300 group-hover/code:-rotate-12" />
         <span className="shrink-0">{SIGNER.title}</span>
         <span className="ml-auto truncate normal-case tracking-normal text-muted/60">{SIGNER.source}</span>
@@ -365,11 +365,11 @@ function SubHeading({ title, meta }: { title: string; meta: string }) {
       className="flex items-center gap-3"
     >
       <span aria-hidden className="h-2 w-2 shrink-0 rotate-45 border border-accent bg-accent/30 shadow-glow-sm" />
-      <h3 className="shrink-0 font-display text-[13px] font-bold uppercase tracking-[0.28em] text-ink">
+      <h3 className="shrink-0 font-ui text-[13px] font-bold uppercase tracking-[0.08em] text-ink">
         {title}
       </h3>
       <span aria-hidden className="h-px min-w-6 flex-1 bg-gradient-to-r from-accent/50 via-accent/15 to-transparent" />
-      <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-muted sm:inline">
+      <span className="hidden shrink-0 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted sm:inline">
         {meta}
       </span>
     </motion.div>
@@ -535,7 +535,7 @@ function PlatformStrip() {
           <h3 id={headingId} className="font-display text-[15px] font-bold tracking-wide text-ink">
             {SECTION_COPY.platforms.title}
           </h3>
-          <p className="hidden font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted sm:block">
+          <p className="hidden font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted sm:block">
             {SECTION_COPY.platforms.subtitle}
           </p>
         </div>
@@ -618,7 +618,7 @@ function MarqueeRow({
 
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-      <span className="shrink-0 px-4 font-mono text-[9.5px] uppercase tracking-[0.2em] text-accent sm:w-36 sm:pl-6 sm:pr-0">
+      <span className="shrink-0 px-4 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent sm:w-36 sm:pl-6 sm:pr-0">
         {group.label}
       </span>
       <div
@@ -661,7 +661,7 @@ function PlatformChip({ p, hidden }: { p: Platform; hidden: boolean }) {
           <span className="whitespace-nowrap font-display text-[12.5px] font-bold tracking-wide text-ink">
             {p.name}
           </span>
-          <span className="whitespace-nowrap font-mono text-[9.5px] uppercase tracking-[0.1em] text-muted transition-colors duration-300 group-hover/chip:text-accent3">
+          <span className="whitespace-nowrap font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 group-hover/chip:text-accent3">
             {p.detail}
           </span>
         </span>

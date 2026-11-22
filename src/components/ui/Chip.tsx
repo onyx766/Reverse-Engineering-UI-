@@ -18,11 +18,11 @@ export function Chip({ children, icon: Icon, active, onClick, className, size = 
     <Tag
       {...(onClick ? { type: 'button' as const, onClick } : {})}
       className={cn(
-        'group relative inline-flex items-center gap-1.5 overflow-hidden rounded-lg border font-mono uppercase tracking-[0.12em] transition-all duration-300',
-        size === 'xs' ? 'px-2 py-0.5 text-[9.5px]' : 'px-2.5 py-1 text-[10.5px]',
+        'group relative inline-flex items-center gap-1.5 overflow-hidden rounded-[7px] border font-ui normal-case tracking-normal transition-all duration-300',
+        size === 'xs' ? 'px-2 py-[2px] text-[11.5px]' : 'px-2.5 py-[3px] text-[12.5px]',
         active
-          ? 'border-accent/70 bg-accent/20 text-ink shadow-glow-sm'
-          : 'border-accent/25 bg-accent/[0.06] text-muted',
+          ? 'border-accent/70 bg-accent/15 text-ink shadow-glow-sm'
+          : 'border-white/[0.16] bg-white/[0.05] text-ink/90',
         onClick && !active && 'hover:border-accent/60 hover:bg-accent/15 hover:text-ink',
         className,
       )}

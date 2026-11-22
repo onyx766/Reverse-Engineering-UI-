@@ -248,7 +248,7 @@ export function DebuggerView({
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-md border bg-deep/40 px-2 py-1 font-mono text-[9.5px] uppercase tracking-[0.16em] transition-colors duration-300',
+            'inline-flex items-center gap-1.5 rounded-md border bg-deep/40 px-2 py-1 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] transition-colors duration-300',
             status.tone,
           )}
         >
@@ -542,7 +542,7 @@ function CtrlButton({
       aria-label={label}
       title={label}
       className={cn(
-        'group relative inline-flex h-8 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-accent/30 bg-accent/[0.06] font-mono text-[10px] uppercase tracking-[0.14em] text-muted transition-[color,background-color,border-color,box-shadow] duration-300 hover:border-accent/70 hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm active:bg-accent/30 [@media(pointer:coarse)]:h-10',
+        'group relative inline-flex h-8 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-accent/30 bg-accent/[0.06] font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted transition-[color,background-color,border-color,box-shadow] duration-300 hover:border-accent/70 hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm active:bg-accent/30 [@media(pointer:coarse)]:h-10',
         text ? 'px-2.5 [@media(pointer:coarse)]:px-3.5' : 'w-8 [@media(pointer:coarse)]:w-10',
       )}
     >

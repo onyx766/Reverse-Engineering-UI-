@@ -102,7 +102,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
         />
 
         <div className="relative flex items-center gap-4 md:col-start-1 md:row-start-1 lg:col-start-auto lg:row-start-auto lg:flex-col lg:items-start lg:gap-1">
-          <span className="font-display text-[34px] font-black leading-none text-gradient lg:text-[40px]">
+          <span className="font-display text-[34px] font-bold leading-none text-gradient lg:text-[40px]">
             {String(index + 1).padStart(2, '0')}
           </span>
           <ProjectIllustration
@@ -117,7 +117,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
             <Chip size="xs" icon={CatIcon} active={hover}>
               {category?.label}
             </Chip>
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">{p.role}</span>
+            <span className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">{p.role}</span>
           </div>
           <h3 className="mt-2 font-display text-[18px] font-bold leading-tight tracking-wide text-ink sm:text-[20px]">
             {p.title}
@@ -129,7 +129,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
             {facts.map((f) => (
               <div key={f.label} className={cn('min-w-0', (f.label === 'Target' || f.label === 'Outcome') && 'col-span-2')}>
-                <dt className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted">
+                <dt className="flex items-center gap-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
                   <f.icon aria-hidden className="h-3 w-3 text-accent" />
                   {f.label}
                 </dt>
@@ -155,7 +155,7 @@ function IndexRow({ project: p, index, onOpen }: { project: Project; index: numb
             onClick={onOpen}
             aria-label={`Open case study: ${p.title}`}
             className={cn(
-              'group/btn inline-flex min-h-[44px] items-center gap-2 overflow-hidden rounded-xl border px-4 font-display text-[11.5px] font-bold uppercase tracking-[0.16em] outline-none',
+              'group/btn inline-flex min-h-[44px] items-center gap-2 overflow-hidden rounded-xl border px-4 font-ui text-[11.5px] font-bold uppercase tracking-[0.08em] outline-none',
               'transition-[border-color,background-color,box-shadow,color] duration-300',
               'after:absolute after:inset-0 after:rounded-2xl after:content-[""]',
               'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep',

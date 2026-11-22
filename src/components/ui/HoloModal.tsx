@@ -158,7 +158,7 @@ function ModalPanel({
           {/* decor: scanlines, hairline, corner brackets, opening sweep */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            className="pointer-events-none absolute inset-0 opacity-0"
             style={{
               backgroundImage:
                 'repeating-linear-gradient(0deg, rgb(var(--ink)) 0 1px, transparent 1px 4px)',
@@ -194,7 +194,7 @@ function ModalPanel({
             )}
             <div className="min-w-0 flex-1">
               {eyebrow && (
-                <p className="truncate font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
+                <p className="truncate font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
                   {eyebrow}
                 </p>
               )}
@@ -206,7 +206,7 @@ function ModalPanel({
               </h2>
             </div>
             {badge && (
-              <span className="hidden shrink-0 rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent sm:inline-block">
+              <span className="hidden shrink-0 rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent sm:inline-block">
                 {badge}
               </span>
             )}

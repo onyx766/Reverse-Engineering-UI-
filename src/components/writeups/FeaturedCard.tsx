@@ -30,16 +30,16 @@ export function FeaturedCard({
       {/* content */}
       <div className="flex flex-col justify-center gap-4 p-5 sm:p-7">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/45 bg-accent/12 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-accent shadow-glow-sm">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/45 bg-accent/12 px-2.5 py-1 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent shadow-glow-sm">
             <Star className="h-3 w-3" />
             Featured
           </span>
-          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+          <span className="font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-muted">
             {formatDate(writeup.date)}
           </span>
         </div>
 
-        <h3 className="font-display text-[22px] font-black leading-[1.12] tracking-tight text-ink transition-colors duration-300 group-hover:text-accent sm:text-[27px]">
+        <h3 className="font-display text-[22px] font-bold leading-[1.12] tracking-tight text-ink transition-colors duration-300 group-hover:text-accent sm:text-[27px]">
           {writeup.title}
         </h3>
 
@@ -57,7 +57,7 @@ export function FeaturedCard({
             {writeup.tags.map((t) => (
               <span
                 key={t}
-                className="rounded-md border border-accent/25 bg-accent/[0.06] px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-muted"
+                className="rounded-md border border-accent/25 bg-accent/[0.06] px-2 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted"
               >
                 {t}
               </span>
@@ -66,7 +66,7 @@ export function FeaturedCard({
         </div>
 
         {/* read affordance (visual — the whole card is the button) */}
-        <span className="relative mt-1 inline-flex w-fit items-center gap-2 overflow-hidden rounded-xl border border-accent/50 bg-accent/15 px-5 py-2.5 font-display text-[12px] font-bold uppercase tracking-[0.16em] text-ink transition-all duration-300 group-hover:border-accent group-hover:bg-accent/25 group-hover:shadow-glow">
+        <span className="relative mt-1 inline-flex w-fit items-center gap-2 overflow-hidden rounded-xl border border-accent/50 bg-accent/15 px-5 py-2.5 font-ui text-[12px] font-bold uppercase tracking-[0.08em] text-ink transition-all duration-300 group-hover:border-accent group-hover:bg-accent/25 group-hover:shadow-glow">
           <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
           Read write-up
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1.5" />

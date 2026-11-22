@@ -97,7 +97,7 @@ export function ShardFrame({
           <div className={cn('relative transition-opacity duration-700', dim && 'opacity-[0.8]')}>
             <div className="relative flex items-center gap-1.5 border-b border-accent/15 px-2.5 py-1.5">
               <Icon aria-hidden className={cn('h-3 w-3 shrink-0', hot ? 'text-accent' : 'text-muted')} />
-              <span className={cn('font-mono text-[9.5px] uppercase tracking-[0.16em]', hot ? 'text-ink' : 'text-muted')}>
+              <span className={cn('font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em]', hot ? 'text-ink' : 'text-muted')}>
                 {label.title}
               </span>
               <span className="ml-auto truncate font-mono text-[9px] tracking-[0.06em] text-muted/75">

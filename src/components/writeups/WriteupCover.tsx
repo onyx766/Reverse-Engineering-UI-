@@ -67,7 +67,7 @@ export function WriteupCover({ motif, seed = 1, animated = false, dense = false,
 
       {/* corner readout — tighter on narrow thumbnails (Home's 96px phone rows)
           so the longest label still fits on one line without an ellipsis */}
-      <span className="pointer-events-none absolute left-3 top-2.5 max-w-[calc(100%-1.5rem)] truncate whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.2em] text-accent/70 [@container(max-width:8rem)]:left-2 [@container(max-width:8rem)]:max-w-[calc(100%-1rem)] [@container(max-width:8rem)]:tracking-[0.06em]">
+      <span className="pointer-events-none absolute left-3 top-2.5 max-w-[calc(100%-1.5rem)] truncate whitespace-nowrap font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-accent/70 [@container(max-width:8rem)]:left-2 [@container(max-width:8rem)]:max-w-[calc(100%-1rem)] [@container(max-width:8rem)]:tracking-[0.06em]">
         {LABEL[motif]}
       </span>
       <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[9px] tracking-[0.14em] text-muted/60 [@container(max-width:8rem)]:right-2">

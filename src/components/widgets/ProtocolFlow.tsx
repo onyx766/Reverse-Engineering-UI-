@@ -260,7 +260,7 @@ function Endpoint({ icon: Icon, label, active }: { icon: LucideIcon; label: stri
         )}
         <Icon className="h-[18px] w-[18px]" />
       </span>
-      <span className="max-w-full truncate font-mono text-[9px] uppercase tracking-[0.14em] text-muted">
+      <span className="max-w-full truncate font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
         {label}
       </span>
     </div>

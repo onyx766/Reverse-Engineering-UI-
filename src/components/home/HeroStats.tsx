@@ -67,7 +67,7 @@ function StatTile({
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-accent/0 transition-colors duration-500 group-hover:bg-accent/[0.06]"
         />
-        <p className="relative font-display text-[clamp(1.7rem,4vw,2.4rem)] font-black leading-none text-ink">
+        <p className="relative font-display text-[clamp(1.7rem,4vw,2.4rem)] font-bold leading-none text-ink">
           <span className="sr-only">
             {fmt.format(value)}
             {suffix}{' '}
@@ -77,7 +77,7 @@ function StatTile({
             <span className="neon">{suffix}</span>
           </span>
         </p>
-        <p className="relative mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+        <p className="relative mt-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
           {label}
         </p>
         {note && (

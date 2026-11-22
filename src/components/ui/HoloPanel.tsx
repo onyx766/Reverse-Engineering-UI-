@@ -160,15 +160,6 @@ export function HoloPanel({
             />
           )}
 
-          {/* inner scanline texture */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.045]"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(0deg, rgb(var(--ink)) 0 1px, transparent 1px 4px)',
-            }}
-          />
 
           {/* top hairline + hover sweep */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
@@ -178,23 +169,20 @@ export function HoloPanel({
             </div>
           )}
 
-          <Corners />
 
           {/* header */}
           {(title || badge) && (
-            <div className="relative flex items-center gap-2.5 border-b border-accent/15 px-4 py-3 sm:px-5">
+            <div className="relative flex items-center gap-3 border-b border-white/[0.08] px-4 py-3 sm:px-5">
               {Icon && (
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-accent/35 bg-accent/10 text-accent shadow-glow-sm transition-transform duration-500 group-hover/panel:scale-110">
-                  <Icon className="h-4 w-4" />
-                </span>
+                <Icon className="h-5 w-5 shrink-0 text-accent drop-shadow-[0_0_6px_rgb(var(--accent)/0.9)] transition-transform duration-500 group-hover/panel:scale-110" />
               )}
               {title && (
-                <h3 className="truncate font-display text-[15px] font-bold tracking-wide text-ink">
+                <h3 className="truncate font-display text-[17px] font-semibold text-ink">
                   {title}
                 </h3>
               )}
               {badge && (
-                <span className="ml-auto shrink-0 rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
+                <span className="ml-auto shrink-0 rounded-[7px] border border-accent/35 bg-accent/10 px-2 py-0.5 font-ui text-[11px] font-semibold uppercase tracking-[0.1em] text-accent">
                   {badge}
                 </span>
               )}
@@ -211,18 +199,5 @@ export function HoloPanel({
         />
       </div>
     </motion.div>
-  )
-}
-
-function Corners() {
-  const base =
-    'pointer-events-none absolute h-3.5 w-3.5 border-accent/70 transition-all duration-500 group-hover/panel:h-5 group-hover/panel:w-5 group-hover/panel:border-accent'
-  return (
-    <>
-      <span aria-hidden className={cn(base, 'left-2 top-2 border-l border-t')} />
-      <span aria-hidden className={cn(base, 'right-2 top-2 border-r border-t')} />
-      <span aria-hidden className={cn(base, 'bottom-2 left-2 border-b border-l')} />
-      <span aria-hidden className={cn(base, 'bottom-2 right-2 border-b border-r')} />
-    </>
   )
 }

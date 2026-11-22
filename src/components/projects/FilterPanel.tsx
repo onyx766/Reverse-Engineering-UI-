@@ -16,14 +16,14 @@ interface FilterProps {
   density?: 0 | 1 | 2
 }
 
-const OPTIONS: { id: FilterId; label: string }[] = [
+export const OPTIONS: { id: FilterId; label: string }[] = [
   { id: 'all', label: 'All Projects' },
   ...CATEGORIES.map((c) => ({ id: c.id as FilterId, label: c.label })),
 ]
 
 
 /** Roving-tabindex radio group: arrows move the selection, Home/End jump. */
-function useRadioKeys(value: FilterId, onChange: (id: FilterId) => void, axis: 'x' | 'y') {
+export function useRadioKeys(value: FilterId, onChange: (id: FilterId) => void, axis: 'x' | 'y') {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     const i = OPTIONS.findIndex((o) => o.id === value)

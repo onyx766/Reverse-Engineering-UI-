@@ -464,7 +464,7 @@ export function HexDump({ rows, legend = true, fields, labels, structure = false
                 onBlur={() => setFocus(null)}
                 onClick={() => toggle({ kind: k })}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-md border px-2 font-mono text-[9.5px] uppercase tracking-[0.12em] transition-colors duration-200 [@media(pointer:coarse)]:h-10',
+                  'inline-flex h-7 items-center gap-1.5 rounded-md border px-2 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] transition-colors duration-200 [@media(pointer:coarse)]:h-10',
                   on
                     ? 'border-accent/50 bg-accent/15 text-ink'
                     : 'border-transparent text-muted hover:border-accent/30 hover:bg-accent/[0.08] hover:text-ink',

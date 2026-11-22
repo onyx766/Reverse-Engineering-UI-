@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Home,
+  House,
+  Box,
   Cpu,
   FolderGit2,
   Wrench,
@@ -10,10 +12,14 @@ import {
   Mail,
   Menu,
   X,
+  Codesandbox,
 } from 'lucide-react'
 import { useTheme } from '@/theme/ThemeProvider'
 import { NAV_ITEMS, SECTION_ORDER, THEMES, morphVars, type SectionId } from '@/theme/themes'
 import { HoloLogo } from '@/components/ui/HoloLogo'
+import NAV_SLAB from '@/assets/ref/nav.webp'
+import { useRefScale } from '@/hooks/useRefScale'
+import { PROFILE } from '@/data/profile'
 import { MagneticButton } from '@/components/ui/MagneticButton'
 import { ScrollProgress } from '@/components/fx/ScrollProgress'
 import { preloadSection } from '@/sections/registry'
@@ -139,10 +145,12 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
             scrolled ? 'opacity-100' : 'opacity-0',
           )}
         />
-        {/* widths are sized for Orbitron, which is wider than its fallbacks */}
+        <DesktopBar section={section} go={go} />
+
+        {/* phones and tablets: the compact bar */}
         <div
           className={cn(
-            'scene pointer-events-auto relative w-full max-w-6xl transition-[max-width] duration-500 2xl:max-w-[84rem]',
+            'scene pointer-events-auto relative w-full max-w-6xl lg:hidden transition-[max-width] duration-500 2xl:max-w-[84rem]',
             scrolled && 'max-w-5xl xl:max-w-[68rem] 2xl:max-w-[76rem]',
           )}
         >
@@ -171,12 +179,12 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
               <HoloLogo size={38} />
               {/* phones keep the wordmark (the bar has room for it); the subtitle joins from sm */}
               <span className="block min-w-[4.75rem] leading-none">
-                <span className="block font-display text-[18px] font-black tracking-[0.18em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent sm:text-[20px]">
+                <span className="block font-display text-[18px] font-bold tracking-[-0.005em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent sm:text-[20px]">
                   ONYX
                 </span>
                 <span
                   className={cn(
-                    'mt-1 hidden font-mono text-[8.5px] uppercase leading-[1.35] tracking-[0.18em] text-muted sm:block lg:hidden xl:block',
+                    'mt-1 hidden font-ui font-semibold text-[10.5px] uppercase leading-[1.35] tracking-[0.08em] text-muted sm:block lg:hidden xl:block',
                     scrolled && 'xl:hidden',
                   )}
                 >
@@ -204,7 +212,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
                 onClick={() => go('contact')}
                 strength={0.3}
                 className={cn(
-                  'group relative hidden min-h-10 overflow-hidden rounded-xl border px-3 py-2.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] transition-[color,border-color,background-color,box-shadow] duration-300 sm:inline-flex xl:px-4 xl:text-[12px] xl:tracking-[0.16em]',
+                  'group relative hidden min-h-10 overflow-hidden rounded-xl border px-3 py-2.5 font-ui text-[11px] font-bold uppercase tracking-[0.08em] transition-[color,border-color,background-color,box-shadow] duration-300 sm:inline-flex xl:px-4 xl:text-[12px] xl:tracking-[0.08em]',
                   section === 'contact'
                     ? 'border-accent bg-accent/20 text-ink shadow-glow'
                     : 'border-accent/45 bg-accent/10 text-accent hover:border-accent hover:text-ink hover:shadow-glow-sm focus-visible:border-accent focus-visible:text-ink',
@@ -282,7 +290,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
               <Bracket className="bottom-2 left-2 -rotate-90" />
               <Bracket className="bottom-2 right-2 rotate-180" />
 
-              <div className="flex items-center justify-between px-3 pb-2 pt-1.5 font-mono text-[9.5px] uppercase tracking-[0.26em] text-muted">
+              <div className="flex items-center justify-between px-3 pb-2 pt-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
                 <span className="text-accent">// navigate</span>
                 <span>{String(SECTION_ORDER.length).padStart(2, '0')} nodes</span>
               </div>
@@ -304,7 +312,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
                         onClick={(e) => routeClick(e, () => go(id))}
                         aria-current={active ? 'page' : undefined}
                         className={cn(
-                          'group relative flex min-h-12 items-center gap-3 overflow-hidden rounded-xl px-3 py-2 font-display text-[13px] uppercase tracking-[0.16em] transition-colors duration-300',
+                          'group relative flex min-h-12 items-center gap-3 overflow-hidden rounded-xl px-3 py-2 font-ui font-semibold text-[13px] uppercase tracking-[0.08em] transition-colors duration-300',
                           active
                             ? 'bg-accent/15 text-ink shadow-glow-sm'
                             : 'text-muted hover:bg-accent/[0.08] hover:text-ink focus-visible:bg-accent/10 focus-visible:text-ink',
@@ -338,7 +346,7 @@ export function Navbar({ ready = true }: { ready?: boolean }) {
                 })}
               </ul>
 
-              <div className="mt-2 flex items-center gap-2 border-t border-accent/15 px-3 pb-1 pt-2.5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-muted">
+              <div className="mt-2 flex items-center gap-2 border-t border-accent/15 px-3 pb-1 pt-2.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -380,7 +388,7 @@ function NavLink({
       aria-keyshortcuts={key}
       data-cursor-label={`[${key}]`}
       className={cn(
-        'group relative whitespace-nowrap rounded-xl px-1.5 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors duration-300 xl:px-2.5 xl:text-[12px] xl:tracking-[0.1em] 2xl:px-3',
+        'group relative whitespace-nowrap rounded-xl px-1.5 py-2.5 font-ui text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors duration-300 xl:px-2.5 xl:text-[12px] xl:tracking-[0.08em] 2xl:px-3',
         active ? 'text-ink' : 'text-muted hover:text-ink focus-visible:text-ink',
       )}
     >
@@ -427,5 +435,161 @@ function Bracket({ className }: { className?: string }) {
         className,
       )}
     />
+  )
+}
+
+/* ── desktop bar: the reference render's navbar, drawn in its own pixel space ── */
+
+/** design box of the bar: x 228…1456, y 0…118 of the 1672 × 941 reference */
+const BAR_W = 1228
+const BAR_H = 118
+const REF_ICONS: Record<SectionId, (p: { className?: string }) => JSX.Element> = {
+  home: (p) => <House strokeWidth={1.6} {...p} />,
+  expertise: (p) => <Codesandbox strokeWidth={1.6} {...p} />,
+  projects: (p) => <Box strokeWidth={1.6} {...p} />,
+  tools: (p) => <Wrench strokeWidth={1.6} {...p} />,
+  writeups: (p) => <FileText strokeWidth={1.6} {...p} />,
+  about: AboutGlyph,
+  contact: (p) => <Mail strokeWidth={1.6} {...p} />,
+}
+
+function DesktopBar({ section, go }: { section: SectionId; go: (id: SectionId) => void }) {
+  // never smaller than 0.8: at 1024–1280px the bar stays readable and still fits
+  const s = Math.max(0.8, useRefScale())
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-0 hidden lg:block"
+      style={{
+        width: BAR_W,
+        height: BAR_H,
+        // the bar's centre sits 6px right of the page centre in the reference
+        transform: `translateX(calc(-50% + ${6 * s}px)) scale(${s})`,
+        transformOrigin: 'top center',
+      }}
+    >
+      {/* the render's own glass slab (name and links removed, logo and Contact kept) */}
+      <img
+        aria-hidden
+        alt=""
+        src={NAV_SLAB}
+        width={BAR_W}
+        height={BAR_H}
+        draggable={false}
+        className="pointer-events-none absolute inset-0 h-full w-full select-none"
+        style={{ filter: 'drop-shadow(0 10px 18px rgb(0 0 0 / 0.6))' }}
+      />
+
+      {/* brand */}
+      <a
+        href="#home"
+        onClick={(e) => routeClick(e, () => go('home'))}
+        aria-label={`${PROFILE.name}, home`}
+        data-cursor-label="[1] home"
+        className="group pointer-events-auto absolute left-[37px] top-[23px] flex items-center gap-[17px] rounded-xl font-ui outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        {/* the logo is part of the slab: hover adds light over it */}
+        <span
+          aria-hidden
+          className="relative h-[66px] w-[60px] shrink-0 rounded-[14px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          style={{ mixBlendMode: 'screen', background: 'radial-gradient(closest-side, rgb(60 220 250 / 0.55), transparent)' }}
+        />
+        <span className="block leading-none text-ink">
+          <span className="block text-[41px] font-bold leading-[40px] tracking-[-0.01em] transition-[text-shadow] duration-300 group-hover:[text-shadow:0_0_18px_rgb(var(--accent)/0.8)]">
+            {PROFILE.name}
+          </span>
+          <span className="mt-[3px] block text-[15.5px] leading-[17.5px] text-ink/90">
+            Reverse Engineer
+            <br />
+            &amp; Automation Engineer
+          </span>
+        </span>
+      </a>
+
+      <ScrollProgress className="left-[300px] top-[97px] w-[700px]" />
+
+      <nav aria-label="Primary" className="pointer-events-auto absolute left-[343px] top-[46px] flex h-[44px] items-center gap-[30px] font-ui">
+        {NAV_ITEMS.map((id) => (
+          <RefNavLink key={id} id={id} active={section === id} onSelect={(e) => routeClick(e, () => go(id))} />
+        ))}
+      </nav>
+
+      {/* Contact is drawn on the slab; this is the live control over it */}
+      <button
+        type="button"
+        onClick={() => go('contact')}
+        aria-current={section === 'contact' ? 'page' : undefined}
+        aria-label="Contact"
+        className="group pointer-events-auto absolute left-[1057px] top-[31px] h-[51px] w-[136px] rounded-[11px] outline-none focus-visible:ring-2 focus-visible:ring-accent3"
+      >
+        <span
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute inset-0 rounded-[11px] transition-opacity duration-300',
+            section === 'contact' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+          )}
+          style={{
+            mixBlendMode: 'screen',
+            boxShadow: 'inset 0 0 0 2px rgb(110 235 255 / 0.9), inset 0 0 16px rgb(60 215 250 / 0.55), 0 0 18px rgb(60 215 250 / 0.7)',
+          }}
+        />
+      </button>
+    </div>
+  )
+}
+
+function RefNavLink({
+  id,
+  active,
+  onSelect,
+}: {
+  id: SectionId
+  active: boolean
+  onSelect: (e: MouseEvent<HTMLAnchorElement>) => void
+}) {
+  const Icon = REF_ICONS[id]
+  const key = keyOf(id)
+  return (
+    <a
+      href={`#${id}`}
+      onClick={onSelect}
+      onMouseEnter={() => preloadSection(id)}
+      onFocus={() => preloadSection(id)}
+      aria-current={active ? 'page' : undefined}
+      aria-keyshortcuts={key}
+      data-cursor-label={`[${key}]`}
+      className={cn(
+        'group relative flex h-full items-center gap-[9px] whitespace-nowrap rounded-md text-[15.5px] outline-none transition-[color,text-shadow] duration-300 focus-visible:ring-2 focus-visible:ring-accent',
+        active ? 'font-semibold text-ink' : 'text-ink/[0.92] hover:text-ink hover:[text-shadow:0_0_12px_rgb(var(--accent)/0.85)]',
+      )}
+    >
+      <Icon
+        className={cn(
+          'h-[21px] w-[21px] shrink-0 transition-[color,transform] duration-300',
+          active ? 'text-ink' : 'text-ink/90 group-hover:-translate-y-px group-hover:text-accent3',
+        )}
+      />
+      {THEMES[id].label}
+      {/* hover: a thin sweep along the bottom lip */}
+      <span className="pointer-events-none absolute -inset-x-3 top-[46px] h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-accent to-transparent transition-transform duration-500 group-hover:scale-x-100" />
+      {active && (
+        <motion.span
+          layoutId="ref-nav-underline"
+          transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+          className="absolute -inset-x-[15px] top-[45px] h-[3px] rounded-full bg-accent3"
+          style={{ boxShadow: '0 0 6px rgb(var(--accent)), 0 0 16px rgb(var(--accent) / 0.8), 0 0 30px rgb(var(--accent) / 0.45)' }}
+        />
+      )}
+    </a>
+  )
+}
+
+/** About: a person inside a rounded hexagon (the reference's glyph). */
+function AboutGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M12 2.6 19.9 7.2v9.6L12 21.4 4.1 16.8V7.2z" />
+      <circle cx="12" cy="10" r="2.8" />
+      <path d="M7.6 16.6c.9-2 2.5-3 4.4-3s3.5 1 4.4 3" />
+    </svg>
   )
 }

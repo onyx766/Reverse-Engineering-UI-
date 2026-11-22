@@ -168,11 +168,11 @@ export function BootSequence({ onReveal, onDone }: { onReveal: () => void; onDon
           >
             <BootMark />
 
-            <div className="mt-7 flex font-display text-[44px] font-black leading-none text-ink [text-shadow:0_0_28px_rgb(var(--accent)/0.55)] sm:text-[52px]">
+            <div className="mt-7 flex font-display text-[44px] font-bold leading-none text-ink [text-shadow:0_0_28px_rgb(var(--accent)/0.55)] sm:text-[52px]">
               <Scramble text={BOOT.title} delay={260} duration={620} />
             </div>
             <motion.p
-              className="mt-3 font-mono text-[11px] uppercase tracking-[0.34em] text-accent"
+              className="mt-3 font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-accent"
               initial={{ opacity: 0, letterSpacing: '0.6em' }}
               animate={{ opacity: 1, letterSpacing: '0.34em' }}
               transition={{ duration: 0.8, delay: 0.45, ease: EASE }}
@@ -187,7 +187,7 @@ export function BootSequence({ onReveal, onDone }: { onReveal: () => void; onDon
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
             >
-              <div className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.24em]">
+              <div className="mb-2 flex items-center justify-between font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em]">
                 <span className="flex items-center gap-2 text-muted">
                   <span
                     className={cn(
@@ -249,7 +249,7 @@ export function BootSequence({ onReveal, onDone }: { onReveal: () => void; onDon
           </motion.div>
 
           <motion.p
-            className="absolute inset-x-0 bottom-7 text-center font-mono text-[10px] uppercase tracking-[0.3em] text-muted/80 sm:bottom-10"
+            className="absolute inset-x-0 bottom-7 text-center font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted/80 sm:bottom-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: exiting ? 0 : 1 }}
             transition={{ duration: 0.4, delay: exiting ? 0 : 0.7 }}
@@ -349,7 +349,7 @@ function HudCorner({
           !flip && 'border-l border-t',
         )}
       />
-      <span className="mt-1 whitespace-nowrap font-mono text-[9.5px] uppercase tracking-[0.22em] text-muted">
+      <span className="mt-1 whitespace-nowrap font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
         {text}
       </span>
     </motion.div>

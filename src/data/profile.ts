@@ -6,7 +6,7 @@ export const PROFILE = {
   location: 'Remote · UTC+1',
   available: true,
   // OWNER: real contact address (also hard-coded in the <noscript> card of index.html)
-  email: 'ryanma02228@gmail.com',
+  email: 'onyxdev88@gmail.com',
   tagline:
     'Eight years taking software apart and automating what’s left — reverse engineering, AIO / ACO / ATC bots, and Discord & Whop apps.',
   roles: [
@@ -21,7 +21,7 @@ export const PROFILE = {
   socials: [
     { label: 'GitHub', href: 'https://github.com/onyx766', handle: '@onyx766' },
     { label: 'Telegram', href: 'https://t.me/onyxdev766', handle: '@onyxdev766' },
-    { label: 'Mail', href: 'mailto:ryanma02228@gmail.com', handle: 'ryanma02228@gmail.com' },
+    { label: 'Mail', href: 'mailto:onyxdev88@gmail.com', handle: 'onyxdev88@gmail.com' },
   ],
 }
 

@@ -97,7 +97,7 @@ export const CATEGORIES: Category[] = [
 export const STAGES: { id: StageId; label: string }[] = [
   { id: 'static', label: 'Static Analysis' },
   { id: 'dynamic', label: 'Dynamic Analysis' },
-  { id: 'behavior', label: 'Behaviour Tracing' },
+  { id: 'behavior', label: 'Behavior Tracing' },
   { id: 'protocol', label: 'Protocol Mapping' },
   { id: 'reimpl', label: 'Reimplementation' },
 ]
@@ -130,7 +130,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'undocumented-api',
     title: 'Undocumented API Analysis',
-    short: 'Analyse and reconstruct a private web API.',
+    short: 'Analyze and reconstruct a private web API.',
     category: 'api',
     kind: 'api',
     tags: ['API', 'HTTP', 'Python'],
@@ -241,7 +241,7 @@ class SignedAuth(httpx.Auth):
   {
     id: 'binary-case-study',
     title: 'Binary Analysis Case Study',
-    short: 'Analyse a compiled binary and recover its logic.',
+    short: 'Analyze a compiled binary and recover its logic.',
     category: 'binary',
     kind: 'binary',
     tags: ['Ghidra', 'x64dbg', 'C++'],
@@ -482,7 +482,7 @@ DissectorTable.get("tcp.port"):add(7400, ctl)
   {
     id: 'file-format',
     title: 'File Format Reverse Engineering',
-    short: 'Analyse an undocumented file format and build a parser.',
+    short: 'Analyze an undocumented file format and build a parser.',
     category: 'format',
     kind: 'format',
     tags: ['Hex', 'Python', 'Parser'],
@@ -638,7 +638,7 @@ enums:
   {
     id: 'reimplementation',
     title: 'Reimplementation & Patching',
-    short: 'Recreate key behaviour and build a compatible implementation.',
+    short: 'Recreate key behavior and build a compatible implementation.',
     category: 'reimpl',
     kind: 'reimpl',
     tags: ['C++', 'Linux', 'Debugging'],

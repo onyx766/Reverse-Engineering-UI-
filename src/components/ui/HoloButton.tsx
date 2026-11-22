@@ -16,9 +16,9 @@ interface Props {
 }
 
 const SIZES = {
-  sm: 'px-3.5 py-2 text-[11px]',
-  md: 'px-5 py-2.5 text-[12px]',
-  lg: 'px-7 py-3.5 text-[13px]',
+  sm: 'px-3.5 py-2 text-[14px]',
+  md: 'px-5 py-2.5 text-[15.5px]',
+  lg: 'px-7 py-3 text-[17px]',
 }
 
 export function HoloButton({
@@ -33,11 +33,11 @@ export function HoloButton({
   magnetic = true,
 }: Props) {
   const classes = cn(
-    'group relative overflow-hidden rounded-xl border font-display font-bold uppercase tracking-[0.16em]',
+    'group relative overflow-hidden rounded-[10px] border-[1.5px] font-ui font-semibold',
     'transition-[color,background-color,border-color,box-shadow] duration-300',
     SIZES[size],
     variant === 'solid' &&
-      'border-accent/60 bg-accent/15 text-ink hover:border-accent hover:bg-accent/25 hover:shadow-glow',
+      'border-accent/90 bg-[rgb(4_14_20/0.6)] text-ink shadow-[0_0_10px_rgb(var(--accent)/0.6),inset_0_0_12px_rgb(var(--accent)/0.22)] hover:bg-accent/15 hover:shadow-glow',
     variant === 'outline' &&
       'border-accent/40 bg-transparent text-accent hover:border-accent hover:bg-accent/10 hover:text-ink hover:shadow-glow-sm',
     variant === 'ghost' &&

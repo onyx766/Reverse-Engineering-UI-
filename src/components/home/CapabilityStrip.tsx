@@ -124,7 +124,7 @@ function CapabilityCell({
           {/* phones keep to title + hook; the tool names start at sm */}
           <span className="hidden sm:mt-auto sm:block sm:pt-4">
             {/* two lines reserved at xl, where the narrow cells wrap, so every divider lines up */}
-            <span className="block border-t border-accent/15 pt-2.5 font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-muted/90 transition-colors duration-300 group-hover:text-accent xl:min-h-[calc(3.25em+0.625rem)]">
+            <span className="block border-t border-accent/15 pt-2.5 font-ui font-semibold text-[11.25px] uppercase leading-relaxed tracking-[0.08em] text-muted/90 transition-colors duration-300 group-hover:text-accent xl:min-h-[calc(3.25em+0.625rem)]">
               {cap.tags.join(' · ')}
             </span>
           </span>

@@ -180,7 +180,7 @@ function ToastCard({
         {t.tone === 'warn' ? <TriangleAlert className="h-4 w-4" /> : <Check className="h-4 w-4" />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-display text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink">
+        <span className="block font-ui text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink">
           {t.title}
         </span>
         {t.body && (
@@ -196,7 +196,7 @@ function ToastCard({
             t.action?.onClick(e)
             onDismiss(t.id)
           }}
-          className="h-10 shrink-0 rounded-lg border border-accent/40 bg-accent/10 px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-accent transition-colors duration-300 hover:border-accent hover:bg-accent/20 hover:text-ink"
+          className="h-10 shrink-0 rounded-lg border border-accent/40 bg-accent/10 px-3 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent transition-colors duration-300 hover:border-accent hover:bg-accent/20 hover:text-ink"
         >
           {t.action.label}
         </button>

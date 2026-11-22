@@ -72,7 +72,7 @@ export function DifficultyPips({
         ))}
       </span>
       {showLabel && (
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+        <span className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
           {level}
         </span>
       )}

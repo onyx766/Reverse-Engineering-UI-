@@ -15,8 +15,10 @@ import type { Project } from '@/data/projects'
 import { clamp, cn } from '@/lib/utils'
 import { useElementSize } from './hooks'
 import { ProjectCard } from './ProjectCard'
+import { RefCard, REF_CARD_H, REF_CARD_W } from './ref/RefCard'
+import { lerpQuad, quadMatrix, type Quad } from './ref/quad'
 
-export type CarouselMode = 'arc' | 'slider'
+export type CarouselMode = 'arc' | 'slider' | 'ref'
 
 interface Layout {
   mode: CarouselMode
@@ -45,6 +47,9 @@ const ARROW_GAP = 18
 const ARC_PERSPECTIVE = 1500
 
 function computeLayout(width: number, vh: number, mode: CarouselMode): Layout {
+  if (mode === 'ref') {
+    return { mode, cardW: REF_CARD_W, cardH: REF_CARD_H, gap1: 282, gap2: 280, rot: 0, depth: 0, drop: 0, range: 2, sideOpacity: 1 }
+  }
   if (mode === 'slider') {
     const cardW = Math.round(clamp(Math.min(width * 0.8, 330), 240, 330))
     return {
@@ -114,6 +119,34 @@ export function offsetFor(i: number, f: number, n: number) {
   return d
 }
 
+/* -- reference arc: every slot pinned to the card corners measured on the render -- */
+
+/** slot quads (TL, TR, BR, BL) measured on the render; ±3 continue the arc off-stage */
+const REF_SLOTS: Record<number, Quad> = {
+  [-3]: [[-137, 498], [143, 531], [127, 764], [-162, 746]],
+  [-2]: [[153, 522], [420, 541], [411, 768], [136, 758]],
+  [-1]: [[443, 546], [697, 551], [695, 772], [434, 770]],
+  0: [[716, 555], [977, 555], [978, 772], [715, 772]],
+  1: [[999, 551], [1259, 548], [1263, 770], [1004, 773]],
+  2: [[1274, 537], [1521, 519], [1541, 760], [1287, 768]],
+  3: [[1549, 523], [1783, 490], [1819, 750], [1570, 763]],
+}
+
+function refQuad(e: number): Quad {
+  const a = Math.min(Math.abs(e), 3)
+  const sign = e < 0 ? -1 : 1
+  const i = Math.min(2, Math.floor(a))
+  return lerpQuad(REF_SLOTS[sign * i], REF_SLOTS[sign * (i + 1)], a - i)
+}
+
+function refStyle(e: number) {
+  const a = Math.abs(e)
+  return {
+    transform: quadMatrix(REF_CARD_W, REF_CARD_H, refQuad(e)),
+    opacity: a <= 2 ? 1 : clamp(1 - (a - 2), 0, 1),
+  }
+}
+
 interface CarouselProps {
   projects: Project[]
   focusIndex: number
@@ -125,6 +158,8 @@ interface CarouselProps {
   onStep: (delta: number) => void
   onOpen: (id: string) => void
   className?: string
+  /** ref mode: the stage's CSS scale, so drags map to slots correctly */
+  scale?: number
 }
 
 /**
@@ -134,7 +169,7 @@ interface CarouselProps {
  * side card all move focus; cards that wrap around exit one side and re-enter
  * from the other instead of sweeping across the stage.
  */
-export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOpen, className }: CarouselProps) {
+export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOpen, className, scale = 1 }: CarouselProps) {
   const reduced = useReducedMotion()
   const rootRef = useRef<HTMLDivElement>(null)
   const { width } = useElementSize(rootRef)
@@ -174,7 +209,8 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
     setTimeout(() => {
       didPan.current = false
     }, 0)
-    const proj = info.offset.x / L.gap1 + (info.velocity.x / L.gap1) * 0.12
+    const unit = L.gap1 * scale
+    const proj = info.offset.x / unit + (info.velocity.x / unit) * 0.12
     let steps = -Math.round(proj)
     if (steps === 0 && Math.abs(proj) > 0.22) steps = -Math.sign(proj)
     steps = clamp(steps, -2, 2)
@@ -187,12 +223,12 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
 
   // empty slots on the arc keep its shape when a filter leaves few cards
   const ghosts: number[] = []
-  if (mode === 'arc' && n < 5) {
+  if ((mode === 'arc' || mode === 'ref') && n < 5) {
     const taken = new Set(projects.map((_, i) => offsetFor(i, focusIndex, n)))
     for (const d of [-2, -1, 1, 2]) if (!taken.has(d) && Math.abs(d) <= L.range) ghosts.push(d)
   }
 
-  const trackH = L.cardH + (mode === 'arc' ? 64 : 36)
+  const trackH = mode === 'ref' ? 941 : L.cardH + (mode === 'arc' ? 64 : 36)
   // arc arrows sit just outside the outermost cards, as in the reference
   const arrowInset = mode === 'arc' ? Math.max(0, Math.round((width || 1200) / 2 - arcExtent(L) - ARROW_GAP - ARROW)) : 0
 
@@ -206,7 +242,11 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
     >
       <motion.div
         className={cn('relative select-none', mode === 'slider' && '-mx-5 overflow-hidden sm:-mx-8')}
-        style={{ height: trackH, perspective: mode === 'arc' ? ARC_PERSPECTIVE : 1100, perspectiveOrigin: '50% 30%', touchAction: 'pan-y' }}
+        style={
+          mode === 'ref'
+            ? { height: trackH, touchAction: 'pan-y' }
+            : { height: trackH, perspective: mode === 'arc' ? ARC_PERSPECTIVE : 1100, perspectiveOrigin: '50% 30%', touchAction: 'pan-y' }
+        }
         onPointerDownCapture={() => {
           didPan.current = false
         }}
@@ -214,7 +254,7 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
           didPan.current = true
         }}
         onPan={(_, info) => {
-          if (n > 1) drag.set(clamp(info.offset.x / L.gap1, -1.8, 1.8))
+          if (n > 1) drag.set(clamp(info.offset.x / (L.gap1 * scale), -1.8, 1.8))
         }}
         onPanEnd={onPanEnd}
       >
@@ -269,6 +309,14 @@ export function Carousel({ projects, focusIndex, shift, mode, live, onStep, onOp
             className="absolute"
             style={{ top: L.cardH / 2 - ARROW / 2 + 6, right: arrowInset }}
           />
+        </>
+      )}
+
+      {/* ref: round arrows at the measured spots, either side of the arc */}
+      {mode === 'ref' && n > 1 && (
+        <>
+          <RefArrow dir="prev" onClick={() => onStep(-1)} style={{ left: 72, top: 599 }} />
+          <RefArrow dir="next" onClick={() => onStep(1)} style={{ left: 1554, top: 599 }} />
         </>
       )}
 
@@ -358,10 +406,13 @@ function Slot({
   useEffect(() => () => ctrl.current?.stop(), [])
 
   const transform = useTransform(() => {
+    if (L.mode === 'ref') return refStyle(pos.get() + drag.get()).transform
     const g = geom(pos.get() + drag.get(), L)
     return `translate3d(${g.x.toFixed(2)}px, ${g.y.toFixed(2)}px, ${g.z.toFixed(2)}px) rotateY(${g.rot.toFixed(2)}deg) scale(${g.scale.toFixed(4)})`
   })
-  const opacity = useTransform(() => geom(pos.get() + drag.get(), L).opacity)
+  const opacity = useTransform(() =>
+    L.mode === 'ref' ? refStyle(pos.get() + drag.get()).opacity : geom(pos.get() + drag.get(), L).opacity,
+  )
   const zIndex = useTransform(() => 100 - Math.round(Math.abs(pos.get() + drag.get()) * 10))
 
   // declared after the derived values so their listeners are re-attached before pos changes
@@ -409,15 +460,16 @@ function Slot({
 
   return (
     <motion.div
-      className="preserve-3d absolute left-1/2 top-0"
+      className={cn('preserve-3d absolute top-0', L.mode === 'ref' ? 'left-0' : 'left-1/2')}
       style={{
         width: L.cardW,
         height: L.cardH,
-        marginLeft: -L.cardW / 2,
+        marginLeft: L.mode === 'ref' ? 0 : -L.cardW / 2,
+        transformOrigin: L.mode === 'ref' ? '0 0' : undefined,
         transform,
         opacity,
         zIndex,
-        pointerEvents: hidden ? 'none' : undefined,
+        pointerEvents: hidden ? 'none' : 'auto',
       }}
       role="group"
       aria-roledescription="slide"
@@ -457,7 +509,11 @@ function Slot({
           animate={{ y: lit && !reduced ? -8 : 0, z: lit && !reduced ? 34 : 0 }}
           transition={{ type: 'spring', stiffness: 260, damping: 24 }}
         >
-          <ProjectCard project={project} focused={focused} hover={lit} live={live} width={L.cardW} />
+          {L.mode === 'ref' ? (
+            <RefCard project={project} focused={focused} hover={lit} live={live} />
+          ) : (
+            <ProjectCard project={project} focused={focused} hover={lit} live={live} width={L.cardW} />
+          )}
           <button
             ref={registerButton}
             type="button"
@@ -473,7 +529,7 @@ function Slot({
               setKbd(e.currentTarget.matches(':focus-visible'))
             }}
             onBlur={() => setKbd(false)}
-            className="absolute inset-0 cursor-pointer rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep"
+            className="absolute inset-0 cursor-pointer rounded-[15px] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep"
           />
         </motion.div>
       </motion.div>
@@ -483,15 +539,19 @@ function Slot({
 
 function Ghost({ d, L }: { d: number; L: Layout }) {
   const g = geom(d, L)
+  const ref = L.mode === 'ref'
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none absolute left-1/2 top-0"
+      className={cn('pointer-events-none absolute top-0', ref ? 'left-0' : 'left-1/2')}
       style={{
         width: L.cardW,
         height: L.cardH,
-        marginLeft: -L.cardW / 2,
-        transform: `translate3d(${g.x}px, ${g.y}px, ${g.z}px) rotateY(${g.rot}deg) scale(${g.scale})`,
+        marginLeft: ref ? 0 : -L.cardW / 2,
+        transformOrigin: ref ? '0 0' : undefined,
+        transform: ref
+          ? refStyle(d).transform
+          : `translate3d(${g.x}px, ${g.y}px, ${g.z}px) rotateY(${g.rot}deg) scale(${g.scale})`,
         zIndex: 10,
       }}
       initial={{ opacity: 0 }}
@@ -501,7 +561,7 @@ function Ghost({ d, L }: { d: number; L: Layout }) {
     >
       <div className="relative h-full w-full rounded-2xl border border-dashed border-accent/25 bg-accent/[0.025]">
         <span className="absolute inset-0 rounded-2xl bg-[repeating-linear-gradient(135deg,rgb(var(--accent)/0.05)_0_2px,transparent_2px_10px)]" />
-        <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono text-[9.5px] uppercase tracking-[0.24em] text-muted/50">
+        <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted/50">
           empty slot
         </span>
       </div>
@@ -601,6 +661,28 @@ function ArrowButton({
           small ? 'h-5 w-5' : 'h-6 w-6',
           dir === 'prev' ? 'group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5',
         )}
+      />
+    </button>
+  )
+}
+
+function RefArrow({ dir, onClick, style }: { dir: 'prev' | 'next'; onClick: () => void; style: React.CSSProperties }) {
+  // the arrow itself is part of the photoreal plate: this is the live control over it
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={dir === 'prev' ? 'Previous project' : 'Next project'}
+      className="group pointer-events-auto absolute z-[120] h-[46px] w-[46px] rounded-full outline-none transition-transform duration-200 active:scale-95"
+      style={style}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+        style={{
+          mixBlendMode: 'screen',
+          boxShadow: 'inset 0 0 0 1.5px rgb(110 235 255 / 0.95), inset 0 0 12px rgb(60 215 250 / 0.55), 0 0 16px rgb(60 215 250 / 0.7)',
+        }}
       />
     </button>
   )

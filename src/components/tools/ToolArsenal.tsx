@@ -43,7 +43,7 @@ export function ToolArsenal({
         title="The Arsenal"
         kicker="Every tool, and exactly what I use it for"
         right={
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+          <span className="font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-muted">
             showing <span className="text-accent">{String(visible.length).padStart(2, '0')}</span> / {TOOLS.length}
           </span>
         }
@@ -64,7 +64,7 @@ export function ToolArsenal({
               aria-pressed={active}
               onClick={() => onFilter(o.id)}
               className={cn(
-                'group relative inline-flex min-h-[40px] shrink-0 items-center gap-2 overflow-hidden rounded-xl border px-3.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-300',
+                'group relative inline-flex min-h-[40px] shrink-0 items-center gap-2 overflow-hidden rounded-xl border px-3.5 font-ui font-semibold text-[11px] uppercase tracking-[0.08em] transition-colors duration-300',
                 active
                   ? 'border-transparent text-ink'
                   : 'border-accent/25 bg-accent/[0.05] text-muted hover:border-accent/60 hover:bg-accent/[0.12] hover:text-ink',
@@ -138,7 +138,7 @@ export function ToolArsenal({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="group inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent/45 bg-accent/10 px-5 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-ink transition-colors duration-300 hover:border-accent hover:bg-accent/20"
+              className="group inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-accent/45 bg-accent/10 px-5 font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-ink transition-colors duration-300 hover:border-accent hover:bg-accent/20"
             >
               Show all {TOOLS.length} tools
               <ChevronDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />

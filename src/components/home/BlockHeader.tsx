@@ -38,7 +38,7 @@ export function BlockHeader({
       <div className="min-w-0 max-w-2xl">
         <motion.p
           {...reveal(0, 12, still)}
-          className="flex items-center gap-3 font-mono text-[10.5px] uppercase tracking-[0.32em] text-accent"
+          className="flex items-center gap-3 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent"
         >
           <span className="grid h-7 min-w-7 place-items-center rounded-md border border-accent/40 bg-accent/10 px-1 font-mono text-[10px] tracking-[0.04em] text-accent shadow-glow-sm">
             {String(index).padStart(2, '0')}
@@ -51,7 +51,7 @@ export function BlockHeader({
           id={headingId}
           tabIndex={-1}
           data-block-heading
-          className="mt-3 text-balance font-display text-[clamp(1.55rem,3.6vw,2.45rem)] font-black uppercase leading-[1.06] tracking-tight text-gradient outline-none"
+          className="mt-3 text-balance font-display text-[clamp(1.55rem,3.6vw,2.45rem)] font-bold leading-[1.06] tracking-tight text-gradient outline-none"
         >
           {title}
         </motion.h2>

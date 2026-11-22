@@ -221,7 +221,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
       <div className="flex flex-1 flex-col gap-4 pb-5">
         {/* stepper + reference */}
         <motion.div {...reveal(0.12)} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <ol className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em]">
+          <ol className="flex items-center gap-1.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em]">
             {['Encode', 'Transmit', 'Deliver'].map((s, i) => {
               const done = i < stepIndex || stage === 'done'
               const active = i === stepIndex && stage !== 'done'
@@ -258,7 +258,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
               )
             })}
           </ol>
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+          <span className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
             ref <span className="text-accent">{brief.ref}</span>
           </span>
         </motion.div>
@@ -378,7 +378,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
 
       {/* status + the submit button collapsing into a progress bar */}
       <div>
-        <div className="mb-2 flex items-center justify-between gap-3 font-mono text-[10.5px] uppercase tracking-[0.16em]">
+        <div className="mb-2 flex items-center justify-between gap-3 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em]">
           <span
             role="status"
             aria-live="polite"
@@ -422,7 +422,7 @@ export function Transmission({ brief, mode, host, delivery, detail, onDone }: Pr
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
             transition={{ duration: reduced ? 0 : 0.22 }}
-            className="absolute inset-0 flex items-center justify-center gap-2.5 font-display text-[12.5px] font-bold uppercase tracking-[0.2em] text-ink"
+            className="absolute inset-0 flex items-center justify-center gap-2.5 font-ui text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink"
           >
             <Send className="h-4 w-4" />
             Transmit message
@@ -498,7 +498,7 @@ function TxLog({ lines, reduced, live }: { lines: LogLine[]; reduced: boolean; l
       transition={{ duration: reduced ? 0 : 0.5, delay: reduced ? 0 : 0.36, ease: EASE }}
       className="relative min-h-[150px] flex-1 overflow-hidden rounded-xl border border-accent/15 bg-deep/50"
     >
-      <div className="flex items-center justify-between border-b border-accent/10 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
+      <div className="flex items-center justify-between border-b border-accent/10 px-3 py-1.5 font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
         <span>tx.log</span>
         <span className="tabular-nums">{lines.length} events</span>
       </div>
@@ -553,7 +553,7 @@ function Node({
       >
         <Icon aria-hidden className="h-5 w-5" />
       </span>
-      <span className="max-w-full truncate font-mono text-[9px] uppercase tracking-[0.14em] text-muted">
+      <span className="max-w-full truncate font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
         {label}
       </span>
     </div>

@@ -94,7 +94,7 @@ export function WriteupToolbar({
         ))}
         <span
           aria-live="polite"
-          className="ml-auto whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.14em] text-muted"
+          className="ml-auto whitespace-nowrap font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-muted"
         >
           <span className="text-accent">{resultCount}</span>
           {resultCount === total ? ' write-ups' : ` / ${total}`}
@@ -122,7 +122,7 @@ function SortButton({
       aria-pressed={active}
       className={cn(
         // phones: the toggle has its own full-width row, so split it evenly and keep the labels
-        'inline-flex h-full flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent sm:flex-none',
+        'inline-flex h-full flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent sm:flex-none',
         active
           ? 'border border-accent/50 bg-accent/15 text-ink shadow-glow-sm'
           : 'border border-transparent text-muted hover:text-ink',

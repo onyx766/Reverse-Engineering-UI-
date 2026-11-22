@@ -87,7 +87,7 @@ function Hero() {
           transition={{ duration: 0.7, ease: EASE }}
           className="flex flex-wrap items-center gap-2"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.18em] text-accent">
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent">
             <span aria-hidden className="relative flex h-1.5 w-1.5">
               <span
                 className={cn(
@@ -112,7 +112,7 @@ function Hero() {
             initial={still ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.08, ease: EASE }}
-            className="font-mono text-[12px] uppercase tracking-[0.34em] text-muted"
+            className="font-ui font-semibold text-[12px] uppercase tracking-[0.08em] text-muted"
           >
             {'>'} {HERO.prompt}
           </motion.p>
@@ -121,7 +121,7 @@ function Hero() {
             initial={still ? false : { opacity: 0, y: 26, filter: 'blur(14px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             transition={{ duration: 0.95, delay: 0.14, ease: EASE }}
-            className="font-display text-[clamp(2.6rem,7vw,5.2rem)] font-black uppercase leading-[0.92] tracking-tight"
+            className="font-display text-[clamp(2.6rem,7vw,5.2rem)] font-bold leading-[0.92] tracking-tight"
           >
             <span className="text-gradient">{PROFILE.name}</span>
             <span className="sr-only">, {PROFILE.role}</span>
@@ -201,7 +201,7 @@ function Hero() {
               ))}
             </ul>
           </div>
-          <div className="mt-3 flex items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+          <div className="mt-3 flex items-center justify-between gap-3 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
             <span className="inline-flex items-center gap-1.5">
               <ShieldCheck aria-hidden className="h-3 w-3 text-accent" />
               {HERO.terminal.footLeft}

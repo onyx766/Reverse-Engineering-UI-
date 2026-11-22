@@ -173,7 +173,7 @@ export function SkillRadar() {
                       x={x}
                       y={p.y + dy}
                       textAnchor={anchor}
-                      className={cn('font-mono uppercase', on ? 'fill-accent' : 'fill-muted')}
+                      className={cn('font-ui font-semibold uppercase', on ? 'fill-accent' : 'fill-muted')}
                       style={{ fontSize: 10, letterSpacing: '0.06em' }}
                     >
                       {a.short}
@@ -220,7 +220,7 @@ export function SkillRadar() {
             </div>
           </div>
 
-          <div className="mt-1 flex items-center justify-center gap-5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+          <div className="mt-1 flex items-center justify-center gap-5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
             <span className="inline-flex items-center gap-2">
               <span className="h-0.5 w-5 rounded-full bg-accent shadow-glow-sm" />
               {RADAR_SERIES.now}
@@ -244,12 +244,12 @@ export function SkillRadar() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: EASE }}
             >
-              <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-muted">
+              <p className="font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
                 axis {String(active + 1).padStart(2, '0')} / {String(N).padStart(2, '0')}
               </p>
               <p className="mt-1 font-display text-[15px] font-bold tracking-wide text-ink">{axis.label}</p>
               <p className="mt-1 flex items-baseline gap-2">
-                <span className="font-display text-[30px] font-black leading-none text-accent [text-shadow:0_0_18px_rgb(var(--accent)/0.6)]">
+                <span className="font-display text-[30px] font-bold leading-none text-accent [text-shadow:0_0_18px_rgb(var(--accent)/0.6)]">
                   {axis.value}
                 </span>
                 <span className="font-mono text-[10px] text-muted">/100</span>

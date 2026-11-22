@@ -559,7 +559,7 @@ export function ContactForm() {
 
                 <div className="mt-auto flex flex-col gap-2">
                   <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-3">
-                    <span className="inline-flex min-w-0 items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+                    <span className="inline-flex min-w-0 items-center gap-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
                       <Save aria-hidden className="h-3.5 w-3.5 shrink-0 text-accent" />
                       <AnimatePresence mode="wait" initial={false}>
                         <motion.span
@@ -578,7 +578,7 @@ export function ContactForm() {
                       <button
                         type="button"
                         onClick={discard}
-                        className="group/discard -mr-2 inline-flex h-10 items-center gap-1.5 rounded-lg px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted transition-colors duration-300 hover:bg-rose-400/10 hover:text-rose-300"
+                        className="group/discard -mr-2 inline-flex h-10 items-center gap-1.5 rounded-lg px-2.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 hover:bg-rose-400/10 hover:text-rose-300"
                       >
                         <Trash2
                           aria-hidden
@@ -592,7 +592,7 @@ export function ContactForm() {
                   <button
                     ref={submitRef}
                     type="submit"
-                    className="group relative flex h-[52px] w-full items-center justify-center overflow-hidden rounded-[14px] border border-accent/60 bg-accent/15 font-display text-[12.5px] font-bold uppercase tracking-[0.2em] text-ink transition-[background-color,border-color,box-shadow,transform] duration-300 hover:border-accent hover:bg-accent/25 hover:shadow-glow active:scale-[0.99]"
+                    className="group relative flex h-[52px] w-full items-center justify-center overflow-hidden rounded-[14px] border border-accent/60 bg-accent/15 font-ui text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink transition-[background-color,border-color,box-shadow,transform] duration-300 hover:border-accent hover:bg-accent/25 hover:shadow-glow active:scale-[0.99]"
                   >
                     <span
                       aria-hidden

@@ -399,7 +399,7 @@ export function CfgGraph({
       {legend && (
         <div
           aria-hidden
-          className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[9px] uppercase tracking-[0.12em] text-muted"
+          className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted"
         >
           <span className="inline-flex items-center gap-1.5">
             <span className="h-px w-4 bg-accent" />

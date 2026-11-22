@@ -191,10 +191,10 @@ function WorkCard({ project: p, index, onOpen }: { project: Project; index: numb
             hover={lit}
             className="absolute inset-0 m-auto h-[82%] w-[76%] drop-shadow-[0_0_10px_rgb(var(--accent)/0.45)] sm:h-[86%] sm:w-[92%] lg:h-[80%] lg:w-[70%]"
           />
-          <span className="absolute left-4 top-3 font-display text-[24px] font-black leading-none text-gradient sm:hidden lg:block lg:text-[26px]">
+          <span className="absolute left-4 top-3 font-display text-[24px] font-bold leading-none text-gradient sm:hidden lg:block lg:text-[26px]">
             {number}
           </span>
-          <span className="absolute right-3 top-3 rounded-md border border-accent/30 bg-deep/60 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-accent sm:hidden lg:block">
+          <span className="absolute right-3 top-3 rounded-md border border-accent/30 bg-deep/60 px-2 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent sm:hidden lg:block">
             {KIND_LABEL[p.kind]}
           </span>
         </span>
@@ -212,7 +212,7 @@ function WorkCard({ project: p, index, onOpen }: { project: Project; index: numb
 
         {/* copy */}
         <span className="relative flex min-w-0 flex-1 flex-col px-4 pb-4 pt-3.5 sm:p-0 sm:pr-12 lg:px-5 lg:pb-5 lg:pt-4">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+          <span className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
             <span className="hidden sm:inline lg:hidden">
               {number} · {KIND_LABEL[p.kind]} ·{' '}
             </span>
@@ -230,11 +230,11 @@ function WorkCard({ project: p, index, onOpen }: { project: Project; index: numb
           <span className="mt-4 grid grid-cols-3 gap-3 border-t border-accent/15 pt-3">
             {p.outcome.metrics.map((m) => (
               <span key={m.label} className="min-w-0">
-                <span className="block font-display text-[16px] font-black leading-none text-ink sm:text-[17px]">
+                <span className="block font-display text-[16px] font-bold leading-none text-ink sm:text-[17px]">
                   {fmt.format(m.value)}
                   {m.suffix && <span className="text-accent">{m.suffix}</span>}
                 </span>
-                <span className="mt-1 block font-mono text-[9.5px] uppercase leading-snug tracking-[0.08em] text-muted">
+                <span className="mt-1 block font-ui font-semibold text-[10.75px] uppercase leading-snug tracking-[0.08em] text-muted">
                   {m.label}
                 </span>
               </span>
@@ -244,7 +244,7 @@ function WorkCard({ project: p, index, onOpen }: { project: Project; index: numb
           <span
             aria-hidden
             className={cn(
-              'mt-4 inline-flex items-center gap-2 pt-1 font-display text-[11px] font-bold uppercase tracking-[0.16em] transition-colors duration-300 sm:hidden lg:mt-auto lg:inline-flex lg:pt-5',
+              'mt-4 inline-flex items-center gap-2 pt-1 font-ui text-[11px] font-bold uppercase tracking-[0.08em] transition-colors duration-300 sm:hidden lg:mt-auto lg:inline-flex lg:pt-5',
               lit ? 'text-ink' : 'text-accent',
             )}
           >

@@ -250,8 +250,8 @@ function BinaryChip({ id, hover }: IlluProps) {
             animate={{ opacity: hover ? [0.5, 1, 0.7] : 0.8 }}
             transition={hover ? { duration: 0.9, repeat: Infinity, repeatType: 'mirror', delay: i * 0.09 } : { duration: 0.3 }}
           >
-            <IsoBox x={60} y={p} z={1.5} a={7} b={3.2} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(var(--accent-3))" />
-            <IsoBox x={p} y={60} z={1.5} a={3.2} b={7} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(var(--accent-3))" />
+            <IsoBox x={60} y={p} z={1.5} a={7} b={3.2} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(255 150 70)" />
+            <IsoBox x={p} y={60} z={1.5} a={3.2} b={7} h={2.2} ox={ox} oy={oy} glow={2} topFill="rgb(255 150 70)" />
           </motion.g>
         ))}
       </g>

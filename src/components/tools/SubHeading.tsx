@@ -42,12 +42,12 @@ export function SubHeading({
         <div className="min-w-0">
           <h3
             id={id}
-            className="font-display text-[19px] font-bold uppercase tracking-[0.08em] text-ink sm:text-[22px]"
+            className="font-display text-[19px] font-bold tracking-[-0.005em] text-ink sm:text-[22px]"
           >
             {title}
           </h3>
           {kicker && (
-            <p className="mt-0.5 text-pretty font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted">
+            <p className="mt-0.5 text-pretty font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted">
               {kicker}
             </p>
           )}

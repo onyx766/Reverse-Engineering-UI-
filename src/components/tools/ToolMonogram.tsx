@@ -31,7 +31,7 @@ export function ToolMonogram({
     <span
       aria-hidden
       className={cn(
-        'relative grid shrink-0 place-items-center overflow-hidden border border-accent/45 font-display font-black leading-none tracking-tight text-ink shadow-glow-sm',
+        'relative grid shrink-0 place-items-center overflow-hidden border border-accent/45 font-display font-bold leading-none tracking-tight text-ink shadow-glow-sm',
         SIZE[size],
         className,
       )}

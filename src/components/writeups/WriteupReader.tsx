@@ -134,7 +134,7 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
             title={prev?.title}
             onClick={() => prev && onNavigate(prev.id)}
           />
-          <span className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-accent/25 bg-accent/5 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted sm:inline-flex">
+          <span className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-accent/25 bg-accent/5 px-2.5 py-1.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted sm:inline-flex">
             <Clock className="h-3 w-3 text-accent" />
             {minutesLeft === 0 ? 'done' : `${minutesLeft} min left`}
           </span>
@@ -151,7 +151,7 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
         <div className="min-w-0">
           {/* meta strip */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-accent/15 pb-4">
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent">
+            <span className="font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-accent">
               {formatDate(wu.date)}
             </span>
             <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted">
@@ -163,7 +163,7 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
               {wu.tags.map((t) => (
                 <span
                   key={t}
-                  className="rounded-md border border-accent/25 bg-accent/[0.06] px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-muted"
+                  className="rounded-md border border-accent/25 bg-accent/[0.06] px-2 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted"
                 >
                   {t}
                 </span>
@@ -180,7 +180,7 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
                 type="button"
                 onClick={() => setTocOpen((v) => !v)}
                 aria-expanded={tocOpen}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-mono text-[11px] uppercase tracking-[0.14em] text-accent"
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-accent"
               >
                 <ListTree className="h-3.5 w-3.5" />
                 Contents
@@ -218,7 +218,7 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
           {/* end marker */}
           <div className="mt-8 flex items-center gap-3 border-t border-accent/15 pt-5">
             <span className="h-1.5 w-1.5 rotate-45 bg-accent shadow-glow-sm" />
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-muted">
+            <span className="font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted">
               end of write-up
             </span>
             <span className="h-px flex-1 bg-gradient-to-r from-accent/40 to-transparent" />
@@ -229,7 +229,7 @@ export function WriteupReader({ writeup, list, open, onClose, onNavigate }: Prop
         {toc.length > 0 && (
           <aside className="hidden lg:block">
             <div className="sticky top-0">
-              <p className="flex items-center gap-2 border-b border-accent/15 pb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
+              <p className="flex items-center gap-2 border-b border-accent/15 pb-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
                 <ListTree className="h-3.5 w-3.5" />
                 On this page
               </p>
@@ -293,7 +293,7 @@ function ReaderNavButton({
         <ArrowLeft className="h-4 w-4 shrink-0 text-accent transition-transform duration-300 group-hover:-translate-x-0.5" />
       )}
       <span className="min-w-0">
-        <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-muted">
+        <span className="block font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
           {isNext ? 'Next' : 'Previous'}
         </span>
         <span className="block truncate font-display text-[11.5px] font-semibold text-ink">

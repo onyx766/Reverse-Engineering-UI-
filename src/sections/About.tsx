@@ -109,17 +109,17 @@ export function About() {
             className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2"
           >
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-accent">
+              <p className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
                 {ABOUT_COPY.stats.eyebrow}
               </p>
               <h2
                 id="about-stats"
-                className="mt-1 font-display text-[19px] font-black uppercase tracking-wide text-ink sm:text-[22px]"
+                className="mt-1 font-display text-[19px] font-bold tracking-[-0.005em] text-ink sm:text-[22px]"
               >
                 {ABOUT_COPY.stats.title}
               </h2>
             </div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+            <p className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
               {SINCE} → {CAREER_NOW} · {ABOUT_COPY.stats.note}
             </p>
           </motion.div>

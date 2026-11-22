@@ -95,7 +95,7 @@ export function CodeBlock({ code, lang }: { code: string; lang: string }) {
     <div className="group/code relative overflow-hidden rounded-xl border border-accent/20 bg-deep/70">
       {/* header */}
       <div className="flex items-center justify-between border-b border-accent/15 bg-accent/[0.04] px-3 py-1.5">
-        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+        <span className="flex items-center gap-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
           <span className="flex gap-1" aria-hidden>
             <span className="h-2 w-2 rounded-full bg-accent/40" />
             <span className="h-2 w-2 rounded-full bg-accent/25" />
@@ -108,7 +108,7 @@ export function CodeBlock({ code, lang }: { code: string; lang: string }) {
           onClick={copy}
           aria-label={copied ? 'Copied' : 'Copy code'}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent',
+            'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent',
             copied
               ? 'border-emerald-400/50 bg-emerald-400/10 text-emerald-300'
               : 'border-accent/30 bg-accent/5 text-muted hover:border-accent/60 hover:text-ink',

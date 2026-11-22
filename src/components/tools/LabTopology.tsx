@@ -275,7 +275,7 @@ export function LabTopology() {
 
           <ul
             aria-label="Status legend"
-            className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted"
+            className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted"
           >
             {STATUSES.map((s) => (
               <li key={s} className="inline-flex items-center gap-1.5">
@@ -395,13 +395,13 @@ function NodeReadout({ node, index, live }: { node: LabNode; index: number; live
           <Led status={node.status} size="md" />
           <span className="truncate font-mono text-[12.5px] font-bold tracking-[0.08em] text-ink">{node.label}</span>
           <span
-            className="ml-auto shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em]"
+            className="ml-auto shrink-0 rounded-md border px-1.5 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em]"
             style={{ color, borderColor: statusColor(node.status, 0.45), background: statusColor(node.status, 0.1) }}
           >
             {LAB_STATUS_LABEL[node.status]}
           </span>
         </div>
-        <p className="mt-1 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted">
+        <p className="mt-1 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
           node {String(index + 1).padStart(2, '0')} · {node.role}
         </p>
         <ul className="mt-3 flex flex-col gap-1.5">
@@ -423,7 +423,7 @@ function Containment() {
   const shown = useInView(ref, { once: true, margin: '-30px' }) || reduced
   return (
     <div ref={ref} className="rounded-xl border border-accent/25 bg-deep/40 p-4">
-      <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em]">
+      <div className="flex items-center justify-between font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em]">
         <span className="text-ink">Containment</span>
         <span className="text-accent">
           {LAB_CHECKS.length}/{LAB_CHECKS.length} · 100%
@@ -456,7 +456,7 @@ function Containment() {
             </motion.span>
             <span className="whitespace-nowrap text-[14px] font-semibold text-ink/90">{c.label}</span>
             {/* the side column is too narrow for the detail between lg and xl */}
-            <span className="ml-auto hidden min-w-0 truncate font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted sm:inline lg:hidden xl:inline">
+            <span className="ml-auto hidden min-w-0 truncate font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted sm:inline lg:hidden xl:inline">
               {c.detail}
             </span>
           </motion.li>

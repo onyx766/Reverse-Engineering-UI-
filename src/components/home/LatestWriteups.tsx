@@ -100,7 +100,7 @@ function Tags({ tags }: { tags: string[] }) {
       {tags.map((t) => (
         <span
           key={t}
-          className="rounded-md border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-muted transition-colors duration-300 group-hover:border-accent/40 group-hover:text-accent"
+          className="rounded-md border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 group-hover:border-accent/40 group-hover:text-accent"
         >
           {t}
         </span>
@@ -113,7 +113,7 @@ function ReadArrow() {
   return (
     <span
       aria-hidden
-      className="inline-flex items-center gap-1.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] text-accent transition-colors duration-300 group-hover:text-ink"
+      className="inline-flex items-center gap-1.5 font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-accent transition-colors duration-300 group-hover:text-ink"
     >
       Read
       <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5" />
@@ -128,14 +128,14 @@ function LeadCard({ writeup: w, onOpen }: { writeup: Writeup; onOpen: () => void
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-px hairline" />
       <span className="relative block w-24 shrink-0 border-r border-accent/15 sm:w-[44%] lg:w-full lg:border-r-0">
         <WriteupCover motif={w.motif} seed={1} className="h-full w-full lg:h-56" />
-        <span className="absolute left-3 top-8 hidden items-center gap-1.5 rounded-full border border-accent/45 bg-deep/70 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-[0.18em] text-accent shadow-glow-sm sm:inline-flex">
+        <span className="absolute left-3 top-8 hidden items-center gap-1.5 rounded-full border border-accent/45 bg-deep/70 px-2.5 py-1 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent shadow-glow-sm sm:inline-flex">
           <Sparkles aria-hidden className="h-3 w-3" />
           {COPY.latest}
         </span>
       </span>
       <span className="relative flex min-w-0 flex-1 flex-col p-4 sm:p-6">
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="inline-flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.16em] text-accent3 sm:hidden">
+          <span className="inline-flex items-center gap-1 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent3 sm:hidden">
             <Sparkles aria-hidden className="h-3 w-3" />
             {COPY.latest}
           </span>

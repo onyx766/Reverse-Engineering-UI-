@@ -22,7 +22,7 @@ const PEER_FOCUS =
  */
 const NATIVE_COVER = 'peer absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none opacity-0'
 
-const LABEL_TEXT = 'font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted'
+const LABEL_TEXT = 'font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted'
 
 const describedBy = (...ids: (string | false | undefined)[]) => ids.filter(Boolean).join(' ') || undefined
 
@@ -225,7 +225,7 @@ export function MessageField({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.3, ease: EASE }}
-              className="group/tpl relative inline-flex h-10 items-center gap-1.5 overflow-hidden rounded-lg border border-accent/30 bg-accent/[0.06] px-3 font-mono text-[10px] uppercase tracking-[0.14em] text-accent transition-[color,background-color,border-color,box-shadow] duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm"
+              className="group/tpl relative inline-flex h-10 items-center gap-1.5 overflow-hidden rounded-lg border border-accent/30 bg-accent/[0.06] px-3 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent transition-[color,background-color,border-color,box-shadow] duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm"
             >
               <span
                 aria-hidden
@@ -351,7 +351,7 @@ export function ChipGroup<T extends string>({
               />
               <span
                 className={cn(
-                  'relative flex min-h-10 w-full items-center gap-2 overflow-hidden rounded-lg border px-3 py-2 font-mono text-[10.5px] uppercase tracking-[0.12em] transition-all duration-300',
+                  'relative flex min-h-10 w-full items-center gap-2 overflow-hidden rounded-lg border px-3 py-2 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] transition-all duration-300',
                   PEER_FOCUS,
                   on
                     ? 'border-accent/75 bg-accent/20 text-ink shadow-glow-sm'
@@ -469,7 +469,7 @@ export function SegmentGroup<T extends string>({
                   on ? 'text-ink' : 'text-muted group-hover/seg:bg-accent/10 group-hover/seg:text-ink',
                 )}
               >
-                <span className="font-mono text-[11px] font-medium uppercase tracking-[0.12em]">
+                <span className="font-ui text-[11px] font-medium uppercase tracking-[0.08em]">
                   {o.label}
                 </span>
                 <span

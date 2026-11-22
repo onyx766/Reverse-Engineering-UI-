@@ -94,7 +94,7 @@ export function CaseStudyModal({ project, index, total, prev, next, onClose, onP
             <span className="font-mono text-[11px] tracking-[0.2em] text-ink">
               <span className="text-accent">{pad(index + 1)}</span> / {pad(total)}
             </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
+            <span className="font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
               <kbd className="rounded border border-accent/30 px-1 text-accent">←</kbd>{' '}
               <kbd className="rounded border border-accent/30 px-1 text-accent">→</kbd> to browse
             </span>
@@ -209,7 +209,7 @@ function MetaStrip({ project: p }: { project: Project }) {
             c.wide && 'col-span-2 sm:col-span-3 lg:col-span-1 lg:border-r-0',
           )}
         >
-          <dt className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted">
+          <dt className="flex items-center gap-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
             <c.icon aria-hidden className="h-3 w-3 text-accent" />
             {c.label}
           </dt>
@@ -228,7 +228,7 @@ function Block({ n, title, icon: Icon, children }: { n: string; title: string; i
       viewport={{ once: true, margin: '-30px' }}
       transition={{ duration: 0.6, ease: EASE }}
     >
-      <h3 className="mb-3.5 flex items-center gap-2.5 font-display text-[12.5px] font-bold uppercase tracking-[0.2em] text-ink">
+      <h3 className="mb-3.5 flex items-center gap-2.5 font-ui text-[12.5px] font-bold uppercase tracking-[0.08em] text-ink">
         <span className="grid h-7 w-7 place-items-center rounded-lg border border-accent/40 bg-accent/10 text-accent">
           <Icon aria-hidden className="h-3.5 w-3.5" />
         </span>
@@ -323,12 +323,12 @@ function MetricTile({ metric, delay }: { metric: Metric; delay: number }) {
         aria-hidden
         className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-accent/15 blur-2xl transition-colors duration-500 group-hover:bg-accent/30"
       />
-      <div className="relative font-display text-[28px] font-black leading-none text-ink">
+      <div className="relative font-display text-[28px] font-bold leading-none text-ink">
         {/* filled by the count-up above */}
         <span ref={ref} />
         {metric.suffix && <span className="neon">{metric.suffix}</span>}
       </div>
-      <div className="relative mt-2 font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted">{metric.label}</div>
+      <div className="relative mt-2 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">{metric.label}</div>
     </motion.div>
   )
 }
@@ -367,7 +367,7 @@ function PagerButton({
         )}
       />
       <span className="min-w-0">
-        <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-muted">
+        <span className="block font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
           {dir === 'prev' ? 'Previous' : 'Next'}
         </span>
         <span className="block truncate font-sans text-[14px] font-semibold text-ink">{project?.title}</span>

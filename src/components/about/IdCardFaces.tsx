@@ -71,7 +71,7 @@ export function Face({
       <div aria-hidden className="pointer-events-none absolute inset-0" style={{ backgroundImage: SECURITY_PRINT }} />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        className="pointer-events-none absolute inset-0 opacity-0"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgb(var(--ink)) 0 1px, transparent 1px 4px)' }}
       />
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
@@ -146,7 +146,7 @@ export function CardFront({ data, motion: m }: { data: IdCardData; motion: FaceM
             <p className="truncate font-display text-[11.5px] font-bold tracking-[0.24em] text-ink">
               {data.issuer}
             </p>
-            <p className="truncate font-mono text-[8.5px] uppercase tracking-[0.2em] text-muted">
+            <p className="truncate font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
               {data.docType}
             </p>
           </div>
@@ -165,13 +165,13 @@ export function CardFront({ data, motion: m }: { data: IdCardData; motion: FaceM
         </motion.div>
         <span
           aria-hidden
-          className="absolute left-0 top-1/2 -translate-y-1/2 rotate-180 whitespace-nowrap font-mono text-[8px] uppercase tracking-[0.3em] text-muted/70 [writing-mode:vertical-rl]"
+          className="absolute left-0 top-1/2 -translate-y-1/2 rotate-180 whitespace-nowrap font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted/70 [writing-mode:vertical-rl]"
         >
           {data.clearance}
         </span>
         <span
           aria-hidden
-          className="absolute right-0 top-1/2 -translate-y-1/2 whitespace-nowrap font-mono text-[8px] uppercase tracking-[0.3em] text-muted/70 [writing-mode:vertical-rl]"
+          className="absolute right-0 top-1/2 -translate-y-1/2 whitespace-nowrap font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted/70 [writing-mode:vertical-rl]"
         >
           ISS {data.issued}
         </span>
@@ -182,16 +182,16 @@ export function CardFront({ data, motion: m }: { data: IdCardData; motion: FaceM
       </div>
 
       <div className="mt-2.5 text-center">
-        <p className="pl-[0.34em] font-display text-[30px] font-black uppercase leading-none tracking-[0.34em]">
+        <p className="pl-[0.34em] font-display text-[30px] font-bold leading-none tracking-[-0.005em]">
           <span className="text-gradient">{data.name}</span>
         </p>
-        <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted">{data.role}</p>
+        <p className="mt-2 font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">{data.role}</p>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-accent/25 bg-accent/20">
         {data.fields.map((f) => (
           <div key={f.label} className={cn('bg-deep/90 px-3 py-2', f.wide && 'col-span-2')}>
-            <dt className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-muted">{f.label}</dt>
+            <dt className="font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">{f.label}</dt>
             <dd className="mt-0.5 flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-ink">
               {f.live && <Led />}
               <span className="truncate">{f.value}</span>
@@ -202,7 +202,7 @@ export function CardFront({ data, motion: m }: { data: IdCardData; motion: FaceM
 
       <div className="mt-auto pt-4">
         <Barcode value={data.serial} scanning={m.hovered && m.live} className="h-9 w-full" />
-        <div className="mt-1.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
+        <div className="mt-1.5 flex items-center justify-between font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
           <span>
             SN <span className="text-ink">{data.serial}</span>
           </span>
@@ -236,7 +236,7 @@ export function CardBack({ data }: { data: IdCardData }) {
           <Rosette spinning={false} />
         </div>
 
-        <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.22em] text-muted">
+        <div className="flex items-center justify-between font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
           <span>Side B · Manifesto</span>
           <span className="text-ink/80">{data.serial}</span>
         </div>
@@ -248,17 +248,17 @@ export function CardBack({ data }: { data: IdCardData }) {
           </blockquote>
           <figcaption className="mt-3 flex items-center gap-2">
             <span aria-hidden className="h-px w-6 bg-accent/70" />
-            <span className="font-display text-[12px] font-bold uppercase tracking-[0.24em] text-accent">
+            <span className="font-ui text-[12px] font-bold uppercase tracking-[0.08em] text-accent">
               {data.signature}
             </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">
+            <span className="font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
               signed {data.issued}
             </span>
           </figcaption>
         </figure>
 
         <div className="relative mt-5">
-          <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
+          <p className="flex items-center gap-1.5 font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">
             <Fingerprint aria-hidden className="h-3 w-3 text-accent" />
             PGP fingerprint · {data.pgp.algo}
           </p>
@@ -271,7 +271,7 @@ export function CardBack({ data }: { data: IdCardData }) {
 
         <div className="relative mt-auto pt-4">
           <div className="rounded-xl border border-accent/35 bg-accent/10 p-3">
-            <p className="flex items-center gap-2 font-display text-[11px] font-bold uppercase tracking-[0.18em] text-ink">
+            <p className="flex items-center gap-2 font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-ink">
               <ShieldCheck aria-hidden className="h-4 w-4 text-accent" />
               {data.authorised.title}
             </p>
@@ -279,7 +279,7 @@ export function CardBack({ data }: { data: IdCardData }) {
           </div>
           <div
             aria-hidden
-            className="mt-3 overflow-hidden whitespace-nowrap rounded border border-accent/25 bg-accent/[0.06] px-2 py-1 font-mono text-[7.5px] uppercase tracking-[0.3em] text-accent/70"
+            className="mt-3 overflow-hidden whitespace-nowrap rounded border border-accent/25 bg-accent/[0.06] px-2 py-1 font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-accent/70"
           >
             {'void if tampered · authorised scope only · '.repeat(4)}
           </div>

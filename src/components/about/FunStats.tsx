@@ -92,8 +92,8 @@ function TileChrome() {
 }
 
 /** Labels reserve two lines, so the figures line up across a row whatever wraps. */
-const LABEL = 'min-h-[2.75em] font-mono text-[9.5px] uppercase leading-snug tracking-[0.18em] text-muted'
-const FIGURE = 'relative mt-3 font-display text-[clamp(2rem,3.4vw,2.6rem)] font-black leading-none tabular-nums text-ink'
+const LABEL = 'min-h-[2.75em] font-ui font-semibold text-[10.75px] uppercase leading-snug tracking-[0.08em] text-muted'
+const FIGURE = 'relative mt-3 font-display text-[clamp(2rem,3.4vw,2.6rem)] font-bold leading-none tabular-nums text-ink'
 const NOTE = 'relative mt-2.5 text-pretty text-[13px] leading-snug text-muted'
 
 /**

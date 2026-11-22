@@ -105,7 +105,7 @@ export function LoadoutPanel({
           )
         })}
       </ul>
-      <p className="mx-1 mt-2.5 border-t border-accent/15 pt-2.5 font-mono text-[9.5px] uppercase leading-relaxed tracking-[0.16em] text-muted/80">
+      <p className="mx-1 mt-2.5 border-t border-accent/15 pt-2.5 font-ui font-semibold text-[10.75px] uppercase leading-relaxed tracking-[0.08em] text-muted/80">
         {/* two short lines: the narrow column would otherwise leave the separator dangling */}
         <span className="[@media(hover:none)]:hidden">
           <span className="block">hover to light the orbit</span>

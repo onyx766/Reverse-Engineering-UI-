@@ -36,9 +36,9 @@ export interface ContactConfig {
 }
 
 export const CONTACT: ContactConfig = {
-  // OWNER: set an HTTPS form endpoint (Formspree, a Worker, your own API) to deliver briefs
-  // directly; while it is empty the form hands the brief to the visitor's mail client.
-  endpoint: '',
+  // Briefs are POSTed to the Resend relay (api/contact.ts on Vercel, a Vite middleware in dev).
+  // Set it to '' to fall back to opening the visitor's mail client instead.
+  endpoint: '/api/contact',
   timeoutMs: 15000,
   subject: 'Engagement enquiry',
   draftKey: 'onyx:contact-draft:v1',

@@ -110,12 +110,12 @@ export function CodeBlock({ code, lang, className }: { code: string; lang: strin
           <span className="h-2 w-2 rounded-full bg-amber-300/70" />
           <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
         </span>
-        <span className="ml-1 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-muted">{lang}</span>
+        <span className="ml-1 truncate font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">{lang}</span>
         <button
           type="button"
           onClick={copy}
           aria-label={copied ? 'Copied to clipboard' : 'Copy snippet'}
-          className="group ml-auto inline-flex min-h-[32px] shrink-0 items-center gap-1.5 rounded-md border border-accent/30 bg-accent/[0.06] px-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted transition-colors duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink"
+          className="group ml-auto inline-flex min-h-[32px] shrink-0 items-center gap-1.5 rounded-md border border-accent/30 bg-accent/[0.06] px-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink"
         >
           {copied ? (
             <Check className="h-3.5 w-3.5 text-accent" />

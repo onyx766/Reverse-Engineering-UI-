@@ -38,7 +38,7 @@ export function AboutHero() {
           transition={{ duration: 0.7, ease: EASE }}
           className="flex flex-wrap items-center gap-2"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.18em] text-accent">
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
@@ -54,7 +54,7 @@ export function AboutHero() {
           initial={entrance(reduced, { opacity: 0, y: 14 })}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: EASE }}
-          className="mt-6 font-mono text-[12px] uppercase tracking-[0.3em] text-muted"
+          className="mt-6 font-ui font-semibold text-[12px] uppercase tracking-[0.08em] text-muted"
         >
           <span className="text-accent">{'>'}</span> {copy.command}
         </motion.p>
@@ -63,7 +63,7 @@ export function AboutHero() {
           initial={entrance(reduced, { opacity: 0, y: 26, filter: 'blur(14px)' })}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.95, delay: 0.14, ease: EASE }}
-          className="mt-2 font-display text-[clamp(2.5rem,6.2vw,4.6rem)] font-black uppercase leading-[0.92] tracking-tight"
+          className="mt-2 font-display text-[clamp(2.5rem,6.2vw,4.6rem)] font-bold leading-[0.92] tracking-tight"
         >
           <span className="text-gradient">{copy.title}</span>
         </motion.h1>
@@ -110,7 +110,7 @@ export function AboutHero() {
               </div>
             ))}
           </div>
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-accent/15 pt-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted/80">
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-accent/15 pt-3 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted/80">
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-1.5 animate-blink bg-accent" aria-hidden />
               read-only
@@ -194,7 +194,7 @@ function FactTile({ fact, index, reduced }: { fact: QuickFact; index: number; re
           <Icon className="h-4 w-4" />
         </span>
         <div className="min-w-0">
-          <p className="flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.2em] text-muted">
+          <p className="flex items-center gap-2 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
             {fact.label}
             {fact.live && (
               <span className="inline-flex items-center gap-1 rounded border border-accent/40 bg-accent/10 px-1 py-px text-[8px] tracking-[0.16em] text-accent">

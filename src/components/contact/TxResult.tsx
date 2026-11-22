@@ -15,7 +15,7 @@ import type { Brief } from './lib'
 import { EASE } from './fields'
 
 const ACTION =
-  'group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 font-display text-[11px] font-bold uppercase tracking-[0.16em] transition-[color,background-color,border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 sm:w-auto'
+  'group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 font-ui text-[11px] font-bold uppercase tracking-[0.08em] transition-[color,background-color,border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 sm:w-auto'
 /** phones stack the actions full width; wider screens set them in a centred row */
 const ACTIONS = 'flex w-full max-w-xs flex-col gap-2.5 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center'
 const PRIMARY = 'border-accent/60 bg-accent/15 text-ink hover:border-accent hover:bg-accent/25 hover:shadow-glow'
@@ -148,13 +148,13 @@ export function TxSuccess({
       </div>
 
       <div>
-        <p className="font-mono text-[10.5px] uppercase tracking-[0.3em] text-accent">
+        <p className="font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent">
           {mode === 'mailto' ? 'Handoff complete' : 'Transmission complete'}
         </p>
         <h3
           ref={headingRef}
           tabIndex={-1}
-          className="mt-2 font-display text-[22px] font-black uppercase tracking-wide text-gradient outline-none sm:text-[26px]"
+          className="mt-2 font-display text-[22px] font-bold tracking-[-0.005em] text-gradient outline-none sm:text-[26px]"
         >
           {mode === 'mailto' ? 'Mail client opened' : 'Message received'}
         </h3>
@@ -240,11 +240,11 @@ export function TxError({
         <ServerCrash aria-hidden className="relative h-8 w-8 text-rose-300" />
       </div>
       <div>
-        <p className="font-mono text-[10.5px] uppercase tracking-[0.3em] text-rose-300">NACK · delivery failed</p>
+        <p className="font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-rose-300">NACK · delivery failed</p>
         <h3
           ref={headingRef}
           tabIndex={-1}
-          className="mt-2 font-display text-[22px] font-black uppercase tracking-wide text-ink outline-none sm:text-[26px]"
+          className="mt-2 font-display text-[22px] font-bold tracking-[-0.005em] text-ink outline-none sm:text-[26px]"
         >
           Transmission failed
         </h3>

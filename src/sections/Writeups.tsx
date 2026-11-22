@@ -96,7 +96,7 @@ export function Writeups() {
       {!empty && (
         <>
           <div className="mt-10 flex items-center gap-3">
-            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
+            <span className="font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-accent">
               {isDefault ? 'More write-ups' : 'Results'}
             </span>
             <span className="h-px flex-1 bg-gradient-to-r from-accent/40 to-transparent" />
@@ -147,7 +147,7 @@ function EmptyState({ query, onReset }: { query: string; onReset: () => void }) 
           <SearchX className="h-6 w-6" />
         </motion.span>
 
-        <h3 className="relative mt-5 font-display text-lg font-bold uppercase tracking-wide text-ink">
+        <h3 className="relative mt-5 font-ui text-lg font-bold uppercase tracking-wide text-ink">
           No matches
         </h3>
         <p className="relative mt-2 text-[13px] leading-relaxed text-muted">
@@ -163,7 +163,7 @@ function EmptyState({ query, onReset }: { query: string; onReset: () => void }) 
         <button
           type="button"
           onClick={onReset}
-          className="group relative mt-5 inline-flex items-center gap-2 rounded-xl border border-accent/50 bg-accent/15 px-4 py-2 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-ink transition-all duration-300 hover:border-accent hover:bg-accent/25 hover:shadow-glow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+          className="group relative mt-5 inline-flex items-center gap-2 rounded-xl border border-accent/50 bg-accent/15 px-4 py-2 font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-ink transition-all duration-300 hover:border-accent hover:bg-accent/25 hover:shadow-glow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
         >
           <RotateCcw className="h-3.5 w-3.5 transition-transform duration-500 group-hover:-rotate-180" />
           Reset filters

@@ -164,7 +164,7 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
                   />
                 </span>
                 <div className="min-w-0">
-                  <p className="font-mono text-[9.5px] uppercase tracking-[0.22em] text-muted">
+                  <p className="font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
                     Phase {pad(i + 1)}
                   </p>
                   <h3 className="text-balance font-display text-[15px] font-bold leading-tight tracking-wide text-ink xl:min-h-[2.5em]">
@@ -183,7 +183,7 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
                   <p className="text-[14.5px] leading-relaxed text-muted">{step.summary}</p>
                   <span
                     aria-hidden
-                    className="mt-auto hidden items-center gap-1.5 pt-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-accent/70 xl:inline-flex"
+                    className="mt-auto hidden items-center gap-1.5 pt-3 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent/70 xl:inline-flex"
                   >
                     <span className="h-px w-4 bg-accent/50" />
                     <span>
@@ -210,7 +210,7 @@ export function WorkProcess({ steps, className }: { steps: ProcessStep[]; classN
                 </ul>
               </div>
 
-              <p className="relative mt-auto flex items-center gap-2 border-t border-accent/15 pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+              <p className="relative mt-auto flex items-center gap-2 border-t border-accent/15 pt-3 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
                 <PackageCheck aria-hidden className="h-3.5 w-3.5 shrink-0 text-accent" />
                 <span className="sr-only">Deliverable: </span>
                 <span className="min-w-0">{step.artefact}</span>

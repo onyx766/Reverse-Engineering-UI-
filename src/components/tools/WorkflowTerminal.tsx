@@ -39,7 +39,7 @@ export function WorkflowTerminal() {
                 setTab(i)
               }}
               className={cn(
-                'group relative inline-flex min-h-[40px] shrink-0 items-center gap-2 overflow-hidden rounded-lg border px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] transition-[color,background-color,border-color,box-shadow] duration-300',
+                'group relative inline-flex min-h-[40px] shrink-0 items-center gap-2 overflow-hidden rounded-lg border px-3 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] transition-[color,background-color,border-color,box-shadow] duration-300',
                 selected
                   ? 'border-accent/70 bg-accent/[0.16] text-ink shadow-glow-sm'
                   : 'border-accent/20 bg-accent/[0.04] text-muted hover:border-accent/50 hover:bg-accent/10 hover:text-ink',
@@ -85,7 +85,7 @@ export function WorkflowTerminal() {
             type="button"
             onClick={() => setRun((r) => r + 1)}
             aria-label="Replay this session"
-            className="group ml-auto inline-flex min-h-[30px] shrink-0 items-center gap-1.5 rounded-md border border-accent/30 bg-accent/[0.06] px-2 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted transition-colors duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink"
+            className="group ml-auto inline-flex min-h-[30px] shrink-0 items-center gap-1.5 rounded-md border border-accent/30 bg-accent/[0.06] px-2 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink"
           >
             <RotateCcw className="h-3 w-3 transition-transform duration-500 group-hover:-rotate-180" />
             replay
@@ -100,7 +100,7 @@ export function WorkflowTerminal() {
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
         <span className="inline-flex min-w-0 items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-accent" />
           <span className="truncate">{session.context}</span>

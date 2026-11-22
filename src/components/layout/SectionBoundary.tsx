@@ -54,7 +54,7 @@ export class SectionBoundary extends Component<Props, State> {
           <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-rose-400/40 bg-rose-400/10 text-rose-300">
             <AlertTriangle className="h-5 w-5" />
           </span>
-          <h2 className="mt-4 font-display text-lg font-bold uppercase tracking-wide text-ink">
+          <h2 className="mt-4 font-ui text-lg font-bold uppercase tracking-wide text-ink">
             Segment fault
           </h2>
           <p className="mt-2 font-mono text-[11.5px] leading-relaxed text-muted">
@@ -63,7 +63,7 @@ export class SectionBoundary extends Component<Props, State> {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="mx-auto mt-5 inline-flex items-center gap-2 rounded-xl border border-accent/50 bg-accent/15 px-4 py-2 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-ink transition-colors hover:border-accent hover:bg-accent/25"
+            className="mx-auto mt-5 inline-flex items-center gap-2 rounded-xl border border-accent/50 bg-accent/15 px-4 py-2 font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-ink transition-colors hover:border-accent hover:bg-accent/25"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Reload

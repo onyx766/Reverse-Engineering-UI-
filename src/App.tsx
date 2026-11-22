@@ -25,13 +25,8 @@ const HoloCore = lazy(() =>
  * Size changes use scale (cheap) rather than width/height (canvas resize).
  */
 const CORE_PLACEMENT: Partial<Record<SectionId, string>> = {
-  // below lg the hero is one column with the copy over the core, so it steps back there
-  home: 'scale-[0.82] opacity-25 lg:opacity-45',
-  // content-dense sections: keep the core as ambience, never competing with text
-  expertise: 'scale-100 opacity-35',
-  writeups: 'scale-[0.88] opacity-20',
-  about: 'scale-90 opacity-30',
-  contact: 'scale-95 opacity-30',
+  // every section now stands in the photoreal room of the reference render,
+  // so the drawn wireframe core no longer floats behind any of them
 }
 
 const MAIN_ID = 'main-content'
@@ -96,7 +91,7 @@ export default function App() {
         href={`#${MAIN_ID}`}
         onClick={skipToContent}
         // not-sr-only resets padding to 0, so the padding has to be focus-scoped too
-        className="sr-only rounded-xl border border-accent bg-deep font-mono text-[11px] uppercase tracking-[0.2em] text-accent shadow-glow focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[95] focus:px-4 focus:py-2.5"
+        className="sr-only rounded-xl border border-accent bg-deep font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-accent shadow-glow focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[95] focus:px-4 focus:py-2.5"
       >
         Skip to content
       </a>
@@ -220,7 +215,7 @@ function SectionLoader() {
         <span className="absolute inset-0 animate-spin rounded-full border-2 border-accent/20 border-t-accent" />
         <span className="absolute inset-3 animate-pulse rounded-full bg-accent/20 shadow-glow" />
       </div>
-      <span className="font-mono text-[10.5px] uppercase tracking-[0.3em] text-muted">
+      <span className="font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted">
         loading segment
       </span>
     </div>

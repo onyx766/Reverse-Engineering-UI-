@@ -152,7 +152,7 @@ export function Availability() {
             />
           </span>
           <div className="min-w-0">
-            <p className="font-display text-[13.5px] font-bold uppercase tracking-[0.12em] text-ink">
+            <p className="font-ui text-[13.5px] font-bold uppercase tracking-[0.08em] text-ink">
               {open ? AVAILABILITY.status : AVAILABILITY.bookedStatus}
             </p>
             <p className="mt-0.5 text-[14px] text-muted">
@@ -165,7 +165,7 @@ export function Availability() {
         <div className="group/clock relative overflow-hidden rounded-xl border border-accent/20 bg-deep/45 px-4 py-3.5 transition-colors duration-300 hover:border-accent/45">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+              <p className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
                 Onyx local time · <span className="text-accent">{OWNER_TZ.label}</span>
               </p>
               <time
@@ -203,7 +203,7 @@ export function Availability() {
 
           <p
             className={cn(
-              'mt-3 inline-flex items-center gap-2 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em]',
+              'mt-3 inline-flex items-center gap-2 rounded-md border px-2 py-1 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em]',
               status.tone === 'ok'
                 ? 'border-emerald-400/35 bg-emerald-400/10 text-emerald-300'
                 : 'border-amber-400/35 bg-amber-400/10 text-amber-300',
@@ -305,7 +305,7 @@ function Stat({
 }) {
   return (
     <div className="group/stat relative overflow-hidden rounded-xl border border-accent/20 bg-accent/[0.04] p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent/[0.08]">
-      <span className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted">
+      <span className="flex items-center gap-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
         <Icon
           aria-hidden
           className="h-3.5 w-3.5 text-accent transition-transform duration-300 group-hover/stat:scale-110"

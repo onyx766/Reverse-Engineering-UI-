@@ -79,7 +79,7 @@ export function Toolchain() {
 
         {/* top bar: lockfile label, recent hours (lg+), pause */}
         <div className="relative flex items-center gap-3 px-4 sm:px-6">
-          <span className="min-w-0 flex-1 truncate font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted">
+          <span className="min-w-0 flex-1 truncate font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted">
             <span className="text-accent">~/lab/</span>toolchain.lock
             <span className="hidden sm:inline">
               {' '}
@@ -126,7 +126,7 @@ export function Toolchain() {
               return (
                 <li
                   key={c.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-accent/20 bg-accent/[0.05] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-muted"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-accent/20 bg-accent/[0.05] px-2 py-1 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted"
                 >
                   <Icon aria-hidden className="h-3 w-3 text-accent" />
                   {c.short}
@@ -232,7 +232,7 @@ function TickerRow({
 
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-      <span className="shrink-0 px-4 font-mono text-[9.5px] uppercase tracking-[0.2em] text-accent sm:w-48 sm:pl-6 sm:pr-0">
+      <span className="shrink-0 px-4 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent sm:w-48 sm:pl-6 sm:pr-0">
         {label}
       </span>
       <div
@@ -272,7 +272,7 @@ const ToolBadge = memo(function ToolBadge({ tool, hidden }: { tool: Tool; hidden
         <span
           aria-hidden
           style={MONO_STYLE}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent/45 font-display text-[10.5px] font-black leading-none tracking-tight text-ink"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent/45 font-display text-[10.5px] font-bold leading-none tracking-tight text-ink"
         >
           {tool.mono}
         </span>
@@ -280,7 +280,7 @@ const ToolBadge = memo(function ToolBadge({ tool, hidden }: { tool: Tool; hidden
           <span className="whitespace-nowrap font-display text-[12px] font-bold tracking-wide text-ink">
             {tool.short}
           </span>
-          <span className="whitespace-nowrap font-mono text-[9.5px] uppercase tracking-[0.1em] text-muted transition-colors duration-300 group-hover/badge:text-accent3">
+          <span className="whitespace-nowrap font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 group-hover/badge:text-accent3">
             {tool.years} yrs · {PROFICIENCY_LABEL[tool.level]}
           </span>
         </span>

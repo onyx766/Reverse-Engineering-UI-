@@ -211,7 +211,7 @@ export function CodeBlock({ artifact }: { artifact: Artifact }) {
         </span>
         <FileCode2 aria-hidden className="ml-1 h-3.5 w-3.5 text-accent" />
         <span className="min-w-0 truncate font-mono text-[11px] text-ink/90">{artifact.label}</span>
-        <span className="ml-auto hidden shrink-0 rounded-md border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-accent sm:inline-block">
+        <span className="ml-auto hidden shrink-0 rounded-md border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-accent sm:inline-block">
           {LANG_LABEL[artifact.lang]}
         </span>
         <button
@@ -219,7 +219,7 @@ export function CodeBlock({ artifact }: { artifact: Artifact }) {
           onClick={onCopy}
           aria-label={copied ? 'Copied to clipboard' : `Copy ${artifact.label}`}
           className={cn(
-            'group relative ml-auto inline-flex h-10 shrink-0 items-center gap-1.5 overflow-hidden rounded-lg border px-3 font-mono text-[10px] uppercase tracking-[0.14em] transition-all duration-300 sm:ml-0 sm:h-8 sm:px-2.5',
+            'group relative ml-auto inline-flex h-10 shrink-0 items-center gap-1.5 overflow-hidden rounded-lg border px-3 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] transition-all duration-300 sm:ml-0 sm:h-8 sm:px-2.5',
             copied
               ? 'border-emerald-400/60 bg-emerald-400/10 text-emerald-300'
               : 'border-accent/35 bg-accent/5 text-muted hover:border-accent hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm',

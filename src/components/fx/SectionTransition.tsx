@@ -192,7 +192,7 @@ function Sweep({ theme, onDone }: { theme: Theme; onDone: () => void }) {
       {/* routing HUD */}
       <div ref={hud} className="absolute bottom-5 left-4 opacity-0 sm:bottom-8 sm:left-8">
         <div
-          className="relative rounded-md border px-3 py-2 font-mono uppercase"
+          className="relative rounded-md border px-3 py-2 font-ui font-semibold uppercase"
           style={{
             borderColor: rgb(theme.accent, 0.45),
             background: rgb(theme.deep, 0.8),

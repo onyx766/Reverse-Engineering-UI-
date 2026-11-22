@@ -94,7 +94,7 @@ function BlockView({ articleId, block }: { articleId: string; block: Block }) {
             </span>
             <span
               className={cn(
-                'rounded-md border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.16em]',
+                'rounded-md border px-1.5 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em]',
                 c.chip,
               )}
             >
@@ -144,7 +144,7 @@ function BlockView({ articleId, block }: { articleId: string; block: Block }) {
                 {block.head.map((h, i) => (
                   <th
                     key={i}
-                    className="whitespace-nowrap border-b border-accent/25 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-accent"
+                    className="whitespace-nowrap border-b border-accent/25 px-3 py-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent"
                   >
                     {h}
                   </th>
@@ -176,7 +176,7 @@ function BlockView({ articleId, block }: { articleId: string; block: Block }) {
       return (
         <figure className="mt-4 overflow-hidden rounded-xl border border-accent/20 bg-deep/70">
           {block.title && (
-            <figcaption className="border-b border-accent/15 bg-accent/[0.04] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-accent">
+            <figcaption className="border-b border-accent/15 bg-accent/[0.04] px-3 py-1.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
               {block.title}
             </figcaption>
           )}

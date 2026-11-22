@@ -32,12 +32,12 @@ export function SectionHeading({
       )}
     >
       <motion.span
-        // 0.5em, not wider: a long eyebrow must not wrap mid-entrance on a 360px phone
-        initial={reduced ? { opacity: 0, letterSpacing: '0.42em' } : { opacity: 0, y: 14, letterSpacing: '0.5em' }}
-        whileInView={reduced ? { opacity: 1, letterSpacing: '0.42em' } : { opacity: 1, y: 0, letterSpacing: '0.42em' }}
+        // tracking eases in from 0.22em; a long eyebrow must not wrap mid-entrance on a 360px phone
+        initial={reduced ? { opacity: 0, letterSpacing: '0.12em' } : { opacity: 0, y: 14, letterSpacing: '0.22em' }}
+        whileInView={reduced ? { opacity: 1, letterSpacing: '0.12em' } : { opacity: 1, y: 0, letterSpacing: '0.12em' }}
         viewport={{ once: true }}
         transition={reduced ? fade : { duration: 0.7, ease: EASE }}
-        className="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase text-accent"
+        className="inline-flex items-center gap-2 font-ui text-[11.5px] font-semibold uppercase text-accent"
       >
         <span className="h-px w-6 bg-accent/70" />
         {eyebrow}
@@ -49,7 +49,7 @@ export function SectionHeading({
         whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
         viewport={{ once: true }}
         transition={reduced ? fade : { duration: 0.8, delay: 0.08, ease: EASE }}
-        className="text-balance font-display text-3xl font-black uppercase tracking-tight text-gradient sm:text-[42px]"
+        className="text-balance font-display text-[30px] font-semibold leading-tight tracking-[-0.01em] text-gradient sm:text-[40px]"
       >
         {title}
       </motion.h2>

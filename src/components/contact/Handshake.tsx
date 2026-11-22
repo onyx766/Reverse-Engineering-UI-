@@ -46,7 +46,7 @@ export function HandshakePanel() {
         />
         <div className="flex min-w-0 flex-col gap-3">
           <div className="rounded-lg border border-accent/20 bg-deep/40 p-3">
-            <p className="mb-2.5 flex items-center justify-between font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted">
+            <p className="mb-2.5 flex items-center justify-between font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
               <span>initiator ⇄ responder</span>
               <span className="text-accent">XX</span>
             </p>
@@ -58,7 +58,7 @@ export function HandshakePanel() {
                 key={s.label}
                 className="rounded-lg border border-accent/15 bg-accent/[0.04] px-2.5 py-2 transition-colors duration-300 hover:border-accent/45 hover:bg-accent/[0.08]"
               >
-                <dt className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted">{s.label}</dt>
+                <dt className="font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted">{s.label}</dt>
                 <dd className="mt-0.5 truncate font-mono text-[11.5px] text-ink">{s.value}</dd>
               </div>
             ))}
@@ -66,7 +66,7 @@ export function HandshakePanel() {
           <button
             type="button"
             onClick={() => setRun((r) => r + 1)}
-            className="group mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/5 px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted transition-all duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm"
+            className="group mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/5 px-3 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted transition-all duration-300 hover:border-accent hover:bg-accent/15 hover:text-ink hover:shadow-glow-sm"
           >
             <RotateCcw
               aria-hidden
@@ -106,7 +106,7 @@ export function RulesPanel() {
       className="h-full"
     >
       <div ref={ref}>
-        <div className="flex items-center justify-between font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted">
+        <div className="flex items-center justify-between font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted">
           <span>Compliance checks</span>
           <span className="tabular-nums text-accent">
             <span ref={countRef}>{value}</span>%

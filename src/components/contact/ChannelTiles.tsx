@@ -83,7 +83,7 @@ function Tile({ channel: c, index }: { channel: Channel; index: number }) {
       >
         <Icon className="h-5 w-5" />
       </span>
-      <span className="mt-4 block font-mono text-[10px] uppercase tracking-[0.22em] text-muted">
+      <span className="mt-4 block font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
         {c.label}
       </span>
       <span

@@ -44,15 +44,15 @@ export function Principles({
 
       <div className="relative flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-accent/15 px-5 py-4 sm:px-6">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-accent">{eyebrow}</p>
+          <p className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">{eyebrow}</p>
           <h2
             id="about-principles"
-            className="mt-1 font-display text-[19px] font-black uppercase tracking-wide text-ink sm:text-[22px]"
+            className="mt-1 font-display text-[19px] font-bold tracking-[-0.005em] text-ink sm:text-[22px]"
           >
             {title}
           </h2>
         </div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+        <p className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
           {items.length} rules · enforced since {since}
         </p>
       </div>

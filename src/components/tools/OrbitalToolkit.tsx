@@ -420,7 +420,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         <span aria-hidden className="pointer-events-none absolute right-0 top-0 h-5 w-5 border-r border-t border-accent/50" />
         <div
           aria-hidden
-          className="pointer-events-none absolute left-3 top-2.5 hidden font-mono text-[9.5px] uppercase leading-relaxed tracking-[0.2em] text-muted/80 sm:block"
+          className="pointer-events-none absolute left-3 top-2.5 hidden font-ui font-semibold text-[10.75px] uppercase leading-relaxed tracking-[0.08em] text-muted/80 sm:block"
         >
           <span className="text-accent">01</span> // orbital toolkit
           <br />
@@ -429,7 +429,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         <div
           aria-hidden
           className={cn(
-            'pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[9.5px] uppercase tracking-[0.18em] transition-colors duration-300',
+            'pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] transition-colors duration-300',
             status === 'live' ? 'border-accent/35 bg-accent/10 text-accent' : 'border-accent2/40 bg-accent2/10 text-accent2',
           )}
         >
@@ -533,7 +533,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
 
         <ul
           aria-hidden
-          className="pointer-events-none absolute bottom-1 left-2 z-[6] hidden flex-col gap-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-muted/80 sm:flex"
+          className="pointer-events-none absolute bottom-1 left-2 z-[6] hidden flex-col gap-0.5 font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted/80 sm:flex"
         >
           {ORBIT_RINGS.map((label, ri) => (
             <li key={label} className="flex items-center gap-1.5">
@@ -621,7 +621,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
               >
                 <span
                   className={cn(
-                    'relative grid shrink-0 place-items-center rounded-full border font-display font-black leading-none text-ink',
+                    'relative grid shrink-0 place-items-center rounded-full border font-display font-bold leading-none text-ink',
                     compact ? 'h-[34px] w-[34px] text-[10px]' : 'h-8 w-8 text-[10px]',
                     isShown || isHi ? 'border-accent3/80' : 'border-accent/50',
                   )}
@@ -634,7 +634,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
                   {t.mono}
                 </span>
                 {!compact && (
-                  <span className="ml-2 max-w-[8rem] overflow-hidden whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/90 transition-[max-width,margin,opacity] duration-500 group-data-[far]/badge:ml-0 group-data-[far]/badge:max-w-0 group-data-[far]/badge:opacity-0">
+                  <span className="ml-2 max-w-[8rem] overflow-hidden whitespace-nowrap font-ui text-[11px] font-semibold uppercase tracking-[0.08em] text-ink/90 transition-[max-width,margin,opacity] duration-500 group-data-[far]/badge:ml-0 group-data-[far]/badge:max-w-0 group-data-[far]/badge:opacity-0">
                     <span style={{ opacity: 'var(--occ, 1)' }}>{t.short}</span>
                   </span>
                 )}
@@ -696,7 +696,7 @@ export function OrbitalToolkit({ highlight, external, onOpen }: Props) {
         </div>
       </div>
 
-      <p className="mt-1 text-balance px-2 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted/80">
+      <p className="mt-1 text-balance px-2 text-center font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted/80">
         <span className="[@media(hover:none)]:hidden">
           hover or focus a node <span className="text-accent/70">·</span> ← → to cycle{' '}
           <span className="text-accent/70">·</span> enter for details
@@ -723,7 +723,7 @@ function TooltipCard({ tool, onOpen }: { tool: Tool; onOpen: () => void }) {
         <ToolMonogram tool={tool} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="font-display text-[13.5px] font-bold leading-tight tracking-wide text-ink">{tool.name}</p>
-          <p className="mt-0.5 font-mono text-[9.5px] uppercase leading-snug tracking-[0.14em] text-accent">{cat.label}</p>
+          <p className="mt-0.5 font-ui font-semibold text-[10.75px] uppercase leading-snug tracking-[0.08em] text-accent">{cat.label}</p>
         </div>
         <span className="shrink-0 rounded-md border border-accent/30 bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-ink">
           {tool.years}y
@@ -731,7 +731,7 @@ function TooltipCard({ tool, onOpen }: { tool: Tool; onOpen: () => void }) {
       </div>
       <div className="mt-3 flex items-center gap-2.5">
         <ProficiencyMeter level={tool.level} size="sm" shimmer="always" className="flex-1" />
-        <span className="shrink-0 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted">
+        <span className="shrink-0 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
           {PROFICIENCY_LABEL[tool.level]}
         </span>
       </div>
@@ -740,7 +740,7 @@ function TooltipCard({ tool, onOpen }: { tool: Tool; onOpen: () => void }) {
         type="button"
         tabIndex={-1}
         onClick={onOpen}
-        className="group mt-3 inline-flex min-h-[34px] items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-accent transition-colors duration-300 hover:border-accent hover:bg-accent/20 hover:text-ink"
+        className="group mt-3 inline-flex min-h-[34px] items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent transition-colors duration-300 hover:border-accent hover:bg-accent/20 hover:text-ink"
       >
         Open details
         <ArrowUpRight className="h-3 w-3 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -817,7 +817,7 @@ function Core({ cx, cy, size, caption }: { cx: number; cy: number; size: number;
         <p className="font-display text-[13px] font-bold tracking-[0.2em] text-ink [text-shadow:0_0_12px_rgb(var(--accent)/0.8)]">
           {ORBIT_CORE.label}
         </p>
-        <p className="mt-0.5 inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.22em] text-accent">
+        <p className="mt-0.5 inline-flex items-center gap-1.5 whitespace-nowrap font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-accent">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent shadow-glow-sm" />
           {caption}
         </p>

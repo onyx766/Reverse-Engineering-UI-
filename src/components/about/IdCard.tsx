@@ -210,7 +210,7 @@ export function IdCard({ data }: { data: IdCardData }) {
         initial={entrance(reduced, { opacity: 0, y: 10 })}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.9, ease: EASE }}
-        className="relative z-10 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted"
+        className="relative z-10 mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted"
       >
         <span className="flex items-center gap-1" aria-hidden>
           {(['A', 'B'] as const).map((side) => {

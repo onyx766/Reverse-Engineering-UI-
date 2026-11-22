@@ -105,7 +105,7 @@ export function EngageBand() {
         <div className="relative grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-center lg:gap-14">
           {/* pitch */}
           <div className="min-w-0">
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[10.5px] uppercase tracking-[0.3em] text-accent">
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-2 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent">
               <span className="grid h-7 min-w-7 place-items-center rounded-md border border-accent/40 bg-accent/10 px-1 text-[10px] tracking-[0.04em] shadow-glow-sm">
                 05
               </span>
@@ -116,7 +116,7 @@ export function EngageBand() {
               id={headingId}
               tabIndex={-1}
               data-block-heading
-              className="mt-4 text-balance font-display text-[clamp(1.7rem,4.2vw,3rem)] font-black uppercase leading-[1.04] tracking-tight text-gradient outline-none"
+              className="mt-4 text-balance font-display text-[clamp(1.7rem,4.2vw,3rem)] font-bold leading-[1.04] tracking-tight text-gradient outline-none"
             >
               {COPY.title}
             </h2>
@@ -135,7 +135,7 @@ export function EngageBand() {
                 />
                 <span className={cn('relative inline-flex h-2 w-2 rounded-full', open ? 'bg-emerald-400' : 'bg-amber-400')} />
               </span>
-              <span className="whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink">
+              <span className="whitespace-nowrap font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-ink">
                 {open ? AVAILABILITY.status : AVAILABILITY.bookedStatus}
               </span>
               {/* the detail would break the pill onto two lines in the narrow lg pitch column (1024–1279) */}
@@ -148,7 +148,7 @@ export function EngageBand() {
               <MagneticButton
                 onClick={() => setSection('contact')}
                 strength={0.25}
-                className="group relative min-h-12 w-full gap-2.5 overflow-hidden rounded-xl border border-accent/70 bg-accent/20 px-5 py-3.5 font-display text-[12px] font-bold sm:px-7 sm:text-[13px] uppercase tracking-[0.16em] text-ink shadow-glow-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent hover:bg-accent/30 hover:shadow-glow sm:w-auto"
+                className="group relative min-h-12 w-full gap-2.5 overflow-hidden rounded-xl border border-accent/70 bg-accent/20 px-5 py-3.5 font-ui text-[12px] font-bold sm:px-7 sm:text-[13px] uppercase tracking-[0.08em] text-ink shadow-glow-sm transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent hover:bg-accent/30 hover:shadow-glow sm:w-auto"
               >
                 <span
                   aria-hidden
@@ -182,7 +182,7 @@ export function EngageBand() {
                   transition={{ duration: 0.6, delay: 0.12 + i * 0.07, ease: EASE }}
                   className="group/fact relative min-w-0 overflow-hidden rounded-xl border border-accent/20 bg-deep/45 p-3.5 transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent/[0.07] sm:p-4"
                 >
-                  <span className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted">
+                  <span className="flex items-center gap-1.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
                     <f.icon aria-hidden className="h-3.5 w-3.5 text-accent transition-transform duration-300 group-hover/fact:scale-110" />
                     {f.label}
                   </span>
@@ -225,7 +225,7 @@ function Decor() {
       />
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0 opacity-0"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgb(var(--ink)) 0 1px, transparent 1px 4px)' }}
       />
       <span aria-hidden className={cn(corner, 'left-3 top-3 border-l border-t')} />

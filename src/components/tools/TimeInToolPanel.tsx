@@ -54,11 +54,11 @@ export function TimeInToolPanel({
       bodyClassName="p-2.5 sm:p-3"
     >
       <div className="flex items-end justify-between gap-2 px-1.5 pb-2">
-        <p className="font-display text-[28px] font-black leading-none text-ink">
+        <p className="font-display text-[28px] font-bold leading-none text-ink">
           <span ref={ref}>{value}</span>
           <span className="ml-1 font-mono text-[12px] font-normal text-accent">h</span>
         </p>
-        <p className="pb-0.5 text-right font-mono text-[9.5px] uppercase leading-tight tracking-[0.16em] text-muted">
+        <p className="pb-0.5 text-right font-ui font-semibold text-[10.75px] uppercase leading-tight tracking-[0.08em] text-muted">
           logged
           <br />
           {(TOTAL / 30).toFixed(1)} h / day
@@ -138,7 +138,7 @@ export function TimeInToolPanel({
             />
           ))}
         </div>
-        <p className="mt-1.5 flex justify-between font-mono text-[9px] uppercase tracking-[0.16em] text-muted/80">
+        <p className="mt-1.5 flex justify-between font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted/80">
           <span>-30d</span>
           <span>daily activity</span>
           <span>today</span>

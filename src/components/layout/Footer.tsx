@@ -85,7 +85,7 @@ function Column({ index, children }: { index: number; children: ReactNode }) {
 
 function ColumnTitle({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   return (
-    <div className="mb-4 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.28em] text-accent">
+    <div className="mb-4 flex items-center gap-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
       <span aria-hidden className="h-px w-5 bg-accent/60" />
       <span>{children}</span>
       {aside && (
@@ -103,7 +103,7 @@ function DeckDecor({ live }: { live: boolean }) {
     <>
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.045]"
+        className="pointer-events-none absolute inset-0 opacity-0"
         style={{
           backgroundImage: 'repeating-linear-gradient(0deg, rgb(var(--ink)) 0 1px, transparent 1px 4px)',
         }}
@@ -146,10 +146,10 @@ function Brand() {
       >
         <HoloLogo size={46} />
         <span className="leading-none">
-          <span className="block font-display text-[22px] font-black tracking-[0.2em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent">
+          <span className="block font-display text-[22px] font-bold tracking-[-0.005em] text-ink transition-colors duration-300 group-hover:text-accent group-focus-visible:text-accent">
             ONYX
           </span>
-          <span className="mt-1.5 block font-mono text-[9.5px] uppercase tracking-[0.22em] text-muted">
+          <span className="mt-1.5 block font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-muted">
             {FOOTER.eyebrow}
           </span>
         </span>
@@ -158,7 +158,7 @@ function Brand() {
       <p className="max-w-sm text-balance text-[15px] leading-relaxed text-muted">{FOOTER.tagline}</p>
 
       {PROFILE.available && (
-        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-400/[0.07] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-emerald-300">
+        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-400/[0.07] px-3 py-1 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-emerald-300">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -264,7 +264,7 @@ function Connect() {
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-display text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink">
+                  <span className="block font-ui text-[11.5px] font-bold uppercase tracking-[0.08em] text-ink">
                     {s.label}
                   </span>
                   <span className="block truncate font-mono text-[10.5px] text-muted transition-colors duration-300 group-hover:text-accent3">
@@ -324,7 +324,7 @@ function Telemetry({ live }: { live: boolean }) {
       <div className="relative overflow-hidden rounded-xl border border-accent/20 bg-deep/50 p-3">
         <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px hairline" />
         <Waveform live={live} />
-        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 font-mono text-[10.5px] uppercase tracking-[0.12em]">
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em]">
           <Readout label="uptime" value={formatUptime(performance.now() - startedAt)} />
           {clock && <Readout label="local" value={clock} />}
           <Readout
@@ -405,7 +405,7 @@ function BottomBar() {
 
   return (
     <div className="relative flex flex-col items-center gap-4 border-t border-accent/15 px-5 py-4 sm:px-8 lg:flex-row lg:justify-between lg:gap-6">
-      <p className="text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted lg:text-left">
+      <p className="text-center font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted lg:text-left">
         <span className="text-ink">{FOOTER.copyright}</span>
         <span aria-hidden className="mx-2 text-accent/50">
           /
@@ -413,7 +413,7 @@ function BottomBar() {
         {FOOTER.notice}
       </p>
 
-      <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+      <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
         <span className="relative flex h-1.5 w-1.5">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -444,7 +444,7 @@ function BottomBar() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full"
         />
-        <span className="relative font-display text-[10.5px] font-bold uppercase tracking-[0.2em]">Top</span>
+        <span className="relative font-ui text-[11.75px] font-bold uppercase tracking-[0.08em]">Top</span>
         <ArrowUp aria-hidden className="relative h-4 w-4 transition-transform duration-300 group-hover:-translate-y-1" />
       </MagneticButton>
     </div>

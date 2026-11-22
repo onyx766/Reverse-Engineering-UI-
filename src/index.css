@@ -168,19 +168,16 @@
   /* ── Glass holo panel ─────────────────────────────────────────── */
   .glass {
     background:
-      linear-gradient(
-        145deg,
-        rgb(var(--surface) / 0.86) 0%,
-        rgb(var(--deep) / 0.72) 100%
-      );
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
-    border: 1px solid rgb(var(--accent) / 0.28);
+      radial-gradient(130% 70% at 12% 0%, rgb(var(--accent) / 0.07), transparent 60%),
+      linear-gradient(170deg, rgb(14 28 37 / 0.88) 0%, rgb(7 15 21 / 0.9) 60%, rgb(5 11 16 / 0.92) 100%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    backdrop-filter: blur(14px) saturate(130%);
+    border: 1.5px solid rgb(200 228 236 / 0.26);
     box-shadow:
-      0 0 0 1px rgb(var(--accent) / 0.07) inset,
-      0 1px 0 rgb(255 255 255 / 0.08) inset,
-      0 24px 60px -24px rgb(0 0 0 / 0.9),
-      0 0 34px -12px rgb(var(--accent) / 0.45);
+      0 1.5px 0 rgb(255 255 255 / 0.12) inset,
+      0 0 22px rgb(var(--accent) / 0.06) inset,
+      0 26px 60px -24px rgb(0 0 0 / 0.95),
+      0 0 22px -8px rgb(var(--accent) / 0.4);
     transition:
       border-color 0.4s var(--ease-holo),
       box-shadow 0.4s var(--ease-holo);
@@ -188,14 +185,11 @@
 
   .glass-strong {
     background:
-      linear-gradient(
-        145deg,
-        rgb(var(--surface) / 0.95) 0%,
-        rgb(var(--deep) / 0.88) 100%
-      );
-    -webkit-backdrop-filter: blur(22px) saturate(150%);
-    backdrop-filter: blur(22px) saturate(150%);
-    border: 1px solid rgb(var(--accent) / 0.38);
+      radial-gradient(130% 70% at 12% 0%, rgb(var(--accent) / 0.08), transparent 60%),
+      linear-gradient(170deg, rgb(14 28 37 / 0.96) 0%, rgb(6 13 19 / 0.96) 100%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px) saturate(140%);
+    border: 1.5px solid rgb(200 228 236 / 0.3);
   }
 
   /* Neon label text */
@@ -206,16 +200,10 @@
       0 0 22px rgb(var(--accent) / 0.4);
   }
 
+  /* headings in the render are plain bright type with a faint neon bloom */
   .text-gradient {
-    background-image: linear-gradient(
-      100deg,
-      rgb(var(--accent-3)),
-      rgb(var(--accent)) 45%,
-      rgb(var(--accent-2))
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: rgb(var(--ink));
+    text-shadow: 0 0 22px rgb(var(--accent) / 0.22);
   }
 
   /* Perspective helpers for the 3D layout */

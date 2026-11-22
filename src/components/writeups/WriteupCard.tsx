@@ -50,7 +50,7 @@ export function WriteupCard({
           {writeup.tags.map((t) => (
             <span
               key={t}
-              className="rounded-md border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-muted transition-colors duration-300 group-hover:border-accent/40 group-hover:text-accent"
+              className="rounded-md border border-accent/20 bg-accent/[0.06] px-1.5 py-0.5 font-ui font-semibold text-[10.5px] uppercase tracking-[0.08em] text-muted transition-colors duration-300 group-hover:border-accent/40 group-hover:text-accent"
             >
               {t}
             </span>
@@ -60,7 +60,7 @@ export function WriteupCard({
         {/* footer */}
         <div className="mt-4 flex items-center justify-between border-t border-accent/15 pt-3">
           <DifficultyPips level={writeup.difficulty} />
-          <span className="inline-flex items-center gap-1.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] text-accent">
+          <span className="inline-flex items-center gap-1.5 font-ui text-[11px] font-bold uppercase tracking-[0.08em] text-accent">
             Read
             <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5" />
           </span>

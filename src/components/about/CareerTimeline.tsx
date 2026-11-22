@@ -140,7 +140,7 @@ export function CareerTimeline({
       >
         <motion.div className="absolute left-0 top-0" style={{ y: headY, opacity: chipOpacity }}>
           <motion.span
-            className="absolute left-0 -translate-x-1/2 whitespace-nowrap rounded border border-accent/50 bg-deep/90 px-1.5 py-px font-mono text-[9.5px] uppercase leading-[15px] tracking-[0.12em] text-accent3 shadow-glow-sm"
+            className="absolute left-0 -translate-x-1/2 whitespace-nowrap rounded border border-accent/50 bg-deep/90 px-1.5 py-px font-ui font-semibold text-[10.75px] uppercase leading-[15px] tracking-[0.08em] text-accent3 shadow-glow-sm"
             style={{ top: CHIP_TOP }}
           >
             {year}
@@ -246,11 +246,11 @@ function Row({
           <Brackets />
 
           <div className="relative flex flex-wrap items-center justify-between gap-2">
-            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent transition-colors duration-500 group-hover:text-accent3">
+            <span className="font-ui font-semibold text-[11px] uppercase tracking-[0.08em] text-accent transition-colors duration-500 group-hover:text-accent3">
               {entry.start} — {entry.end ?? 'now'}
             </span>
             {entry.end === null ? (
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-accent/45 bg-accent/15 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-ink">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-accent/45 bg-accent/15 px-2 py-0.5 font-ui font-semibold text-[10.75px] uppercase tracking-[0.08em] text-ink">
                 <span className="relative flex h-1.5 w-1.5" aria-hidden>
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
@@ -258,7 +258,7 @@ function Row({
                 Current
               </span>
             ) : (
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+              <span className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-muted">
                 {span} {span === 1 ? 'yr' : 'yrs'}
               </span>
             )}
@@ -267,7 +267,7 @@ function Row({
           <h3 className="relative mt-2 font-display text-[16.5px] font-bold leading-snug tracking-wide text-ink sm:text-[18px]">
             {entry.role}
           </h3>
-          <p className="relative mt-1.5 flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted">
+          <p className="relative mt-1.5 flex items-center gap-1.5 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-muted">
             <OrgIcon aria-hidden className="h-3.5 w-3.5 shrink-0 text-accent/80 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-125" />
             {entry.org}
           </p>
@@ -295,7 +295,7 @@ function Row({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.9, delay: 0.15, ease: EASE }}
-          className="relative font-display text-[64px] font-black leading-none tracking-tight"
+          className="relative font-display text-[64px] font-bold leading-none tracking-tight"
         >
           <span className="text-transparent [-webkit-text-stroke:1px_rgb(var(--accent)/0.35)]">
             {entry.start}
@@ -311,7 +311,7 @@ function Row({
         </motion.span>
         <span
           className={cn(
-            'mt-2 font-mono text-[10px] uppercase tracking-[0.26em] transition-colors duration-500',
+            'mt-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] transition-colors duration-500',
             on ? 'text-accent' : 'text-muted/60',
           )}
         >

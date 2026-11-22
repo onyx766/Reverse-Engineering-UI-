@@ -14,8 +14,10 @@ export default {
         muted: 'rgb(var(--muted) / <alpha-value>)',
       },
       fontFamily: {
-        display: ['Orbitron', 'Chakra Petch', 'system-ui', 'sans-serif'],
-        sans: ['Rajdhani', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['"Segoe UI"', '"Segoe UI Variable Display"', '-apple-system', 'BlinkMacSystemFont', 'Inter', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        sans: ['"Segoe UI"', '"Segoe UI Variable Text"', '-apple-system', 'BlinkMacSystemFont', 'Inter', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        // the reference render's UI face: Segoe UI on Windows, the platform UI sans elsewhere
+        ui: ['"Segoe UI"', '"Segoe UI Variable Text"', '-apple-system', 'BlinkMacSystemFont', 'Inter', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
         mono: ['"JetBrains Mono"', '"Fira Code"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {

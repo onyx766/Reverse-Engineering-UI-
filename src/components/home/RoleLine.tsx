@@ -27,7 +27,7 @@ export function RoleLine() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, delay: 0.26, ease: EASE }}
       // one line at every width (the longest role is sized to fit), so cycling never shifts the layout
-      className="flex min-h-[2.4rem] items-center gap-2 overflow-hidden whitespace-nowrap font-display text-[clamp(0.95rem,4.2vw,1.6rem)] font-bold uppercase tracking-[0.08em] text-ink lg:text-[clamp(1.15rem,1.95vw,1.75rem)]"
+      className="flex min-h-[2.4rem] items-center gap-2 overflow-hidden whitespace-nowrap font-display text-[clamp(0.95rem,4.2vw,1.6rem)] font-bold tracking-[-0.005em] text-ink lg:text-[clamp(1.15rem,1.95vw,1.75rem)]"
     >
       <span className="text-accent">/</span>
       <span>{text}</span>

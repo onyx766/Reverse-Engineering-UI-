@@ -22,6 +22,7 @@ import { ExplorePedestal } from '@/components/projects/ExplorePedestal'
 import { CaseIndex } from '@/components/projects/CaseIndex'
 import { CaseStudyModal } from '@/components/projects/CaseStudyModal'
 import { useElementSize, useMediaQuery } from '@/components/projects/hooks'
+import { RefStage } from '@/components/projects/ref/RefStage'
 
 const INDEX_ID = 'case-index'
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -46,6 +47,8 @@ const COUNTS = PROJECTS.reduce(
 export function Projects() {
   const reduced = useReducedMotion()
   const desktop = useMediaQuery('(min-width: 1024px)')
+  // the reference composition, scaled as one piece, from 1280px up
+  const wide = useMediaQuery('(min-width: 1280px)')
   const indexMinHeight = useIndexMinHeight()
 
   // arriving from a Home card: centre that study and open it
@@ -141,7 +144,7 @@ export function Projects() {
   }
 
   return (
-    <Section id="projects" className="max-w-[1760px] pb-24 pt-32 sm:pb-32 lg:pt-[100px]">
+    <Section id="projects" className={cn('max-w-[1760px] pb-24 pt-32 sm:pb-32', wide ? 'lg:pt-0' : 'lg:pt-[100px]')}>
       <ProjectsKeyframes />
 
       <div
@@ -154,7 +157,18 @@ export function Projects() {
           pointerInStage.current = false
         }}
       >
-        {desktop ? <DesktopLayout {...stageProps} /> : <MobileLayout {...stageProps} />}
+        {wide ? (
+          <>
+            <h2 className="sr-only">
+              {PROJECTS_COPY.eyebrow}: {visible.length} {visible.length === 1 ? 'case study' : 'case studies'}
+            </h2>
+            <RefStage {...stageProps} counts={COUNTS} />
+          </>
+        ) : desktop ? (
+          <DesktopLayout {...stageProps} />
+        ) : (
+          <MobileLayout {...stageProps} />
+        )}
       </div>
 
       {/* below the fold: mounts once the switch settles or as it nears the viewport;
@@ -265,12 +279,12 @@ function MobileLayout(p: LayoutProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: EASE }}
       >
-        <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.36em] text-accent">
+        <span className="inline-flex items-center gap-2 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
           <span aria-hidden className="h-px w-5 bg-accent/70" />
           {PROJECTS_COPY.eyebrow}
           <span aria-hidden className="h-px w-5 bg-accent/70" />
         </span>
-        <h2 className="font-display text-[22px] font-black uppercase tracking-tight text-gradient sm:text-[28px]">
+        <h2 className="font-display text-[22px] font-bold tracking-tight text-gradient sm:text-[28px]">
           {PROJECTS_COPY.title}
         </h2>
         <p className="max-w-md text-[14.5px] leading-relaxed text-muted">{PROJECTS_COPY.intro}</p>

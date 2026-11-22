@@ -56,7 +56,7 @@ export function Contact() {
           <motion.li variants={chipVariants}>
             <span
               className={cn(
-                'inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.18em]',
+                'inline-flex items-center gap-2 rounded-full border px-3 py-1 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em]',
                 PROFILE.available
                   ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
                   : 'border-amber-400/40 bg-amber-400/10 text-amber-300',

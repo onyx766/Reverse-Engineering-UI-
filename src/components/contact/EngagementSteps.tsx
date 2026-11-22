@@ -47,7 +47,7 @@ export function EngagementSteps({ className = 'mt-16 sm:mt-20' }: { className?: 
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.32em] text-accent"
+            className="flex items-center gap-2 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent"
           >
             <Route aria-hidden className="h-3.5 w-3.5" />
             Process
@@ -59,7 +59,7 @@ export function EngagementSteps({ className = 'mt-16 sm:mt-20' }: { className?: 
             whileInView={reduced ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
             transition={reduced ? { duration: 0.4 } : { duration: 0.7, delay: 0.06, ease: EASE }}
-            className="mt-2 font-display text-2xl font-black uppercase tracking-tight text-gradient sm:text-[28px]"
+            className="mt-2 font-display text-2xl font-bold tracking-tight text-gradient sm:text-[28px]"
           >
             How an engagement works
           </motion.h3>
@@ -207,12 +207,12 @@ function StepCard({
             lit ? 'bg-accent/25' : 'bg-accent/[0.08] group-hover:bg-accent/20',
           )}
         />
-        <span className="relative inline-block self-start rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
+        <span className="relative inline-block self-start rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] text-accent">
           {s.duration}
         </span>
         <h4 className="relative mt-3 font-display text-[15px] font-bold tracking-wide text-ink">{s.title}</h4>
         <p className="relative mt-2 flex-1 text-[14.5px] leading-relaxed text-muted">{s.body}</p>
-        <p className="relative mt-4 flex items-center gap-1.5 border-t border-accent/15 pt-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-accent">
+        <p className="relative mt-4 flex items-center gap-1.5 border-t border-accent/15 pt-3 font-ui font-semibold text-[11.75px] uppercase tracking-[0.08em] text-accent">
           <span aria-hidden>›</span>
           {s.deliverable}
         </p>

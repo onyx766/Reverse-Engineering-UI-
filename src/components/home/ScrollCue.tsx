@@ -28,7 +28,7 @@ export function ScrollCue({ target }: { target: string }) {
         aria-label={HERO.scrollCueLabel}
         className="group flex min-h-11 min-w-[5.5rem] flex-col items-center gap-1.5 rounded-xl px-4 py-2 text-muted transition-colors duration-300 hover:text-ink focus-visible:text-ink"
       >
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] transition-[letter-spacing] duration-500 group-hover:tracking-[0.42em]">
+        <span className="font-ui font-semibold text-[11.25px] uppercase tracking-[0.08em] transition-[letter-spacing] duration-500 group-hover:tracking-[0.08em]">
           {HERO.scrollCue}
         </span>
         <span
